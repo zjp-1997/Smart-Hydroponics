@@ -1,0 +1,206 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  flex: 0 0 auto;
+  gap: 18px;
+}
+
+.stat-card,
+.filter-card,
+.table-card {
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.04);
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 116px;
+  padding: 22px 28px;
+  border: 1px solid #f1f5f9;
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 30px;
+  flex: 0 0 auto;
+}
+
+.stat-card p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.stat-card strong {
+  display: block;
+  margin: 9px 0 8px;
+  color: #111827;
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.stat-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat-trend small,
+.stat-trend b {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.stat-trend b {
+  font-weight: 800;
+}
+
+.trend-up {
+  color: #e34c67 !important;
+}
+
+.trend-down {
+  color: #10b981 !important;
+}
+
+.tone-blue {
+  background: linear-gradient(135deg, #2f80ed, #2563eb);
+}
+
+.tone-orange {
+  background: linear-gradient(135deg, #ffbe35, #f59e0b);
+}
+
+.tone-green {
+  background: linear-gradient(135deg, #41c79a, #10b981);
+}
+
+.tone-purple {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.tone-gray {
+  background: linear-gradient(135deg, #9aa3b2, #64748b);
+}
+
+.table-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  padding: 14px 18px;
+}
+
+.table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.expert-table {
+  width: 100%;
+}
+
+.expert-table :deep(.el-table__header th) {
+  height: 52px;
+  color: #334155;
+  background: #fafcff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.expert-table :deep(.el-table__row) {
+  height: 64px;
+}
+
+.expert-table :deep(.el-table__cell) {
+  color: #334155;
+  font-size: 13px;
+}
+
+.table-avatar {
+  background: #ffffff;
+  box-shadow: 0 6px 12px rgba(64, 158, 255, 0.18);
+}
+
+.table-avatar :deep(img) {
+  object-fit: contain;
+  background: #ffffff;
+}
+
+.default-avatar {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #409eff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: 0 6px 12px rgba(64, 158, 255, 0.22);
+}
+
+.table-cert {
+  width: 74px;
+  height: 42px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.status-cell,
+.table-actions,
+.rating-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-cell {
+  gap: 8px;
+}
+
+.table-actions {
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.rating-cell {
+  gap: 8px;
+}
+
+.rating-cell :deep(.el-rate) {
+  height: 20px;
+}
+
+.rating-cell b {
+  color: #f59e0b;
+}
+
+@media (max-width: 1280px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

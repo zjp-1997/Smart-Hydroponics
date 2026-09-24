@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.PageVisitLogMapper">
+
+    <resultMap id="HomeVisitTrendPointResultMap" type="com.smart_plant.smart_plant.dto.HomeVisitTrendPoint">
+        <result column="visit_date" property="date"/>
+        <result column="visit_label" property="label"/>
+        <result column="visit_count" property="visitCount"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.PageVisitLog">
+        INSERT INTO `page_visit_log`
+        (user_id, username, page_code, page_name, ip, user_agent, visit_time)
+        VALUES
+        (#{userId}, #{username}, #{pageCode}, #{pageName}, #{ip}, #{userAgent}, #{visitTime})
+    </insert>
+
+    <select id="selectDailyVisitTrend" resultMap="HomeVisitTrendPointResultMap">
+        SELECT
+            DATE_FORMAT(visit_time, '%Y-%m-%d') AS visit_date,
+            DATE_FORMAT(visit_time, '%m-%d') AS visit_label,
+            COUNT(1) AS visit_count
+        FROM `page_visit_log`
+        WHERE page_code = #{pageCode}
+          AND user_id = #{userId}
+          AND visit_time &gt;= #{startTime}
+          AND visit_time &lt; #{endTime}
+        GROUP BY DATE(visit_time), DATE_FORMAT(visit_time, '%Y-%m-%d'), DATE_FORMAT(visit_time, '%m-%d')
+        ORDER BY DATE(visit_time) ASC
+    </select>
+</mapper>

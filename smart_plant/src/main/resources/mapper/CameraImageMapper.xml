@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.CameraImageMapper">
+
+    <resultMap id="CameraImageResultMap" type="com.smart_plant.smart_plant.entity.CameraImage">
+        <id column="id" property="id"/>
+        <result column="camera_id" property="cameraId"/>
+        <result column="camera_name" property="cameraName"/>
+        <result column="batch_id" property="batchId"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="thumbnail_url" property="thumbnailUrl"/>
+        <result column="image_size" property="imageSize"/>
+        <result column="capture_type" property="captureType"/>
+        <result column="capture_time" property="captureTime"/>
+        <result column="ai_checked" property="aiChecked"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        cr.id, cr.device_id AS camera_id, cd.name AS camera_name,
+        cr.batch_id, cr.plot_id, p.plot_name, p.plot_code,
+        cr.user_id, u.username, u.nickname,
+        cr.image_url, cr.thumbnail_url, cr.image_size,
+        cr.capture_type, cr.capture_time, cr.ai_checked, cr.status,
+        cr.remark, cr.create_time
+    </sql>
+
+    <sql id="CameraPlotJoin">
+        LEFT JOIN `camera_device` cd ON cd.id = cr.device_id
+        LEFT JOIN `plot` p ON p.id = cr.plot_id
+        LEFT JOIN `user` u ON u.id = cr.user_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.CameraImage"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `camera_capture_record`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="cameraId != null">device_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="plotId != null">plot_id,</if>
+            <if test="batchId != null">batch_id,</if>
+            <if test="imageUrl != null and imageUrl != ''">image_url,</if>
+            <if test="thumbnailUrl != null and thumbnailUrl != ''">thumbnail_url,</if>
+            <if test="imageSize != null">image_size,</if>
+            <if test="captureType != null">capture_type,</if>
+            <if test="captureTime != null">capture_time,</if>
+            <if test="aiChecked != null">ai_checked,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="cameraId != null">#{cameraId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="plotId != null">#{plotId},</if>
+            <if test="batchId != null">#{batchId},</if>
+            <if test="imageUrl != null and imageUrl != ''">#{imageUrl},</if>
+            <if test="thumbnailUrl != null and thumbnailUrl != ''">#{thumbnailUrl},</if>
+            <if test="imageSize != null">#{imageSize},</if>
+            <if test="captureType != null">#{captureType},</if>
+            <if test="captureTime != null">#{captureTime},</if>
+            <if test="aiChecked != null">#{aiChecked},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="deleteById">
+        UPDATE `camera_capture_record`
+        SET status = 0
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteBatchByIds">
+        UPDATE `camera_capture_record`
+        SET status = 0
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.CameraImage">
+        UPDATE `camera_capture_record`
+        <set>
+            <if test="cameraId != null">device_id = #{cameraId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="plotId != null">plot_id = #{plotId},</if>
+            <if test="batchId != null">batch_id = #{batchId},</if>
+            <if test="imageUrl != null and imageUrl != ''">image_url = #{imageUrl},</if>
+            <if test="thumbnailUrl != null">thumbnail_url = #{thumbnailUrl},</if>
+            <if test="imageSize != null">image_size = #{imageSize},</if>
+            <if test="captureType != null">capture_type = #{captureType},</if>
+            <if test="captureTime != null">capture_time = #{captureTime},</if>
+            <if test="aiChecked != null">ai_checked = #{aiChecked},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="CameraImageResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `camera_capture_record` cr
+        <include refid="CameraPlotJoin"/>
+        WHERE cr.id = #{id}
+          AND cr.status = 1
+    </select>
+
+    <select id="selectList" resultMap="CameraImageResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `camera_capture_record` cr
+        <include refid="CameraPlotJoin"/>
+        <where>
+            AND cr.status = 1
+            <if test="userId != null">
+                AND cr.user_id = #{userId}
+            </if>
+            <if test="cameraId != null">
+                AND cr.device_id = #{cameraId}
+            </if>
+            <if test="plotId != null">
+                AND cr.plot_id = #{plotId}
+            </if>
+            <if test="cameraName != null and cameraName != ''">
+                AND cd.name LIKE CONCAT('%', #{cameraName}, '%')
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="startTime != null">
+                AND cr.capture_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND cr.capture_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY cr.id DESC
+    </select>
+</mapper>

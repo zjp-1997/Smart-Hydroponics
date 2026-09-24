@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.FarmTaskMapper">
+
+    <resultMap id="FarmTaskResultMap" type="com.smart_plant.smart_plant.entity.FarmTask">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="batch_id" property="batchId"/>
+        <result column="batch_no" property="batchNo"/>
+        <result column="task_title" property="taskTitle"/>
+        <result column="task_type" property="taskType"/>
+        <result column="task_content" property="taskContent"/>
+        <result column="priority" property="priority"/>
+        <result column="deadline_time" property="deadlineTime"/>
+        <result column="actual_start_time" property="actualStartTime"/>
+        <result column="actual_end_time" property="actualEndTime"/>
+        <result column="status" property="status"/>
+        <result column="executor_id" property="executorId"/>
+        <result column="executor_name" property="executorName"/>
+        <result column="complete_remark" property="completeRemark"/>
+        <result column="remark" property="remark"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="ai_solution_id" property="aiSolutionId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="publish_time" property="publishTime"/>
+        <result column="publisher_name" property="publisherName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="overdue" property="overdue"/>
+    </resultMap>
+
+    <resultMap id="ClientFarmTaskResultMap" type="com.smart_plant.smart_plant.dto.ClientFarmTaskResponse">
+        <id column="id" property="id"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="crop_name" property="cropName"/>
+        <result column="crop_image" property="cropImage"/>
+        <result column="task_title" property="taskTitle"/>
+        <result column="task_content" property="taskContent"/>
+        <result column="task_type" property="taskType"/>
+        <result column="task_type_name" property="taskTypeName"/>
+        <result column="status" property="status"/>
+        <result column="status_name" property="statusName"/>
+        <result column="deadline_time" property="deadlineTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="actual_start_time" property="actualStartTime"/>
+        <result column="actual_end_time" property="actualEndTime"/>
+        <result column="executor_id" property="executorId"/>
+        <result column="executor_name" property="executorName"/>
+        <result column="complete_remark" property="completeRemark"/>
+        <result column="overdue" property="overdue"/>
+        <result column="can_execute" property="canExecute"/>
+        <result column="can_submit_progress" property="canSubmitProgress"/>
+        <result column="can_complete" property="canComplete"/>
+    </resultMap>
+
+    <resultMap id="ClientFarmTaskDateSummaryResultMap" type="com.smart_plant.smart_plant.dto.ClientFarmTaskDateSummaryResponse">
+        <result column="task_date" property="taskDate" javaType="java.time.LocalDate"/>
+        <result column="task_count" property="taskCount"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        ft.id, ft.user_id, u.username, u.nickname,
+        ft.plot_id, p.plot_name, p.plot_code,
+        ft.batch_id, pb.batch_no,
+        ft.task_title, ft.task_type, ft.task_content, ft.priority,
+        ft.deadline_time,
+        ft.actual_start_time, ft.actual_end_time,
+        ft.status, ft.executor_id, eu.nickname AS executor_name,
+        ft.complete_remark, ft.remark,
+        ft.source_type, ft.source_id, ft.ai_solution_id,
+        ft.create_time, ft.create_time AS publish_time,
+        COALESCE(u.nickname, u.username) AS publisher_name,
+        ft.update_time,
+        CASE WHEN ft.status IN (1, 2, 4) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END AS overdue
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `user` u ON u.id = ft.user_id
+        LEFT JOIN `user` eu ON eu.id = ft.executor_id
+        LEFT JOIN `plot` p ON p.id = ft.plot_id
+        LEFT JOIN `planting_batch` pb ON pb.id = ft.batch_id
+    </sql>
+
+    <sql id="ClientTaskColumns">
+        ft.id, ft.plot_id, p.plot_name,
+        COALESCE(c.crop_name, '暂无作物') AS crop_name,
+        COALESCE(NULLIF(pb.crop_image, ''), NULLIF(p.crop_image, ''), c.image_url) AS crop_image,
+        ft.task_title, ft.task_content, ft.task_type,
+        CASE ft.task_type
+            WHEN 1 THEN '灌溉'
+            WHEN 2 THEN '施肥'
+            WHEN 3 THEN '喷药'
+            WHEN 4 THEN '采收'
+            ELSE '其他'
+        END AS task_type_name,
+        ft.status,
+        CASE ft.status
+            WHEN 1 THEN CASE WHEN ft.deadline_time &lt; NOW() THEN '未开始（已逾期）' ELSE '未开始' END
+            WHEN 2 THEN CASE WHEN ft.deadline_time &lt; NOW() THEN '进行中（已逾期）' ELSE '进行中' END
+            WHEN 3 THEN '已完成'
+            WHEN 4 THEN '已逾期'
+            WHEN 5 THEN '已取消'
+            ELSE '未知'
+        END AS status_name,
+        ft.deadline_time, ft.create_time, ft.actual_start_time, ft.actual_end_time,
+        ft.executor_id, COALESCE(eu.nickname, eu.username) AS executor_name,
+        ft.complete_remark,
+        CASE WHEN ft.status IN (1, 2, 4) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END AS overdue,
+        CASE WHEN ft.status IN (1, 4) THEN 1 ELSE 0 END AS can_execute,
+        CASE WHEN ft.status = 2 THEN 1 ELSE 0 END AS can_submit_progress,
+        CASE WHEN ft.status = 2 THEN 1 ELSE 0 END AS can_complete
+    </sql>
+
+    <sql id="ClientTaskJoins">
+        LEFT JOIN `plot` p ON p.id = ft.plot_id
+        LEFT JOIN `planting_batch` pb ON pb.id = ft.batch_id
+        LEFT JOIN `crop` c ON c.id = pb.crop_id
+        LEFT JOIN `user` eu ON eu.id = ft.executor_id
+    </sql>
+
+    <!-- 农场主看本人农事；普通用户只看绑定农场主明确指派给自己的任务。 -->
+    <sql id="ClientTaskAccess">
+        AND (ft.user_id = #{userId}
+          OR (ft.executor_id = #{userId} AND EXISTS (
+              SELECT 1 FROM `farm_owner_user` fou
+              WHERE fou.owner_user_id = ft.user_id AND fou.user_id = #{userId}
+          )))
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.FarmTask"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `farm_task`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="plotId != null">plot_id,</if>
+            <if test="batchId != null">batch_id,</if>
+            <if test="taskTitle != null and taskTitle != ''">task_title,</if>
+            <if test="taskType != null">task_type,</if>
+            <if test="taskContent != null">task_content,</if>
+            <if test="priority != null">priority,</if>
+            <if test="deadlineTime != null">deadline_time,</if>
+            <if test="actualStartTime != null">actual_start_time,</if>
+            <if test="actualEndTime != null">actual_end_time,</if>
+            <if test="status != null">status,</if>
+            <if test="executorId != null">executor_id,</if>
+            <if test="completeRemark != null">complete_remark,</if>
+            <if test="remark != null">remark,</if>
+            <if test="sourceType != null">source_type,</if>
+            <if test="sourceId != null">source_id,</if>
+            <if test="aiSolutionId != null">ai_solution_id,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="plotId != null">#{plotId},</if>
+            <if test="batchId != null">#{batchId},</if>
+            <if test="taskTitle != null and taskTitle != ''">#{taskTitle},</if>
+            <if test="taskType != null">#{taskType},</if>
+            <if test="taskContent != null">#{taskContent},</if>
+            <if test="priority != null">#{priority},</if>
+            <if test="deadlineTime != null">#{deadlineTime},</if>
+            <if test="actualStartTime != null">#{actualStartTime},</if>
+            <if test="actualEndTime != null">#{actualEndTime},</if>
+            <if test="status != null">#{status},</if>
+            <if test="executorId != null">#{executorId},</if>
+            <if test="completeRemark != null">#{completeRemark},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="sourceType != null">#{sourceType},</if>
+            <if test="sourceId != null">#{sourceId},</if>
+            <if test="aiSolutionId != null">#{aiSolutionId},</if>
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.FarmTask">
+        UPDATE `farm_task`
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="plotId != null">plot_id = #{plotId},</if>
+            <if test="batchId != null">batch_id = #{batchId},</if>
+            <if test="taskTitle != null and taskTitle != ''">task_title = #{taskTitle},</if>
+            <if test="taskType != null">task_type = #{taskType},</if>
+            <if test="taskContent != null">task_content = #{taskContent},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="deadlineTime != null">deadline_time = #{deadlineTime},</if>
+            <if test="actualStartTime != null">actual_start_time = #{actualStartTime},</if>
+            <if test="actualEndTime != null">actual_end_time = #{actualEndTime},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="executorId != null">executor_id = #{executorId},</if>
+            <if test="completeRemark != null">complete_remark = #{completeRemark},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="sourceType != null">source_type = #{sourceType},</if>
+            <if test="sourceId != null">source_id = #{sourceId},</if>
+            <if test="aiSolutionId != null">ai_solution_id = #{aiSolutionId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM `farm_task`
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM `farm_task`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateStatus">
+        UPDATE `farm_task`
+        SET status = #{status},
+            actual_start_time = COALESCE(#{actualStartTime}, actual_start_time),
+            actual_end_time = COALESCE(#{actualEndTime}, actual_end_time),
+            complete_remark = COALESCE(#{completeRemark}, complete_remark)
+        WHERE id = #{id}
+    </update>
+
+    <!-- 通过状态条件实现原子开始，旧的“已逾期”状态也允许被实际执行。 -->
+    <update id="startTask">
+        UPDATE `farm_task`
+        SET status = 2,
+            executor_id = #{executorId},
+            actual_start_time = COALESCE(actual_start_time, #{actualStartTime})
+        WHERE id = #{id}
+          AND status IN (1, 4)
+          AND (executor_id IS NULL OR executor_id = #{executorId})
+    </update>
+
+    <!-- 完成动作只接受进行中的任务，防止跳过开始步骤直接闭环。 -->
+    <update id="completeTask">
+        UPDATE `farm_task`
+        SET status = 3,
+            actual_end_time = #{actualEndTime},
+            complete_remark = #{completeRemark}
+        WHERE id = #{id}
+          AND status = 2
+    </update>
+
+    <select id="selectById" resultMap="FarmTaskResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task` ft
+        <include refid="BaseJoins"/>
+        WHERE ft.id = #{id}
+    </select>
+
+    <select id="selectBySource" resultMap="FarmTaskResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task` ft
+        <include refid="BaseJoins"/>
+        WHERE ft.source_type = #{sourceType}
+          AND ft.source_id = #{sourceId}
+        ORDER BY ft.id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectList" resultMap="FarmTaskResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task` ft
+        <include refid="BaseJoins"/>
+        <where>
+            <if test="userId != null">
+                AND ft.user_id = #{userId}
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="taskTitle != null and taskTitle != ''">
+                AND ft.task_title LIKE CONCAT('%', #{taskTitle}, '%')
+            </if>
+            <if test="taskContent != null and taskContent != ''">
+                AND ft.task_content LIKE CONCAT('%', #{taskContent}, '%')
+            </if>
+            <if test="taskType != null">
+                AND ft.task_type = #{taskType}
+            </if>
+            <if test="status != null">
+                AND ft.status = #{status}
+            </if>
+            <if test="sourceType != null and sourceType != ''">
+                AND ft.source_type = #{sourceType}
+            </if>
+            <if test="deadlineStart != null">
+                AND ft.deadline_time &gt;= #{deadlineStart}
+            </if>
+            <if test="deadlineEnd != null">
+                AND ft.deadline_time &lt;= #{deadlineEnd}
+            </if>
+        </where>
+        ORDER BY ft.id DESC
+    </select>
+
+    <select id="selectClientTasks" resultMap="ClientFarmTaskResultMap">
+        <!-- farm 移动端任务列表：只返回当前用户四类常用农事任务，并聚合作物名称。 -->
+        SELECT <include refid="ClientTaskColumns"/>
+        FROM `farm_task` ft
+        <include refid="ClientTaskJoins"/>
+        WHERE 1 = 1
+          <include refid="ClientTaskAccess"/>
+          AND ft.task_type IN (1, 2, 3, 4)
+          AND ft.deadline_time &gt;= #{deadlineStart}
+          AND ft.deadline_time &lt;= #{deadlineEnd}
+        <if test="taskType != null">
+          AND ft.task_type = #{taskType}
+        </if>
+        ORDER BY ft.deadline_time ASC, ft.id DESC
+    </select>
+
+    <select id="selectClientTasksByStatus" resultMap="ClientFarmTaskResultMap">
+        <!-- 状态分类互斥：到期未完成的任务只进入“已逾期”，不再混入未开始或进行中。 -->
+        SELECT <include refid="ClientTaskColumns"/>
+        FROM `farm_task` ft
+        <include refid="ClientTaskJoins"/>
+        WHERE 1 = 1
+          <include refid="ClientTaskAccess"/>
+          AND ft.task_type IN (1, 2, 3, 4)
+          AND ft.status != 5
+        <choose>
+            <when test="status == 1">
+                AND ft.status = 1
+                AND (ft.deadline_time IS NULL OR ft.deadline_time &gt;= NOW())
+            </when>
+            <when test="status == 2">
+                AND ft.status = 2
+                AND (ft.deadline_time IS NULL OR ft.deadline_time &gt;= NOW())
+            </when>
+            <when test="status == 3">
+                AND ft.status = 3
+            </when>
+            <when test="status == 4">
+                AND (ft.status = 4 OR (ft.status IN (1, 2) AND ft.deadline_time &lt; NOW()))
+            </when>
+        </choose>
+        ORDER BY
+          CASE WHEN ft.status = 4 OR (ft.status IN (1, 2) AND ft.deadline_time &lt; NOW()) THEN 0 ELSE 1 END,
+          ft.deadline_time ASC,
+          ft.id DESC
+    </select>
+
+    <select id="selectClientTasksByPlotId" resultMap="FarmTaskResultMap">
+        <!-- 地块详情展示任务本身而非执行记录，排序在数据库层完成以保证各客户端一致。 -->
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task` ft
+        <include refid="BaseJoins"/>
+        WHERE ft.user_id = #{userId}
+          AND ft.plot_id = #{plotId}
+        ORDER BY ft.deadline_time ASC, ft.id ASC
+    </select>
+
+    <select id="selectClientTaskViewsByPlotId" resultMap="ClientFarmTaskResultMap">
+        <!-- 地块时间序列使用移动端任务视图，真实图片按种植批次、地块、作物档案依次兜底。 -->
+        SELECT <include refid="ClientTaskColumns"/>
+        FROM `farm_task` ft
+        <include refid="ClientTaskJoins"/>
+        WHERE 1 = 1
+          <include refid="ClientTaskAccess"/>
+          AND ft.plot_id = #{plotId}
+          AND ft.task_type IN (1, 2, 3, 4)
+        ORDER BY ft.deadline_time ASC, ft.id ASC
+    </select>
+
+    <select id="selectClientTaskById" resultMap="ClientFarmTaskResultMap">
+        <!-- 执行任务后回查最新任务状态，避免前端自行拼装状态造成展示不一致。 -->
+        SELECT <include refid="ClientTaskColumns"/>
+        FROM `farm_task` ft
+        <include refid="ClientTaskJoins"/>
+        WHERE ft.id = #{id}
+          <include refid="ClientTaskAccess"/>
+          AND ft.task_type IN (1, 2, 3, 4)
+    </select>
+
+    <select id="selectClientDateCounts" resultMap="ClientFarmTaskDateSummaryResultMap">
+        <!-- 日期摘要只做轻量聚合，服务层会补齐没有任务的日期。 -->
+        SELECT DATE(ft.deadline_time) AS task_date,
+               COUNT(1) AS task_count
+        FROM `farm_task` ft
+        WHERE 1 = 1
+          <include refid="ClientTaskAccess"/>
+          AND ft.task_type IN (1, 2, 3, 4)
+          AND ft.deadline_time &gt;= #{deadlineStart}
+          AND ft.deadline_time &lt;= #{deadlineEnd}
+        GROUP BY DATE(ft.deadline_time)
+    </select>
+
+    <select id="selectClientStatistics"
+            resultType="map">
+        <!-- 首页与移动端任务列表保持同一数据范围，并由数据库一次完成状态聚合。 -->
+        SELECT COALESCE(SUM(CASE WHEN ft.status = 1 THEN 1 ELSE 0 END), 0) AS pendingCount,
+               COALESCE(SUM(CASE WHEN ft.status = 2 THEN 1 ELSE 0 END), 0) AS runningCount,
+               COALESCE(SUM(CASE WHEN ft.status = 3 THEN 1 ELSE 0 END), 0) AS completedCount,
+               COALESCE(SUM(CASE WHEN ft.status IN (1, 2, 4) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END), 0) AS overdueCount
+        FROM `farm_task` ft
+        WHERE 1 = 1
+          <include refid="ClientTaskAccess"/>
+          AND ft.task_type IN (1, 2, 3, 4)
+    </select>
+
+    <select id="selectActiveBatchIdByPlotId" resultType="long">
+        SELECT id
+        FROM `planting_batch`
+        WHERE plot_id = #{plotId}
+          AND status = 1
+        ORDER BY planted_at DESC, create_time DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS pendingCount,
+            COALESCE(SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END), 0) AS runningCount,
+            COALESCE(SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END), 0) AS completedCount,
+            COALESCE(SUM(CASE WHEN source_type = 'AI_SOLUTION' THEN 1 ELSE 0 END), 0) AS aiGeneratedCount
+        FROM `farm_task`
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </select>
+</mapper>

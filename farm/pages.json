@@ -1,0 +1,434 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			// 将 npm 安装的 uni-ui 组件按 uni-* 标签自动解析，避免每个页面重复注册。
+			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+			"^protected-image$": "@/componment/ProtectedImage.vue"
+		}
+	},
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/login/code_index",
+			"style": {
+				"navigationBarTitleText": "验证码登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			// 专家使用独立双入口导航，避免显示农场主固定四栏 TabBar。
+			// 消息页由内部列表滚动，原生页面不能带动顶部导航滑动。
+			"path": "pages/expert/news",
+			"style": { "navigationBarTitleText": "咨询消息", "navigationStyle": "custom", "disableScroll": true }
+		},
+		{
+			"path": "pages/expert/mine",
+			"style": { "navigationBarTitleText": "个人中心", "navigationStyle": "custom" }
+		},
+		{
+			// 技术人员故障首页沿用现有页面，这两页使用独立三入口导航。
+			"path": "pages/technician/news",
+			"style": { "navigationBarTitleText": "消息", "navigationStyle": "custom", "disableScroll": true }
+		},
+		{
+			"path": "pages/technician/mine",
+			"style": { "navigationBarTitleText": "我的", "navigationStyle": "custom" }
+		},
+		{
+			"path": "pages/technician/records",
+			"style": { "navigationBarTitleText": "故障处理记录", "navigationStyle": "custom" }
+		},
+		{
+			// 聊天页由内部消息列表滚动，原生页面保持固定。
+			"path": "pages/expert/chat",
+			"style": { "navigationBarTitleText": "咨询聊天", "navigationStyle": "custom", "disableScroll": true }
+		},
+		{
+			"path": "pages/expert/identity",
+			"style": { "navigationBarTitleText": "身份认证", "navigationStyle": "custom" }
+		},
+		{
+			// 系统消息列表与维护消息列表采用相同的自定义导航栏。
+			"path": "pages/secondPage/message/announcement",
+			"style": {
+				"navigationBarTitleText": "系统消息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/message/maintenance",
+			"style": {
+				"navigationBarTitleText": "维护消息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login/pwd_index",
+			"style": {
+				"navigationBarTitleText": "账号密码登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/register/index",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"navigationStyle": "custom"
+			}
+		},
+
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			// 农场主消息页由内部列表滚动，原生页面保持固定。
+			"path": "pages/index/news",
+			"style": {
+				"navigationBarTitleText": "消息",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/index/map",
+			"style": {
+				"navigationBarTitleText": "地图",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/index/mine",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login/agreement",
+			"style": {
+				"navigationBarTitleText": "协议与政策",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/secondPage/account_setting/index",
+			"style": {
+				"navigationBarTitleText": "账号设置",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			// 四类移动端角色共用个人信息编辑页，视觉与 farm 二级页面保持一致。
+			"path": "pages/secondPage/profile/index",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/about/about_me",
+			"style": {
+				"navigationBarTitleText": "关于我们",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/secondPage/about/help",
+			"style": {
+				"navigationBarTitleText": "帮助与反馈",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			// 技术支持页使用无空格的标准文件名，确保 uni-app 可以直接编译和注册路由。
+			"path": "pages/secondPage/about/technical",
+			"style": {
+				"navigationBarTitleText": "技术支持",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/service/farm_list",
+			"style": {
+				"navigationBarTitleText": "农场管理",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/device_list",
+			"style": {
+				"navigationBarTitleText": "设备管理",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			// 故障处理页沿用设备管理的自定义导航，并由页面内部承载状态筛选和滚动列表。
+			"path": "pages/service/fault_handling",
+			"style": {
+				"navigationBarTitleText": "故障处理",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			// 故障维护记录页复用农事记录的卡片和时间轴布局。
+			"path": "pages/service/fault_record",
+			"style": {
+				"navigationBarTitleText": "维护记录",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/service/monitor_list",
+			"style": {
+				"navigationBarTitleText": "实时监控",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/picture_list",
+			"style": {
+				"navigationBarTitleText": "图片管理",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/environment",
+			"style": {
+				"navigationBarTitleText": "环境监测",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/expert_list",
+			"style": {
+				"navigationBarTitleText": "专家咨询",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			// AI 咨询弹出键盘时缩小 WebView，让导航和 Tab 留在原位，仅消息列表适应剩余高度。
+			"path": "pages/service/strategy",
+			"style": {
+				"navigationBarTitleText": "智能策略",
+				"navigationStyle": "custom",
+				"disableScroll": true,
+				"app-plus": { "softinputMode": "adjustResize" }
+			}
+		},
+		{
+			"path": "pages/service/disease_control",
+			"style": {
+				"navigationBarTitleText": "病虫害防治",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			// 实时监控详情页使用自定义导航栏，还原视频画面和云台方向控制 UI。
+			"path": "pages/secondPage/monitor/detail",
+			"style": {
+				"navigationBarTitleText": "实时监控",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			// 病虫害详情页使用自定义导航栏，与 farm 其他二级页保持一致。
+			"path": "pages/secondPage/disease/detail",
+			"style": {
+				"navigationBarTitleText": "病虫害详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/task_list",
+			"style": {
+				"navigationBarTitleText": "农事任务",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/wareHouse",
+			"style": {
+				"navigationBarTitleText": "仓库管理",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			// 仓库记录由页面内列表滚动，顶部导航和类型筛选保持固定。
+			"path": "pages/service/warehouse_record",
+			"style": { "navigationBarTitleText": "仓库记录", "navigationStyle": "custom", "disableScroll": true }
+		},
+		{
+			"path": "pages/service/myTask",
+			"style": {
+				"navigationBarTitleText": "农事任务",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/service/task_record",
+			"style": {
+				"navigationBarTitleText": "农事记录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/plot/task_timeline",
+			"style": {
+				"navigationBarTitleText": "地块农事",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/plot/operation_timeline",
+			"style": {
+				"navigationBarTitleText": "所有操作记录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/picture_type/phone",
+			"style": {
+				"navigationBarTitleText": "手机图片",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/picture_type/camera",
+			"style": {
+				"navigationBarTitleText": "摄像头图片",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/environment_type/temperature",
+			"style": {
+				"navigationBarTitleText": "数据分析",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			// 农场主聊天页由内部消息列表滚动，原生页面保持固定。
+			"path": "pages/secondPage/chat/index",
+			"style": {
+				"navigationBarTitleText": "专家聊天",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			// 农场成员通用聊天页供农场主、普通用户和技术人员共同使用。
+			"path": "pages/secondPage/member_chat/index",
+			"style": {
+				"navigationBarTitleText": "成员聊天",
+				"navigationStyle": "custom",
+				"disableScroll": true
+			}
+		},
+		{
+			"path": "pages/secondPage/AIRecognition/index",
+			"style": {
+				"navigationBarTitleText": "识别结果",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/AIRecognition/record",
+			"style": {
+				"navigationBarTitleText": "识别记录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/plot/plot_list",
+			"style": {
+				"navigationBarTitleText": "地块列表",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/secondPage/plot/detail",
+			"style": {
+				"navigationBarTitleText": "地块详情",
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#C8C8C8",
+		"selectedColor": "#6FC4BA",
+		"backgroundColor": "#ffffff",
+		"borderStyle": "white",
+		"height": "58px",
+		"fontSize": "14px",
+		"iconWidth": "24px",
+		"spacing": "3px",
+		"iconfontSrc": "static/iconfont/iconfont.ttf",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页",
+				"iconfont": {
+					"text": "\ue603",
+					"selectedText": "\ue603",
+					"fontSize": "24px",
+					"color": "#C8C8C8",
+					"selectedColor": "#6FC4BA"
+				}
+			},
+			{
+				"pagePath": "pages/index/news",
+				"text": "消息",
+				"iconfont": {
+					"text": "\ue604",
+					"selectedText": "\ue604",
+					"fontSize": "24px",
+					"color": "#C8C8C8",
+					"selectedColor": "#6FC4BA"
+				}
+			},
+			{
+				"pagePath": "pages/index/map",
+				"text": "地图",
+				"iconfont": {
+					"text": "\ue868",
+					"selectedText": "\ue868",
+					"fontSize": "24px",
+					"color": "#C8C8C8",
+					"selectedColor": "#6FC4BA"
+				}
+			},
+			{
+				"pagePath": "pages/index/mine",
+				"text": "我的",
+				"iconfont": {
+					"text": "\ue61b",
+					"selectedText": "\ue61b",
+					"fontSize": "24px",
+					"color": "#C8C8C8",
+					"selectedColor": "#6FC4BA"
+				}
+			}
+		]
+	},
+	"uniIdRouter": {}
+}

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.ErrorLogMapper">
+
+    <resultMap id="ErrorLogResultMap" type="com.smart_plant.smart_plant.entity.ErrorLog">
+        <id column="id" property="id"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="level" property="level"/>
+        <result column="exception_type" property="exceptionType"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="request_method" property="requestMethod"/>
+        <result column="request_uri" property="requestUri"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="ip" property="ip"/>
+        <result column="user_agent" property="userAgent"/>
+        <result column="stack_trace" property="stackTrace"/>
+        <result column="handle_status" property="handleStatus"/>
+        <result column="handle_remark" property="handleRemark"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="handler_name" property="handlerName"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="version" property="version"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, trace_id, level, exception_type, error_message, request_method, request_uri,
+        operator_id, operator_name, ip, user_agent, handle_status, handle_remark,
+        handler_id, handler_name, handle_time, version, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.ErrorLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `error_log`
+        (trace_id, level, exception_type, error_message, request_method, request_uri,
+         operator_id, operator_name, ip, user_agent, stack_trace, create_time)
+        VALUES
+        (#{traceId}, #{level}, #{exceptionType}, #{errorMessage}, #{requestMethod}, #{requestUri},
+         #{operatorId}, #{operatorName}, #{ip}, #{userAgent}, #{stackTrace}, #{createTime})
+    </insert>
+
+    <!-- 详情接口才读取 stack_trace，避免分页列表反复传输大文本。 -->
+    <select id="selectById" resultMap="ErrorLogResultMap">
+        SELECT <include refid="BaseColumns"/>, stack_trace
+        FROM `error_log`
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultMap="ErrorLogResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `error_log`
+        <where>
+            <if test="traceId != null and traceId != ''">AND trace_id LIKE CONCAT('%', #{traceId}, '%')</if>
+            <if test="operatorName != null and operatorName != ''">AND operator_name LIKE CONCAT('%', #{operatorName}, '%')</if>
+            <if test="requestUri != null and requestUri != ''">AND request_uri LIKE CONCAT('%', #{requestUri}, '%')</if>
+            <if test="handleStatus != null">AND handle_status = #{handleStatus}</if>
+            <if test="startTime != null">AND create_time &gt;= #{startTime}</if>
+            <if test="endTime != null">AND create_time &lt;= #{endTime}</if>
+        </where>
+        ORDER BY create_time DESC, id DESC
+    </select>
+
+    <!-- version 条件实现乐观锁，更新异常现场字段不在接口能力范围内。 -->
+    <update id="updateHandle">
+        UPDATE `error_log`
+        SET handle_status = #{handleStatus},
+            handle_remark = #{handleRemark},
+            handler_id = #{handlerId},
+            handler_name = #{handlerName},
+            handle_time = CURRENT_TIMESTAMP,
+            version = version + 1
+        WHERE id = #{id} AND version = #{version}
+    </update>
+</mapper>

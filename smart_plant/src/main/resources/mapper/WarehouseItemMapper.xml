@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.WarehouseItemMapper">
+
+    <resultMap id="WarehouseItemResultMap" type="com.smart_plant.smart_plant.entity.WarehouseItem">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="farm_owner_id" property="farmOwnerId"/>
+        <result column="farm_owner_name" property="farmOwnerName"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="inbound_operator_id" property="inboundOperatorId"/>
+        <result column="inbound_operator_name" property="inboundOperatorName"/>
+        <result column="latest_outbound_operator_name" property="latestOutboundOperatorName"/>
+        <result column="latest_outbound_recipient" property="latestOutboundRecipient"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="category" property="category"/>
+        <result column="specification" property="specification"/>
+        <result column="unit" property="unit"/>
+        <result column="stock_qty" property="stockQty"/>
+        <result column="initial_unit_price" property="initialUnitPrice"/>
+        <result column="warning_qty" property="warningQty"/>
+        <result column="manufacturer" property="manufacturer"/>
+        <result column="status" property="status"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        wi.id, wi.user_id, u.username, u.nickname, wi.farm_owner_id,
+        COALESCE(NULLIF(fou.nickname, ''), fou.username) AS farm_owner_name,
+        wi.inbound_operator_id,
+        COALESCE(NULLIF(iou.nickname, ''), iou.username) AS inbound_operator_name,
+        COALESCE(NULLIF(lou.nickname, ''), lou.username) AS latest_outbound_operator_name,
+        lor.recipient AS latest_outbound_recipient,
+        wi.item_name, wi.item_code, wi.image_url, wi.category,
+        wi.specification, wi.unit, wi.stock_qty, wi.warning_qty, wi.manufacturer,
+        wi.status, wi.is_deleted, wi.remark, wi.create_time, wi.update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.WarehouseItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `warehouse_item`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="farmOwnerId != null">farm_owner_id,</if>
+            <if test="inboundOperatorId != null">inbound_operator_id,</if>
+            <if test="itemName != null and itemName != ''">item_name,</if>
+            <if test="itemCode != null and itemCode != ''">item_code,</if>
+            <if test="imageUrl != null and imageUrl != ''">image_url,</if>
+            <if test="category != null">category,</if>
+            <if test="specification != null and specification != ''">specification,</if>
+            <if test="unit != null and unit != ''">unit,</if>
+            <if test="stockQty != null">stock_qty,</if>
+            <if test="warningQty != null">warning_qty,</if>
+            <if test="manufacturer != null and manufacturer != ''">manufacturer,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="farmOwnerId != null">#{farmOwnerId},</if>
+            <if test="inboundOperatorId != null">#{inboundOperatorId},</if>
+            <if test="itemName != null and itemName != ''">#{itemName},</if>
+            <if test="itemCode != null and itemCode != ''">#{itemCode},</if>
+            <if test="imageUrl != null and imageUrl != ''">#{imageUrl},</if>
+            <if test="category != null">#{category},</if>
+            <if test="specification != null and specification != ''">#{specification},</if>
+            <if test="unit != null and unit != ''">#{unit},</if>
+            <if test="stockQty != null">#{stockQty},</if>
+            <if test="warningQty != null">#{warningQty},</if>
+            <if test="manufacturer != null and manufacturer != ''">#{manufacturer},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 新增物资取得自增主键后再回填编码，避免查询最大编号导致并发重复。 -->
+    <update id="updateGeneratedItemCode">
+        UPDATE `warehouse_item`
+        SET item_code = #{itemCode}
+        WHERE id = #{id} AND item_code IS NULL AND is_deleted = 0
+    </update>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.WarehouseItem">
+        UPDATE `warehouse_item`
+        <set>
+            <if test="farmOwnerId != null">farm_owner_id = #{farmOwnerId},</if>
+            <if test="inboundOperatorId != null">inbound_operator_id = #{inboundOperatorId},</if>
+            <if test="itemName != null and itemName != ''">item_name = #{itemName},</if>
+            <if test="itemCode != null">item_code = #{itemCode},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="specification != null">specification = #{specification},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="warningQty != null">warning_qty = #{warningQty},</if>
+            <if test="manufacturer != null">manufacturer = #{manufacturer},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="softDeleteById">
+        UPDATE `warehouse_item`
+        SET is_deleted = 1, status = 0
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="softDeleteByIds">
+        UPDATE `warehouse_item`
+        SET is_deleted = 1, status = 0
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+          AND is_deleted = 0
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `warehouse_item`
+        SET status = #{status}
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="updateStock">
+        UPDATE `warehouse_item`
+        SET stock_qty = #{stockQty}
+        WHERE id = #{id} AND is_deleted = 0 AND status = 1
+    </update>
+
+    <select id="selectById" resultMap="WarehouseItemResultMap">
+        SELECT <include refid="BaseColumns"/>, iir.price AS initial_unit_price
+        FROM `warehouse_item` wi
+        LEFT JOIN `user` u ON u.id = wi.user_id
+        LEFT JOIN `user` fou ON fou.id = wi.farm_owner_id
+        LEFT JOIN `user` iou ON iou.id = wi.inbound_operator_id
+        LEFT JOIN `warehouse_record` iir ON iir.id = (
+            SELECT wr.id FROM `warehouse_record` wr
+            WHERE wr.item_id = wi.id AND wr.record_type = 1 AND wr.status = 1
+            ORDER BY wr.id ASC LIMIT 1
+        )
+        LEFT JOIN `warehouse_record` lor ON lor.id = (
+            SELECT wr.id FROM `warehouse_record` wr
+            WHERE wr.item_id = wi.id AND wr.record_type = 2 AND wr.status = 1
+            ORDER BY wr.id DESC LIMIT 1
+        )
+        LEFT JOIN `user` lou ON lou.id = lor.operator_id
+        WHERE wi.id = #{id} AND wi.is_deleted = 0
+    </select>
+
+    <!-- 出入库只需要库存计算所需的物资字段；行锁一直持有到事务提交。 -->
+    <select id="selectByIdForUpdate" resultMap="WarehouseItemResultMap">
+        SELECT wi.id, wi.user_id, wi.farm_owner_id, wi.item_name, wi.item_code,
+               wi.image_url, wi.category, wi.specification, wi.unit, wi.stock_qty,
+               wi.warning_qty, wi.manufacturer, wi.status, wi.is_deleted, wi.remark,
+               wi.create_time, wi.update_time
+        FROM `warehouse_item` wi
+        WHERE wi.id = #{id} AND wi.is_deleted = 0
+        FOR UPDATE
+    </select>
+
+    <select id="selectList" resultMap="WarehouseItemResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `warehouse_item` wi
+        LEFT JOIN `user` u ON u.id = wi.user_id
+        LEFT JOIN `user` fou ON fou.id = wi.farm_owner_id
+        LEFT JOIN `user` iou ON iou.id = wi.inbound_operator_id
+        LEFT JOIN `warehouse_record` lor ON lor.id = (
+            SELECT wr.id FROM `warehouse_record` wr
+            WHERE wr.item_id = wi.id AND wr.record_type = 2 AND wr.status = 1
+            ORDER BY wr.id DESC LIMIT 1
+        )
+        LEFT JOIN `user` lou ON lou.id = lor.operator_id
+        <where>
+            AND wi.is_deleted = 0
+            <if test="userId != null">AND wi.farm_owner_id = #{userId}</if>
+            <if test="itemName != null and itemName != ''">AND wi.item_name LIKE CONCAT('%', #{itemName}, '%')</if>
+            <if test="itemCode != null and itemCode != ''">AND wi.item_code LIKE CONCAT('%', #{itemCode}, '%')</if>
+            <if test="category != null">AND wi.category = #{category}</if>
+            <if test="status != null">AND wi.status = #{status}</if>
+        </where>
+        ORDER BY wi.id DESC
+    </select>
+
+    <select id="countItems" resultType="long">
+        SELECT COUNT(1)
+        FROM `warehouse_item`
+        <where>
+            AND is_deleted = 0
+            <if test="userId != null">AND farm_owner_id = #{userId}</if>
+        </where>
+    </select>
+
+    <select id="sumStockQty" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(stock_qty), 0)
+        FROM `warehouse_item`
+        <where>
+            AND is_deleted = 0
+            <if test="userId != null">AND farm_owner_id = #{userId}</if>
+        </where>
+    </select>
+
+    <select id="countByUserIdAndItemCode" resultType="int">
+        SELECT COUNT(1)
+        FROM `warehouse_item`
+        WHERE farm_owner_id = #{userId}
+          AND item_code = #{itemCode}
+        <if test="excludeId != null">AND id != #{excludeId}</if>
+    </select>
+
+    <select id="countRecordByItemId" resultType="int">
+        SELECT COUNT(1)
+        FROM `warehouse_record`
+        WHERE item_id = #{itemId}
+    </select>
+
+    <!-- farm 端共享视图只收录已指定农场主的物资。 -->
+    <select id="selectClientList" resultMap="WarehouseItemResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `warehouse_item` wi
+        LEFT JOIN `user` u ON u.id = wi.user_id
+        LEFT JOIN `user` fou ON fou.id = wi.farm_owner_id
+        LEFT JOIN `user` iou ON iou.id = wi.inbound_operator_id
+        LEFT JOIN `warehouse_record` lor ON lor.id = (
+            SELECT wr.id FROM `warehouse_record` wr
+            WHERE wr.item_id = wi.id AND wr.record_type = 2 AND wr.status = 1
+            ORDER BY wr.id DESC LIMIT 1
+        )
+        LEFT JOIN `user` lou ON lou.id = lor.operator_id
+        WHERE wi.is_deleted = 0 AND wi.status = 1 AND wi.farm_owner_id IS NOT NULL
+        <if test="farmOwnerId != null">AND wi.farm_owner_id = #{farmOwnerId}</if>
+        <if test="category != null">AND wi.category = #{category}</if>
+        <if test="keyword != null and keyword != ''">
+            AND (wi.item_name LIKE CONCAT('%', #{keyword}, '%')
+                OR wi.item_code LIKE CONCAT('%', #{keyword}, '%')
+                OR wi.specification LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY wi.id DESC
+    </select>
+
+    <select id="countClientItems" resultType="long">
+        SELECT COUNT(1) FROM `warehouse_item`
+        WHERE is_deleted = 0 AND farm_owner_id IS NOT NULL
+        <if test="farmOwnerId != null">AND farm_owner_id = #{farmOwnerId}</if>
+    </select>
+
+    <select id="sumClientStockQty" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(stock_qty), 0) FROM `warehouse_item`
+        WHERE is_deleted = 0 AND farm_owner_id IS NOT NULL
+        <if test="farmOwnerId != null">AND farm_owner_id = #{farmOwnerId}</if>
+    </select>
+</mapper>

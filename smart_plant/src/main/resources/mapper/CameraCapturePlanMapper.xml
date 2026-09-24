@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.CameraCapturePlanMapper">
+    <!-- 统一映射计划字段与管理页面需要的设备、地块展示字段。 -->
+    <resultMap id="CameraCapturePlanResultMap" type="com.smart_plant.smart_plant.entity.CameraCapturePlan">
+        <id column="id" property="id"/><result column="device_id" property="deviceId"/>
+        <result column="user_id" property="userId"/><result column="plot_id" property="plotId"/>
+        <result column="plan_name" property="planName"/><result column="camera_name" property="cameraName"/>
+        <result column="plot_name" property="plotName"/><result column="plot_code" property="plotCode"/>
+        <result column="online_status" property="onlineStatus"/>
+        <result column="interval_minutes" property="intervalMinutes"/>
+        <result column="weekdays_mask" property="weekdaysMask"/>
+        <result column="start_time" property="startTime"/><result column="end_time" property="endTime"/>
+        <result column="timezone" property="timezone"/><result column="enabled" property="enabled"/>
+        <result column="apply_status" property="applyStatus"/>
+        <result column="last_capture_time" property="lastCaptureTime"/>
+        <result column="next_capture_time" property="nextCaptureTime"/>
+        <result column="last_apply_error" property="lastApplyError"/><result column="version" property="version"/>
+        <result column="remark" property="remark"/><result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/><result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="PlanColumns">
+        cp.id, cp.device_id, cp.user_id, cp.plot_id, cp.plan_name,
+        c.name AS camera_name, p.plot_name, p.plot_code, c.online_status,
+        cp.interval_minutes, cp.weekdays_mask, cp.start_time, cp.end_time,
+        cp.timezone, cp.enabled, cp.apply_status, cp.last_capture_time,
+        cp.next_capture_time, cp.last_apply_error, cp.version, cp.remark,
+        cp.create_by, cp.update_by, cp.create_time, cp.update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.CameraCapturePlan"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `camera_capture_plan`
+        (device_id, user_id, plot_id, plan_name, interval_minutes, weekdays_mask,
+         start_time, end_time, timezone, enabled, apply_status, next_capture_time,
+         version, remark, create_by, update_by)
+        VALUES
+        (#{deviceId}, #{userId}, #{plotId}, #{planName}, #{intervalMinutes}, #{weekdaysMask},
+         #{startTime}, #{endTime}, #{timezone}, #{enabled}, 0, #{nextCaptureTime},
+         0, #{remark}, #{createBy}, #{updateBy})
+    </insert>
+
+    <update id="update" parameterType="com.smart_plant.smart_plant.entity.CameraCapturePlan">
+        UPDATE `camera_capture_plan`
+        SET device_id = #{deviceId}, user_id = #{userId}, plot_id = #{plotId},
+            plan_name = #{planName}, interval_minutes = #{intervalMinutes},
+            weekdays_mask = #{weekdaysMask}, start_time = #{startTime}, end_time = #{endTime},
+            timezone = #{timezone}, enabled = #{enabled}, apply_status = 0,
+            last_apply_error = NULL, next_capture_time = #{nextCaptureTime},
+            version = version + 1, remark = #{remark}, update_by = #{updateBy}
+        WHERE id = #{id} AND version = #{version}
+    </update>
+
+    <delete id="deleteById">DELETE FROM `camera_capture_plan` WHERE id = #{id}</delete>
+
+    <select id="selectById" resultMap="CameraCapturePlanResultMap">
+        SELECT <include refid="PlanColumns"/> FROM `camera_capture_plan` cp
+        JOIN `camera_device` c ON c.id = cp.device_id
+        JOIN `plot` p ON p.id = cp.plot_id WHERE cp.id = #{id}
+    </select>
+
+    <select id="selectList" resultMap="CameraCapturePlanResultMap">
+        SELECT <include refid="PlanColumns"/> FROM `camera_capture_plan` cp
+        JOIN `camera_device` c ON c.id = cp.device_id
+        JOIN `plot` p ON p.id = cp.plot_id
+        <where>
+            <if test="userId != null">AND cp.user_id = #{userId}</if>
+            <if test="plotId != null">AND cp.plot_id = #{plotId}</if>
+            <if test="enabled != null">AND cp.enabled = #{enabled}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (cp.plan_name LIKE CONCAT('%', #{keyword}, '%') OR c.name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY cp.enabled DESC, cp.id DESC
+    </select>
+</mapper>

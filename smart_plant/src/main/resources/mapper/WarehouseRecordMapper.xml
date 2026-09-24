@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.WarehouseRecordMapper">
+
+    <resultMap id="WarehouseRecordResultMap" type="com.smart_plant.smart_plant.entity.WarehouseRecord">
+        <id column="id" property="id"/>
+        <result column="request_id" property="requestId"/>
+        <result column="item_id" property="itemId"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_unit" property="itemUnit"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="recipient" property="recipient"/>
+        <result column="record_type" property="recordType"/>
+        <result column="quantity" property="quantity"/>
+        <result column="before_qty" property="beforeQty"/>
+        <result column="after_qty" property="afterQty"/>
+        <result column="related_plot_id" property="relatedPlotId"/>
+        <result column="related_plot_name" property="relatedPlotName"/>
+        <result column="related_task_id" property="relatedTaskId"/>
+        <result column="related_task_title" property="relatedTaskTitle"/>
+        <result column="related_fault_id" property="relatedFaultId"/>
+        <result column="related_fault_code" property="relatedFaultCode"/>
+        <result column="related_fault_name" property="relatedFaultName"/>
+        <result column="related_fault_status" property="relatedFaultStatus"/>
+        <result column="related_device_id" property="relatedDeviceId"/>
+        <result column="related_device_name" property="relatedDeviceName"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="supplier" property="supplier"/>
+        <result column="price" property="price"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="record_time" property="recordTime"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        wr.id, wr.request_id, wr.item_id, wi.item_name, wi.unit AS item_unit, wi.item_code, wr.user_id, u.username, u.nickname,
+        wr.operator_id, ou.username AS operator_name, wr.recipient, wr.record_type, wr.quantity,
+        wr.before_qty, wr.after_qty, wr.related_plot_id, p.plot_name AS related_plot_name,
+        wr.related_task_id, ft.task_title AS related_task_title,
+        wr.related_fault_id, df.fault_code AS related_fault_code, df.fault_name AS related_fault_name,
+        df.status AS related_fault_status, fd.id AS related_device_id, fd.name AS related_device_name,
+        wr.source_type, wr.supplier,
+        wr.price, wr.total_amount, wr.record_time, wr.status, wr.remark,
+        wr.create_time, wr.update_time
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `warehouse_item` wi ON wi.id = wr.item_id
+        LEFT JOIN `user` u ON u.id = wr.user_id
+        LEFT JOIN `user` ou ON ou.id = wr.operator_id
+        LEFT JOIN `plot` p ON p.id = wr.related_plot_id
+        LEFT JOIN `farm_task` ft ON ft.id = wr.related_task_id
+        LEFT JOIN `iot_device_fault` df ON df.id = wr.related_fault_id
+        LEFT JOIN `iot_device` fd ON fd.id = df.device_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.WarehouseRecord" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `warehouse_record`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="requestId != null and requestId != ''">request_id,</if>
+            <if test="itemId != null">item_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="operatorId != null">operator_id,</if>
+            <if test="recipient != null and recipient != ''">recipient,</if>
+            <if test="recordType != null">record_type,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="beforeQty != null">before_qty,</if>
+            <if test="afterQty != null">after_qty,</if>
+            <if test="relatedPlotId != null">related_plot_id,</if>
+            <if test="relatedTaskId != null">related_task_id,</if>
+            <if test="relatedFaultId != null">related_fault_id,</if>
+            <if test="sourceType != null">source_type,</if>
+            <if test="supplier != null and supplier != ''">supplier,</if>
+            <if test="price != null">price,</if>
+            <if test="totalAmount != null">total_amount,</if>
+            <if test="recordTime != null">record_time,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="requestId != null and requestId != ''">#{requestId},</if>
+            <if test="itemId != null">#{itemId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="operatorId != null">#{operatorId},</if>
+            <if test="recipient != null and recipient != ''">#{recipient},</if>
+            <if test="recordType != null">#{recordType},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="beforeQty != null">#{beforeQty},</if>
+            <if test="afterQty != null">#{afterQty},</if>
+            <if test="relatedPlotId != null">#{relatedPlotId},</if>
+            <if test="relatedTaskId != null">#{relatedTaskId},</if>
+            <if test="relatedFaultId != null">#{relatedFaultId},</if>
+            <if test="sourceType != null">#{sourceType},</if>
+            <if test="supplier != null and supplier != ''">#{supplier},</if>
+            <if test="price != null">#{price},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
+            <if test="recordTime != null">#{recordTime},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateInitialInbound">
+        UPDATE `warehouse_record`
+        SET operator_id = #{operatorId},
+            price = #{price},
+            total_amount = ROUND(quantity * #{price}, 2)
+        WHERE item_id = #{itemId} AND record_type = 1
+        ORDER BY id ASC
+        LIMIT 1
+    </update>
+
+    <!-- 原始入库人与后续操作人不变，只同步流水的农场主归属快照。 -->
+    <update id="updateOwnerByItemId">
+        UPDATE `warehouse_record` SET user_id = #{farmOwnerId} WHERE item_id = #{itemId}
+    </update>
+
+    <select id="countLinkedRecordsByItemId" resultType="int">
+        SELECT COUNT(1) FROM `warehouse_record`
+        WHERE item_id = #{itemId}
+          AND (related_fault_id IS NOT NULL OR related_plot_id IS NOT NULL OR related_task_id IS NOT NULL)
+    </select>
+
+    <select id="selectById" resultMap="WarehouseRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `warehouse_record` wr
+        <include refid="BaseJoins"/>
+        WHERE wr.id = #{id}
+    </select>
+
+    <select id="selectByRequestIdForUpdate" resultMap="WarehouseRecordResultMap">
+        SELECT wr.*
+        FROM `warehouse_record` wr
+        WHERE wr.request_id = #{requestId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectList" resultMap="WarehouseRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `warehouse_record` wr
+        <include refid="BaseJoins"/>
+        <where>
+            <if test="userId != null">AND wi.farm_owner_id = #{userId}</if>
+            <if test="itemId != null">AND wr.item_id = #{itemId}</if>
+            <if test="itemName != null and itemName != ''">AND wi.item_name LIKE CONCAT('%', #{itemName}, '%')</if>
+            <if test="recordType != null">AND wr.record_type = #{recordType}</if>
+            <if test="startTime != null">AND wr.record_time &gt;= #{startTime}</if>
+            <if test="endTime != null">AND wr.record_time &lt;= #{endTime}</if>
+            AND wr.status = 1
+        </where>
+        ORDER BY wr.record_time DESC, wr.id DESC
+    </select>
+
+    <!-- farm 端只展示有效入库/出库流水；农场主按物资归属查询，普通用户只看仍在共享的物资。 -->
+    <select id="selectClientList" resultMap="WarehouseRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `warehouse_record` wr
+        <include refid="BaseJoins"/>
+        WHERE wr.status = 1 AND wr.record_type IN (1, 2)
+        <choose>
+            <when test="ownerId != null">AND wi.farm_owner_id = #{ownerId}</when>
+            <otherwise>AND wi.farm_owner_id IS NOT NULL AND wi.is_deleted = 0 AND wi.status = 1</otherwise>
+        </choose>
+        <if test="recordType != null">AND wr.record_type = #{recordType}</if>
+        ORDER BY wr.record_time DESC, wr.id DESC
+    </select>
+
+    <select id="sumQuantityByType" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(quantity), 0)
+        FROM `warehouse_record` wr
+        JOIN `warehouse_item` wi ON wi.id = wr.item_id
+        <where>
+            <if test="userId != null">AND wi.farm_owner_id = #{userId}</if>
+            <if test="recordType != null">AND wr.record_type = #{recordType}</if>
+            AND wr.status = 1
+        </where>
+    </select>
+
+    <!-- 使用半开时间区间汇总有效记录，确保次日零点数据不会计入今日统计。 -->
+    <select id="sumQuantityByTypeBetween" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(quantity), 0)
+        FROM `warehouse_record` wr
+        JOIN `warehouse_item` wi ON wi.id = wr.item_id
+        WHERE wr.record_type = #{recordType}
+          AND wr.record_time &gt;= #{startTime}
+          AND wr.record_time &lt; #{endTime}
+          AND wr.status = 1
+        <if test="userId != null">AND wi.farm_owner_id = #{userId}</if>
+    </select>
+
+    <select id="sumClientQuantityByTypeBetween" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(wr.quantity), 0)
+        FROM `warehouse_record` wr
+        JOIN `warehouse_item` wi ON wi.id = wr.item_id
+        WHERE wi.is_deleted = 0 AND wi.farm_owner_id IS NOT NULL
+          AND wr.record_type = #{recordType}
+          AND wr.record_time &gt;= #{startTime}
+          AND wr.record_time &lt; #{endTime}
+          AND wr.status = 1
+        <if test="farmOwnerId != null">AND wi.farm_owner_id = #{farmOwnerId}</if>
+    </select>
+</mapper>

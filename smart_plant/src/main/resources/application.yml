@@ -1,0 +1,122 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /smart_plant
+
+spring:
+  config:
+    # 支持从模块目录或工作区根目录启动；本地 .env 已被 Git 忽略，生产环境变量优先级更高。
+    import: "optional:file:./.env[.properties],optional:file:./smart_plant/.env[.properties]"
+  application:
+    name: smart_plant
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 生产环境必须由环境变量或外部密钥管理系统注入，仓库不保存连接口令。
+    url: ${DB_URL}
+    username: ${DB_RUNTIME_USERNAME:${DB_USERNAME}}
+    password: ${DB_RUNTIME_PASSWORD:${DB_PASSWORD}}
+    druid:
+        initial-size: 5                                       # 初始化大小
+        min-idle: 10                                          # 最小连接数
+        max-active: 20                                        # 最大连接数
+        max-wait: 60000                                       # 获取连接时的最大等待时间
+        validation-query: SELECT 1                            # 检测连接是否有效的 SQL语句，为空时以下三个配置均无效
+        test-on-borrow: false                                 # 交给空闲检测，避免每次借用连接都额外执行 SQL
+        test-while-idle: true                                 # 申请连接时如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效，默认false，建议开启，不影响性能
+        test-on-return: false                                  # 归还连接时执行validationQuery检测连接是否有效，默认false，开启后会降低性能
+
+  flyway:
+    # 生产应用实例默认禁止自行迁移；由单实例迁移作业显式设置 FLYWAY_ENABLED=true。
+    enabled: ${FLYWAY_ENABLED:false}
+    # 发布迁移可注入独立 DDL 账号；本地开发未配置时兼容复用 DB_USERNAME/DB_PASSWORD。
+    url: ${DB_MIGRATION_URL:${DB_URL}}
+    user: ${DB_MIGRATION_USERNAME:${DB_USERNAME}}
+    password: ${DB_MIGRATION_PASSWORD:${DB_PASSWORD}}
+    locations: classpath:db/migration
+    # 仅历史非空库首次接入时显式设为 true；默认关闭，防止误连数据库后被静默接管。
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: 1
+    validate-on-migrate: true
+    clean-disabled: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:default}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE:0}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:3s}
+      timeout: ${REDIS_COMMAND_TIMEOUT:2s}
+
+  servlet:
+    multipart:
+      # 容器设置绝对上限，系统设置服务再按数据库动态参数执行更严格的业务校验。
+      max-file-size: 50MB
+      max-request-size: 51MB
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.smart_plant.smart_plant.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    # MyBatis 配置 开启驼峰功能
+    # 默认关闭逐条 SQL 标准输出；本地排障可临时设置为 StdOutImpl。
+    log-impl: ${MYBATIS_LOG_IMPL:org.apache.ibatis.logging.nologging.NoLoggingImpl}
+
+knife4j:
+  enable: ${API_DOCS_ENABLED:false}
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:false}
+
+management:
+  health:
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:true}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: never
+    prometheus:
+      access: unrestricted
+
+smart-plant:
+  weather:
+    # 高德 Web 服务 Key：用于逆地理编码和天气查询，建议通过环境变量注入，避免提交真实密钥。
+    amap-web-service-key: ${AMAP_WEB_SERVICE_KEY:}
+    # WAQI 空气质量 Token：可选；未配置时会使用 Open-Meteo 查询 PM2.5。
+    waqi-token: ${WAQI_TOKEN:}
+    # Open-Meteo 不需要 Key，用于补齐高德天气缺失时的温湿度，以及默认 PM2.5 数据。
+    open-meteo-fallback-enabled: true
+    # 天气属于首页辅助信息，设置短超时和缓存，避免第三方波动影响首页加载。
+    timeout-seconds: 5
+    cache-minutes: 10
+    default-city: "漳州"
+    default-adcode: "350600"
+  admin-auth:
+    # 至少 32 字节的高熵随机值；缺失时应用拒绝启动。
+    jwt-secret: ${JWT_SECRET}
+    issuer: "smart_plant"
+    token-expiration-seconds: 7200
+    refresh-token-expiration-seconds: 2592000
+    remember-me-expiration-seconds: 604800
+    remember-me-refresh-token-expiration-seconds: 2592000
+    captcha-expiration-seconds: 300
+    require-https: ${REQUIRE_HTTPS:true}
+    ip-max-failures: 5
+    ip-lock-minutes: 15
+    account-max-failures: 5
+    account-lock-minutes: 30
+  security-state:
+    # 生产默认使用 Redis；memory 仅允许 local/dev/test 单实例调试。
+    provider: ${SECURITY_STATE_PROVIDER:redis}
+    # 按环境隔离 Redis Key，避免测试、预发、生产共享状态。
+    redis-key-prefix: ${SECURITY_REDIS_KEY_PREFIX:smart-plant:security}

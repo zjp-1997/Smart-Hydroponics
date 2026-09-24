@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- 设备耗材默认图：使用包装箱语义，供无自定义图片的物资卡片展示。 -->
+  <defs><linearGradient id="g" x1="12" x2="84" y1="12" y2="84"><stop stop-color="#f5f3ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs>
+  <rect width="96" height="96" rx="18" fill="url(#g)"/>
+  <path d="M24 39 48 26l24 13-24 13-24-13Z" fill="#ede9fe"/>
+  <path d="M24 39v27l24 13V52L24 39Z" fill="#6d28d9"/>
+  <path d="M72 39v27L48 79V52l24-13Z" fill="#4c1d95"/>
+  <path d="M36 33 60 46" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round"/>
+</svg>

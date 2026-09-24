@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.RolePermissionMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO `role_permission` (role_id, permission_id)
+        VALUES
+        <foreach collection="permissionIds" item="permissionId" separator=",">
+            (#{roleId}, #{permissionId})
+        </foreach>
+        ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)
+    </insert>
+
+    <delete id="deleteByRoleId">
+        DELETE FROM `role_permission` WHERE role_id = #{roleId}
+    </delete>
+
+    <delete id="deleteByPermissionId">
+        DELETE FROM `role_permission` WHERE permission_id = #{permissionId}
+    </delete>
+
+    <select id="selectPermissionIdsByRoleId" resultType="long">
+        SELECT permission_id
+        FROM `role_permission`
+        WHERE role_id = #{roleId}
+    </select>
+
+    <select id="selectPermissionsByRoleId" resultMap="com.smart_plant.smart_plant.mapper.PermissionMapper.PermissionResultMap">
+        SELECT p.id, p.parent_id, p.permission_name, p.permission_code, p.type, p.path, p.component,
+               p.status, p.sort, p.create_time, p.update_time
+        FROM `role_permission` rp
+        INNER JOIN `permission` p ON p.id = rp.permission_id
+        WHERE rp.role_id = #{roleId}
+        ORDER BY p.sort ASC, p.id ASC
+    </select>
+</mapper>

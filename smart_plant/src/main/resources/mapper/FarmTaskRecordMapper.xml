@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.FarmTaskRecordMapper">
+
+    <resultMap id="FarmTaskRecordResultMap" type="com.smart_plant.smart_plant.entity.FarmTaskRecord">
+        <id column="id" property="id"/>
+        <result column="task_id" property="taskId"/>
+        <result column="task_title" property="taskTitle"/>
+        <result column="user_id" property="userId"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name_snapshot" property="operatorNameSnapshot"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="action_type" property="actionType"/>
+        <result column="action_content" property="actionContent"/>
+        <result column="result_status" property="resultStatus"/>
+        <result column="progress_percent" property="progressPercent"/>
+        <result column="feedback_score" property="feedbackScore"/>
+        <result column="feedback_detail" property="feedbackDetail"/>
+        <result column="optimize_suggestion" property="optimizeSuggestion"/>
+        <result column="attachments" property="attachments"/>
+        <result column="request_id" property="requestId"/>
+        <result column="source_client" property="sourceClient"/>
+        <result column="before_status" property="beforeStatus"/>
+        <result column="after_status" property="afterStatus"/>
+        <result column="execute_time" property="executeTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        r.id, r.task_id, ft.task_title, ft.user_id, ft.plot_id, p.plot_name,
+        r.operator_id, r.operator_name_snapshot,
+        COALESCE(r.operator_name_snapshot, u.nickname, u.username) AS operator_name,
+        r.action_type, r.action_content, r.result_status, r.progress_percent, r.feedback_score,
+        r.feedback_detail, r.optimize_suggestion, r.before_status,
+        r.attachments, r.request_id, r.source_client,
+        r.after_status, r.execute_time, r.create_time
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `farm_task` ft ON ft.id = r.task_id
+        LEFT JOIN `plot` p ON p.id = ft.plot_id
+        LEFT JOIN `user` u ON u.id = r.operator_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.FarmTaskRecord"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `farm_task_record`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="taskId != null">task_id,</if>
+            <if test="operatorId != null">operator_id,</if>
+            <if test="operatorNameSnapshot != null">operator_name_snapshot,</if>
+            <if test="actionType != null">action_type,</if>
+            <if test="actionContent != null">action_content,</if>
+            <if test="resultStatus != null">result_status,</if>
+            <if test="progressPercent != null">progress_percent,</if>
+            <if test="feedbackScore != null">feedback_score,</if>
+            <if test="feedbackDetail != null">feedback_detail,</if>
+            <if test="optimizeSuggestion != null">optimize_suggestion,</if>
+            <if test="attachments != null">attachments,</if>
+            <if test="requestId != null">request_id,</if>
+            <if test="sourceClient != null">source_client,</if>
+            <if test="beforeStatus != null">before_status,</if>
+            <if test="afterStatus != null">after_status,</if>
+            <if test="executeTime != null">execute_time,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="taskId != null">#{taskId},</if>
+            <if test="operatorId != null">#{operatorId},</if>
+            <if test="operatorNameSnapshot != null">#{operatorNameSnapshot},</if>
+            <if test="actionType != null">#{actionType},</if>
+            <if test="actionContent != null">#{actionContent},</if>
+            <if test="resultStatus != null">#{resultStatus},</if>
+            <if test="progressPercent != null">#{progressPercent},</if>
+            <if test="feedbackScore != null">#{feedbackScore},</if>
+            <if test="feedbackDetail != null">#{feedbackDetail},</if>
+            <if test="optimizeSuggestion != null">#{optimizeSuggestion},</if>
+            <if test="attachments != null">#{attachments},</if>
+            <if test="requestId != null">#{requestId},</if>
+            <if test="sourceClient != null">#{sourceClient},</if>
+            <if test="beforeStatus != null">#{beforeStatus},</if>
+            <if test="afterStatus != null">#{afterStatus},</if>
+            <if test="executeTime != null">#{executeTime},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteByTaskId">
+        DELETE FROM `farm_task_record`
+        WHERE task_id = #{taskId}
+    </delete>
+
+    <delete id="deleteByTaskIds">
+        DELETE FROM `farm_task_record`
+        WHERE task_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectById" resultMap="FarmTaskRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task_record` r
+        <include refid="BaseJoins"/>
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 幂等号全局唯一，用于识别已经成功处理过的客户端重试请求。 -->
+    <select id="selectByRequestId" resultMap="FarmTaskRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task_record` r
+        <include refid="BaseJoins"/>
+        WHERE r.request_id = #{requestId}
+    </select>
+
+    <select id="selectList" resultMap="FarmTaskRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task_record` r
+        <include refid="BaseJoins"/>
+        <where>
+            <if test="taskId != null">
+                AND r.task_id = #{taskId}
+            </if>
+            <if test="userId != null">
+                AND ft.user_id = #{userId}
+            </if>
+        </where>
+        ORDER BY COALESCE(r.execute_time, r.create_time) DESC, r.id DESC
+    </select>
+
+    <!-- farm 端过程时间线按发生顺序返回，便于从开始到完成顺序阅读。 -->
+    <select id="selectTimeline" resultMap="FarmTaskRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task_record` r
+        <include refid="BaseJoins"/>
+        WHERE r.task_id = #{taskId}
+          AND ft.user_id = #{userId}
+        ORDER BY COALESCE(r.execute_time, r.create_time) ASC, r.id ASC
+    </select>
+
+    <!-- 地块全部操作记录：同时按用户和地块过滤，并按真实发生时间正序返回。 -->
+    <select id="selectListByPlotId" resultMap="FarmTaskRecordResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `farm_task_record` r
+        <include refid="BaseJoins"/>
+        WHERE ft.user_id = #{userId}
+          AND ft.plot_id = #{plotId}
+        ORDER BY COALESCE(r.execute_time, r.create_time) ASC, r.id ASC
+    </select>
+</mapper>

@@ -1,0 +1,205 @@
+#app {
+  min-height: 100vh;
+  font-weight: normal;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* 管理端列表页统一骨架。页面只需组合这三个语义类，不再重复维护视口、侧栏和内容区尺寸。 */
+.admin-page {
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f7fb;
+}
+
+.admin-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-left: 264px;
+}
+
+.admin-content {
+  height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 14px;
+}
+
+/* 公共头部增加页面标签后，业务主区域自动使用布局中的剩余高度。 */
+.header-stack + main {
+  height: auto !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+/* 统一列表页查询区样式：所有已声明的查询条件都必须可见并自动换行。 */
+.filter-card {
+  flex: 0 0 auto !important;
+  margin-top: 10px !important;
+  padding: 16px 22px !important;
+  border: 1px solid #eef2f7 !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.04) !important;
+}
+
+.filter-form {
+  position: static !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(180px, 1fr)) max-content max-content !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: unset !important;
+  align-items: center !important;
+  gap: 12px 16px !important;
+  width: 100% !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.filter-form > .el-form-item {
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 12px !important;
+  margin-bottom: 0 !important;
+}
+
+.filter-form .el-form-item__label {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #334155 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 40px !important;
+}
+
+.filter-form .el-form-item__content {
+  min-width: 0 !important;
+  min-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-left: 0 !important;
+}
+
+.filter-form .el-input,
+.filter-form .el-select,
+.filter-form .el-input-number,
+.filter-form .el-date-editor {
+  width: 100% !important;
+}
+
+.filter-form .el-input__wrapper,
+.filter-form .el-select__wrapper,
+.filter-form .el-input-number,
+.filter-form .el-date-editor {
+  min-height: 40px !important;
+  border-radius: 2px !important;
+  box-shadow: 0 0 0 1px #e5e7eb inset !important;
+}
+
+.filter-form .el-input__wrapper:hover,
+.filter-form .el-select__wrapper:hover,
+.filter-form .el-date-editor:hover {
+  box-shadow: 0 0 0 1px #cbd5e1 inset !important;
+}
+
+.filter-form .el-input__wrapper.is-focus,
+.filter-form .el-select__wrapper.is-focused,
+.filter-form .el-date-editor.is-active {
+  box-shadow: 0 0 0 1px #409eff inset !important;
+}
+
+.filter-actions,
+.manage-actions {
+  position: static !important;
+  width: auto !important;
+  min-height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  justify-self: start !important;
+}
+
+.manage-actions {
+  justify-self: end !important;
+}
+
+.filter-actions .el-button,
+.manage-actions .el-button {
+  height: 40px !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.filter-actions .el-button {
+  width: 88px !important;
+  min-width: 88px !important;
+  padding: 0 14px !important;
+}
+
+.manage-actions .el-button {
+  width: 124px !important;
+  min-width: 124px !important;
+  padding: 0 14px !important;
+}
+
+@media (max-width: 1280px) {
+  .filter-form {
+    grid-template-columns: repeat(2, minmax(220px, 1fr)) !important;
+  }
+
+  .filter-actions,
+  .manage-actions {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    justify-self: start !important;
+  }
+
+  .manage-actions {
+    justify-self: start !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-shell {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .filter-form {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .filter-actions,
+  .manage-actions {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+}

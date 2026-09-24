@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 补光灯监测数据 MyBatis 映射文件，对应 light_data 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.LightDataMapper">
+
+    <!-- 补光灯监测数据字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="LightDataResultMap" type="com.smart_plant.smart_plant.entity.LightData">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="message_key" property="messageKey"/>
+        <result column="owner_user_id" property="ownerUserId"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="type_id" property="typeId"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="type_name" property="typeName"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="light_intensity" property="lightIntensity"/>
+        <result column="data_status" property="dataStatus"/>
+        <result column="abnormal_detail" property="abnormalDetail"/>
+        <result column="cumulative_runtime" property="cumulativeRuntime"/>
+        <result column="collect_time" property="collectTime"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 补光灯监测数据通用查询字段。 -->
+    <sql id="BaseColumns">
+        ld.id, ld.device_id, ld.message_key,
+        COALESCE(ld.owner_user_id, d.user_id) AS owner_user_id,
+        d.device_code, d.name AS device_name, d.type_id,
+        dt.type_code, dt.type_name,
+        COALESCE(ld.plot_id_at_collection, d.plot_id) AS plot_id, p.plot_name, p.plot_code,
+        ld.light_intensity, ld.data_status,
+        ld.abnormal_detail, ld.cumulative_runtime, ld.collect_time,
+        ld.remark, ld.create_time
+    </sql>
+
+    <!-- 补光灯数据关联设备、设备类型和地块，列表与详情查询复用。 -->
+    <sql id="DataJoin">
+        LEFT JOIN `iot_device` d ON d.id = ld.device_id
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+        LEFT JOIN `plot` p ON p.id = COALESCE(ld.plot_id_at_collection, d.plot_id)
+    </sql>
+
+    <!-- 补光灯数据公共查询条件，支持地块、设备、状态和采集时间范围筛选。 -->
+    <sql id="QueryWhere">
+        <where>
+            <if test="userId != null">
+                AND COALESCE(ld.owner_user_id, d.user_id) = #{userId}
+            </if>
+            <if test="plotId != null">
+                AND COALESCE(ld.plot_id_at_collection, d.plot_id) = #{plotId}
+            </if>
+            <if test="deviceId != null">
+                AND ld.device_id = #{deviceId}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND d.device_code LIKE CONCAT('%', #{deviceCode}, '%')
+            </if>
+            <if test="dataStatus != null">
+                AND ld.data_status = #{dataStatus}
+            </if>
+            <if test="startTime != null">
+                AND ld.collect_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ld.collect_time &lt;= #{endTime}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 新增补光灯监测数据。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.LightData"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `light_data`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">device_id, owner_user_id, plot_id_at_collection,</if>
+            <if test="messageKey != null and messageKey != ''">message_key,</if>
+            <if test="lightIntensity != null">light_intensity,</if>
+            <if test="dataStatus != null">data_status,</if>
+            <if test="abnormalDetail != null and abnormalDetail != ''">abnormal_detail,</if>
+            <if test="cumulativeRuntime != null">cumulative_runtime,</if>
+            <if test="collectTime != null">collect_time,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">
+                #{deviceId},
+                (SELECT user_id FROM `iot_device` WHERE id = #{deviceId}),
+                (SELECT plot_id FROM `iot_device` WHERE id = #{deviceId}),
+            </if>
+            <if test="messageKey != null and messageKey != ''">#{messageKey},</if>
+            <if test="lightIntensity != null">#{lightIntensity},</if>
+            <if test="dataStatus != null">#{dataStatus},</if>
+            <if test="abnormalDetail != null and abnormalDetail != ''">#{abnormalDetail},</if>
+            <if test="cumulativeRuntime != null">#{cumulativeRuntime},</if>
+            <if test="collectTime != null">#{collectTime},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID物理删除补光灯监测数据。 -->
+    <delete id="deleteById">
+        DELETE FROM `light_data` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除补光灯监测数据。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `light_data`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID动态更新补光灯监测数据。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.LightData">
+        UPDATE `light_data`
+        <set>
+            <if test="deviceId != null">device_id = #{deviceId},</if>
+            <if test="lightIntensity != null">light_intensity = #{lightIntensity},</if>
+            <if test="dataStatus != null">data_status = #{dataStatus},</if>
+            <if test="abnormalDetail != null">abnormal_detail = #{abnormalDetail},</if>
+            <if test="cumulativeRuntime != null">cumulative_runtime = #{cumulativeRuntime},</if>
+            <if test="collectTime != null">collect_time = #{collectTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询补光灯监测数据详情。 -->
+    <select id="selectById" resultMap="LightDataResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `light_data` ld
+        <include refid="DataJoin"/>
+        WHERE ld.id = #{id}
+    </select>
+
+    <!-- 分页条件查询补光灯监测数据列表，支持地块、设备、数据状态和采集时间范围筛选。 -->
+    <select id="selectList" resultMap="LightDataResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `light_data` ld
+        <include refid="DataJoin"/>
+        <include refid="QueryWhere"/>
+        ORDER BY ld.collect_time DESC
+    </select>
+
+    <!-- 补光灯监测数据统计，用于页面顶部统计卡片和趋势概览。 -->
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN ld.data_status = 1 THEN 1 ELSE 0 END), 0) AS normalCount,
+            COALESCE(SUM(CASE WHEN ld.data_status = 2 THEN 1 ELSE 0 END), 0) AS abnormalCount,
+            COUNT(DISTINCT ld.device_id) AS deviceCount,
+            COUNT(DISTINCT COALESCE(ld.plot_id_at_collection, d.plot_id)) AS plotCount,
+            MIN(ld.collect_time) AS firstCollectTime,
+            MAX(ld.collect_time) AS latestCollectTime,
+            ROUND(AVG(ld.light_intensity), 2) AS avgLightIntensity,
+            ROUND(AVG(ld.cumulative_runtime), 2) AS avgCumulativeRuntime
+        FROM `light_data` ld
+        <include refid="DataJoin"/>
+        <include refid="QueryWhere"/>
+    </select>
+
+</mapper>

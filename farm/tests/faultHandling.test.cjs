@@ -1,0 +1,33 @@
+const assert = require('node:assert/strict')
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
+
+// 静态回归用于确保 uni-app 路由、设备页入口和移动端接口不会被误删。
+const root = join(__dirname, '..')
+const routes = readFileSync(join(root, 'pages.json'), 'utf8')
+const devicePage = readFileSync(join(root, 'pages', 'service', 'device_list.vue'), 'utf8')
+const faultPage = readFileSync(join(root, 'pages', 'service', 'fault_handling.vue'), 'utf8')
+const faultApi = readFileSync(join(root, 'api', 'deviceFault.js'), 'utf8')
+const recordPage = readFileSync(join(root, 'pages', 'service', 'fault_record.vue'), 'utf8')
+
+assert.match(routes, /pages\/service\/fault_handling/)
+assert.match(routes, /pages\/service\/fault_record/)
+assert.match(devicePage, /icon-guzhangchuli/)
+assert.match(devicePage, /openFaultHandling/)
+assert.match(faultPage, /DEVICE_FAULT_STATUS_OPTIONS/)
+// 技术人员首页隐藏筛选栏，并通过专用接口读取已排序的全部故障任务。
+assert.match(faultPage, /v-if="!isTechnicianHome" class="fault-tabs"/)
+assert.match(faultPage, /getTechnicianFaults/)
+assert.match(faultPage, /completeDeviceFault/)
+assert.match(faultPage, /openFaultRecord\(fault\)/)
+assert.match(faultPage, /@tap\.stop="handlePrimaryAction\(fault\)"/)
+assert.match(recordPage, /getDeviceFaultRecord/)
+assert.match(recordPage, /record\.imageUrl/)
+// 图片凭证必传且按钮文案与故障状态流保持一致。
+assert.match(faultPage, /if \(!this\.completionImagePath\)/)
+assert.match(faultPage, /return '处理故障'/)
+assert.match(faultPage, /return '完成任务'/)
+assert.match(faultApi, /client\/device-faults\/list/)
+assert.match(faultApi, /client\/device-faults\/technician\/tasks/)
+assert.match(faultApi, /client\/device-faults\/\$\{id\}\/record/)
+assert.match(faultApi, /client\/device-faults\/\$\{id\}\/completion-image/)

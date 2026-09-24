@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.IotDeviceMapper">
+
+    <!-- 设备实体结果映射：把 iot_device 表的下划线字段转换为 Java 驼峰属性。 -->
+    <resultMap id="IotDeviceResultMap" type="com.smart_plant.smart_plant.entity.IotDevice">
+        <id column="id" property="id"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="plot_status" property="plotStatus"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="name" property="name"/>
+        <result column="type_id" property="typeId"/>
+        <result column="type_name" property="typeName"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="type_category" property="typeCategory"/>
+        <result column="control_status" property="controlStatus"/>
+        <result column="online_status" property="onlineStatus"/>
+        <result column="health_status" property="healthStatus"/>
+        <result column="install_time" property="installTime"/>
+        <result column="offline_time" property="offlineTime"/>
+        <result column="fault_time" property="faultTime"/>
+        <result column="last_heartbeat_time" property="lastHeartbeatTime"/>
+        <result column="last_online_time" property="lastOnlineTime"/>
+        <result column="online_duration" property="onlineDuration"/>
+        <result column="last_data_time" property="lastDataTime"/>
+        <result column="location" property="location"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 设备表基础字段片段：列表和详情查询复用，避免字段遗漏。 -->
+    <sql id="BaseColumns">
+        d.id, d.plot_id, p.plot_name, p.plot_code, p.status AS plot_status,
+        d.user_id, u.username, u.nickname,
+        d.device_code, d.name, d.type_id,
+        dt.type_code, dt.type_name, dt.category AS type_category,
+        d.control_status, d.online_status, d.health_status,
+        d.install_time, d.offline_time, d.fault_time,
+        d.last_heartbeat_time, d.last_online_time,
+        GREATEST(
+            TIMESTAMPDIFF(
+                SECOND,
+                COALESCE(d.install_time, d.create_time, NOW()),
+                CASE
+                    WHEN d.health_status IN (1, 2)
+                    THEN COALESCE(d.fault_time, d.update_time, NOW())
+                    WHEN d.online_status = 0
+                    THEN COALESCE(d.offline_time, d.update_time, NOW())
+                    ELSE NOW()
+                END
+            ),
+            0
+        ) AS online_duration,
+        d.last_data_time,
+        d.location, d.create_time, d.update_time
+    </sql>
+
+    <!-- 设备与地块关联片段：详情和列表查询都需要展示设备所属地块信息。 -->
+    <sql id="PlotJoin">
+        LEFT JOIN `plot` p ON p.id = d.plot_id
+        LEFT JOIN `user` u ON u.id = d.user_id
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+    </sql>
+
+    <!-- 新增设备：使用动态列，只写入调用方传入或业务层补齐的字段。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.IotDevice"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `iot_device`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="plotId != null">plot_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="deviceCode != null and deviceCode != ''">device_code,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="typeId != null">type_id,</if>
+            <if test="controlStatus != null">control_status,</if>
+            <if test="onlineStatus != null">online_status,</if>
+            <if test="healthStatus != null">health_status,</if>
+            <if test="installTime != null">install_time,</if>
+            <if test="offlineTime != null">offline_time,</if>
+            <if test="faultTime != null">fault_time,</if>
+            <if test="lastHeartbeatTime != null">last_heartbeat_time,</if>
+            <if test="lastOnlineTime != null">last_online_time,</if>
+            <if test="onlineDuration != null">online_duration,</if>
+            <if test="lastDataTime != null">last_data_time,</if>
+            <if test="location != null and location != ''">location,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="plotId != null">#{plotId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="deviceCode != null and deviceCode != ''">#{deviceCode},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="typeId != null">#{typeId},</if>
+            <if test="controlStatus != null">#{controlStatus},</if>
+            <if test="onlineStatus != null">#{onlineStatus},</if>
+            <if test="healthStatus != null">#{healthStatus},</if>
+            <if test="installTime != null">#{installTime},</if>
+            <if test="offlineTime != null">#{offlineTime},</if>
+            <if test="faultTime != null">#{faultTime},</if>
+            <if test="lastHeartbeatTime != null">#{lastHeartbeatTime},</if>
+            <if test="lastOnlineTime != null">#{lastOnlineTime},</if>
+            <if test="onlineDuration != null">#{onlineDuration},</if>
+            <if test="lastDataTime != null">#{lastDataTime},</if>
+            <if test="location != null and location != ''">#{location},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据主键删除单台设备。 -->
+    <delete id="deleteById">
+        DELETE FROM `iot_device` WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除设备，foreach 会把 ID 集合展开成 IN 条件。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `iot_device`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 动态修改设备信息：只更新非空字段，避免覆盖未提交的数据。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.IotDevice">
+        UPDATE `iot_device`
+        <set>
+            <if test="plotId != null">plot_id = #{plotId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="deviceCode != null and deviceCode != ''">device_code = #{deviceCode},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="typeId != null">type_id = #{typeId},</if>
+            <if test="controlStatus != null">control_status = #{controlStatus},</if>
+            <if test="onlineStatus != null">
+                online_status = #{onlineStatus},
+                offline_time = CASE WHEN #{onlineStatus} = 0 THEN COALESCE(offline_time, NOW()) ELSE NULL END,
+                last_online_time = CASE WHEN #{onlineStatus} = 1 THEN COALESCE(last_online_time, NOW()) ELSE last_online_time END,
+            </if>
+            <if test="healthStatus != null">
+                health_status = #{healthStatus},
+                fault_time = CASE WHEN #{healthStatus} IN (1, 2) THEN COALESCE(fault_time, NOW()) ELSE NULL END,
+            </if>
+            <if test="installTime != null">install_time = #{installTime},</if>
+            <if test="lastHeartbeatTime != null">last_heartbeat_time = #{lastHeartbeatTime},</if>
+            <if test="lastOnlineTime != null">last_online_time = #{lastOnlineTime},</if>
+            <if test="onlineDuration != null">online_duration = #{onlineDuration},</if>
+            <if test="lastDataTime != null">last_data_time = #{lastDataTime},</if>
+            <if test="location != null">location = #{location},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 快速更新控制状态。 -->
+    <update id="updateControlStatus">
+        UPDATE `iot_device`
+        SET control_status = #{controlStatus}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 快速更新在线状态。 -->
+    <update id="updateOnlineStatus">
+        UPDATE `iot_device`
+        SET online_duration = CASE
+                WHEN #{onlineStatus} = 0
+                THEN GREATEST(TIMESTAMPDIFF(SECOND, COALESCE(install_time, create_time, NOW()), NOW()), 0)
+                ELSE online_duration
+            END,
+            offline_time = CASE WHEN #{onlineStatus} = 0 THEN NOW() ELSE NULL END,
+            last_online_time =
+                CASE
+                    WHEN #{onlineStatus} = 1
+                         AND (online_status != 1 OR last_online_time IS NULL)
+                    THEN NOW()
+                    WHEN #{onlineStatus} = 0 THEN NULL
+                    ELSE last_online_time
+                END,
+            online_status = #{onlineStatus}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 快速更新健康状态。 -->
+    <update id="updateHealthStatus">
+        UPDATE `iot_device`
+        SET health_status = #{healthStatus},
+            control_status = CASE WHEN #{healthStatus} IN (1, 2) THEN 0 ELSE control_status END,
+            online_status = CASE WHEN #{healthStatus} IN (1, 2) THEN 0 ELSE online_status END,
+            offline_time = CASE WHEN #{healthStatus} IN (1, 2) THEN COALESCE(offline_time, NOW()) ELSE offline_time END,
+            fault_time = CASE WHEN #{healthStatus} IN (1, 2) THEN NOW() ELSE NULL END
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新心跳时间，同时将设备在线状态置为 ONLINE。 -->
+    <update id="updateHeartbeat">
+        UPDATE `iot_device`
+        SET last_heartbeat_time = #{lastHeartbeatTime},
+            last_online_time =
+                CASE
+                    WHEN online_status != 1 OR last_online_time IS NULL
+                    THEN #{lastHeartbeatTime}
+                    ELSE last_online_time
+                END,
+            offline_time = NULL,
+            online_status = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 仅当设备不存在其他未处理故障时恢复在线，避免多故障设备被错误标记为正常。 -->
+    <update id="restoreOnlineAfterFaultResolved">
+        UPDATE `iot_device` d
+        SET d.health_status = 0,
+            d.online_status = 1,
+            d.offline_time = NULL,
+            d.fault_time = NULL,
+            d.last_online_time = NOW()
+        WHERE d.id = #{id}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM `iot_device_fault` f
+              WHERE f.device_id = d.id
+                AND f.status IN (0, 1)
+                AND f.is_deleted = 0
+          )
+    </update>
+
+    <!-- 根据主键查询设备详情。 -->
+    <select id="selectById" resultMap="IotDeviceResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device` d
+        <include refid="PlotJoin"/>
+        WHERE d.id = #{id}
+    </select>
+
+    <!-- 根据唯一设备编码查询设备。 -->
+    <select id="selectByDeviceCode" resultMap="IotDeviceResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device` d
+        <include refid="PlotJoin"/>
+        WHERE d.device_code = #{deviceCode}
+        LIMIT 1
+    </select>
+
+    <!-- 设备列表查询：支持地块和多个设备条件筛选，默认按新设备靠前展示。 -->
+    <select id="selectList" resultMap="IotDeviceResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device` d
+        <include refid="PlotJoin"/>
+        <where>
+            <if test="userId != null">
+                AND d.user_id = #{userId}
+            </if>
+            <if test="plotId != null">
+                AND d.plot_id = #{plotId}
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND d.device_code LIKE CONCAT('%', #{deviceCode}, '%')
+            </if>
+            <if test="name != null and name != ''">
+                AND d.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="typeId != null">
+                AND d.type_id = #{typeId}
+            </if>
+            <if test="controlStatus != null">
+                AND d.control_status = #{controlStatus}
+            </if>
+            <if test="onlineStatus != null">
+                AND d.online_status = #{onlineStatus}
+            </if>
+            <if test="healthStatus != null">
+                AND d.health_status = #{healthStatus}
+            </if>
+        </where>
+        ORDER BY d.id DESC
+    </select>
+
+    <!-- 查询需要补偿生成故障单的故障设备。 -->
+    <select id="selectUnhealthyDevicesWithoutOpenFault" resultMap="IotDeviceResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device` d
+        <include refid="PlotJoin"/>
+        WHERE d.health_status = 1
+          <if test="userId != null">
+            AND d.user_id = #{userId}
+          </if>
+          AND NOT EXISTS (
+              SELECT 1
+              FROM `iot_device_fault` f
+              WHERE f.device_id = d.id
+                AND f.status IN (0, 1)
+          )
+        ORDER BY d.fault_time DESC, d.update_time DESC, d.id DESC
+    </select>
+
+    <!-- 设备编码唯一性统计，修改时通过 excludeId 排除当前记录。 -->
+    <select id="countByDeviceCode" resultType="int">
+        SELECT COUNT(1)
+        FROM `iot_device`
+        WHERE device_code = #{deviceCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 查询 D_001 这类自动编码中的最大序号，用于后端生成下一个设备编码。 -->
+    <select id="selectMaxGeneratedDeviceCodeNumber" resultType="int">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(device_code, 3) AS UNSIGNED)), 0)
+        FROM `iot_device`
+        WHERE device_code REGEXP '^D_[0-9]+$'
+    </select>
+
+    <!-- 设备删除前引用统计：任意业务表仍存在引用时不允许删除。 -->
+    <select id="countReferencesByDeviceId" resultType="int">
+        SELECT
+            (SELECT COUNT(1) FROM `camera_capture_plan` WHERE device_id = #{deviceId})
+            + (SELECT COUNT(1) FROM `camera_capture_record` WHERE device_id = #{deviceId})
+            + (SELECT COUNT(1) FROM `alert_event` WHERE device_id = #{deviceId})
+    </select>
+</mapper>

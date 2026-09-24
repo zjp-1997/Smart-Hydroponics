@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.AlertEventMapper">
+
+    <resultMap id="AlertEventResultMap" type="com.smart_plant.smart_plant.entity.AlertEvent">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="batch_id" property="batchId"/>
+        <result column="batch_no" property="batchNo"/>
+        <result column="alert_type" property="alertType"/>
+        <result column="alert_title" property="alertTitle"/>
+        <result column="alert_content" property="alertContent"/>
+        <result column="metric_code" property="metricCode"/>
+        <result column="metric_name" property="metricName"/>
+        <result column="metric_value" property="metricValue"/>
+        <result column="metric_unit" property="metricUnit"/>
+        <result column="threshold_min" property="thresholdMin"/>
+        <result column="threshold_max" property="thresholdMax"/>
+        <result column="alert_level" property="alertLevel"/>
+        <result column="source_type" property="sourceType"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="dedup_key" property="dedupKey"/>
+        <result column="process_status" property="processStatus"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="trigger_time" property="triggerTime"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        ae.id, ae.user_id, u.username, u.nickname,
+        ae.plot_id, p.plot_name, p.plot_code,
+        ae.device_id, d.name AS device_name, d.device_code,
+        ae.batch_id, pb.batch_no,
+        ae.alert_type, ae.alert_title, ae.alert_content,
+        ae.metric_code, ae.metric_name, ae.metric_value, ae.metric_unit,
+        ae.threshold_min, ae.threshold_max, ae.alert_level, ae.source_type, ae.source_id, ae.dedup_key,
+        ae.process_status, ae.handler_id, ae.handle_time, ae.handle_result, ae.trigger_time,
+        ae.status, ae.remark, ae.create_time, ae.update_time
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `user` u ON u.id = ae.user_id
+        LEFT JOIN `plot` p ON p.id = ae.plot_id
+        LEFT JOIN `iot_device` d ON d.id = ae.device_id
+        LEFT JOIN `planting_batch` pb ON pb.id = ae.batch_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.AlertEvent"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `alert_event`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="plotId != null">plot_id,</if>
+            <if test="deviceId != null">device_id,</if>
+            <if test="batchId != null">batch_id,</if>
+            <if test="alertType != null">alert_type,</if>
+            <if test="alertTitle != null and alertTitle != ''">alert_title,</if>
+            <if test="alertContent != null">alert_content,</if>
+            <if test="metricCode != null">metric_code,</if>
+            <if test="metricName != null">metric_name,</if>
+            <if test="metricValue != null">metric_value,</if>
+            <if test="metricUnit != null">metric_unit,</if>
+            <if test="thresholdMin != null">threshold_min,</if>
+            <if test="thresholdMax != null">threshold_max,</if>
+            <if test="alertLevel != null">alert_level,</if>
+            <if test="sourceType != null">source_type,</if>
+            <if test="sourceId != null">source_id,</if>
+            <if test="dedupKey != null">dedup_key,</if>
+            <if test="processStatus != null">process_status,</if>
+            <if test="handlerId != null">handler_id,</if>
+            <if test="handleTime != null">handle_time,</if>
+            <if test="handleResult != null">handle_result,</if>
+            <if test="triggerTime != null">trigger_time,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="plotId != null">#{plotId},</if>
+            <if test="deviceId != null">#{deviceId},</if>
+            <if test="batchId != null">#{batchId},</if>
+            <if test="alertType != null">#{alertType},</if>
+            <if test="alertTitle != null and alertTitle != ''">#{alertTitle},</if>
+            <if test="alertContent != null">#{alertContent},</if>
+            <if test="metricCode != null">#{metricCode},</if>
+            <if test="metricName != null">#{metricName},</if>
+            <if test="metricValue != null">#{metricValue},</if>
+            <if test="metricUnit != null">#{metricUnit},</if>
+            <if test="thresholdMin != null">#{thresholdMin},</if>
+            <if test="thresholdMax != null">#{thresholdMax},</if>
+            <if test="alertLevel != null">#{alertLevel},</if>
+            <if test="sourceType != null">#{sourceType},</if>
+            <if test="sourceId != null">#{sourceId},</if>
+            <if test="dedupKey != null">#{dedupKey},</if>
+            <if test="processStatus != null">#{processStatus},</if>
+            <if test="handlerId != null">#{handlerId},</if>
+            <if test="handleTime != null">#{handleTime},</if>
+            <if test="handleResult != null">#{handleResult},</if>
+            <if test="triggerTime != null">#{triggerTime},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <select id="selectById" resultMap="AlertEventResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `alert_event` ae
+        <include refid="BaseJoins"/>
+        WHERE ae.id = #{id}
+    </select>
+
+    <select id="selectBySource" resultMap="AlertEventResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `alert_event` ae
+        <include refid="BaseJoins"/>
+        WHERE ae.source_type = #{sourceType}
+          AND ae.source_id = #{sourceId}
+          AND ae.alert_type = #{alertType}
+          AND ae.status = 1
+        ORDER BY ae.id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 锁定读使用当前已提交版本，避免 REPEATABLE READ 快照看不到并发胜出的记录。 -->
+    <select id="selectByDedupKeyForUpdate" resultMap="AlertEventResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `alert_event` ae
+        <include refid="BaseJoins"/>
+        WHERE ae.active_dedup_key = #{dedupKey}
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="selectList" resultMap="AlertEventResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `alert_event` ae
+        <include refid="BaseJoins"/>
+        <where>
+            ae.status = 1
+            <if test="userId != null">
+                AND ae.user_id = #{userId}
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="alertType != null">
+                AND ae.alert_type = #{alertType}
+            </if>
+            <if test="alertLevel != null">
+                AND ae.alert_level = #{alertLevel}
+            </if>
+            <if test="processStatus != null">
+                AND ae.process_status = #{processStatus}
+            </if>
+            <if test="sourceType != null and sourceType != ''">
+                AND ae.source_type = #{sourceType}
+            </if>
+            <if test="startTime != null">
+                AND ae.trigger_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ae.trigger_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY ae.id DESC
+    </select>
+
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN process_status = 1 THEN 1 ELSE 0 END), 0) AS pendingCount,
+            COALESCE(SUM(CASE WHEN process_status = 2 THEN 1 ELSE 0 END), 0) AS processingCount,
+            COALESCE(SUM(CASE WHEN process_status = 3 THEN 1 ELSE 0 END), 0) AS handledCount,
+            COALESCE(SUM(CASE WHEN alert_level = 3 THEN 1 ELSE 0 END), 0) AS urgentCount
+        FROM `alert_event`
+        <where>
+            status = 1
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateProcessStatus">
+        UPDATE `alert_event`
+        SET process_status = #{processStatus},
+            handler_id = #{handlerId},
+            handle_time = CURRENT_TIMESTAMP,
+            handle_result = #{handleResult}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        UPDATE `alert_event`
+        SET status = 0
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        UPDATE `alert_event`
+        SET status = 0
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

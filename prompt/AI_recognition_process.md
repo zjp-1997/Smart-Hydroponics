@@ -1,0 +1,23 @@
+摄像头
+ |
+crop_image
+ |
+AI识别
+ |
+ai_recognition_record
+ |
+ai_recognition_result
+ |
+查询
+ |
+ai_solution
+ |
+判断generate_task
+ |
+生成farm_task
+ |
+执行
+ |
+farm_task_record
+ |
+反馈优化

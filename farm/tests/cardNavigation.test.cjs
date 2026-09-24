@@ -1,0 +1,15 @@
+const assert = require('node:assert/strict')
+const { readFileSync } = require('node:fs')
+
+const farmList = readFileSync('pages/service/farm_list.vue', 'utf8')
+const plotList = readFileSync('pages/secondPage/plot/plot_list.vue', 'utf8')
+
+assert.match(farmList, /@tap\.stop="previewFarmImage\(farm\)"/)
+assert.match(farmList, /class="farm-info"[\s\S]*?@tap="handleFarmDetail\(farm\)"/)
+assert.doesNotMatch(farmList, /class="farm-card"[^>]*@tap=/)
+assert.match(plotList, /class="plot-image-wrap"[\s\S]*?@tap="previewPlotImage\(plot\)"/)
+assert.doesNotMatch(plotList, /<image(?=[^>]*class="plot-image")[^>]*@tap=/)
+assert.match(plotList, /class="monitor-mask"[\s\S]*?@tap\.stop="handleMonitor\(plot\)"/)
+assert.match(plotList, /class="plot-info"[\s\S]*?@tap="handlePlotDetail\(plot\)"/)
+assert.match(plotList, /pages\/service\/monitor_list\?plotId=/)
+assert.doesNotMatch(plotList, /class="plot-card"[^>]*@tap=/)

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.IotDeviceFaultMapper">
+
+    <resultMap id="IotDeviceFaultResultMap" type="com.smart_plant.smart_plant.entity.IotDeviceFault">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="device_owner_id" property="deviceOwnerId"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="fault_code" property="faultCode"/>
+        <result column="fault_name" property="faultName"/>
+        <result column="fault_type" property="faultType"/>
+        <result column="severity" property="severity"/>
+        <result column="fault_desc" property="faultDesc"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="duration" property="duration"/>
+        <result column="status" property="status"/>
+        <result column="assign_status" property="assignStatus"/>
+        <result column="handle_user_id" property="handleUserId"/>
+        <result column="handle_username" property="handleUsername"/>
+        <result column="handle_nickname" property="handleNickname"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="completion_image_url" property="completionImageUrl"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        f.id, f.device_id, d.user_id AS device_owner_id, d.device_code, d.name AS device_name, p.plot_name,
+        f.fault_code, f.fault_name, f.fault_type, f.severity, f.fault_desc,
+        f.start_time, f.end_time, f.duration, f.status, f.assign_status, f.handle_user_id,
+        hu.username AS handle_username, hu.nickname AS handle_nickname,
+        f.handle_time, f.handle_result, f.completion_image_url, f.is_deleted, f.create_time, f.update_time
+    </sql>
+
+    <sql id="FaultJoin">
+        LEFT JOIN `iot_device` d ON d.id = f.device_id
+        LEFT JOIN `plot` p ON p.id = d.plot_id
+        LEFT JOIN `user` hu ON hu.id = f.handle_user_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.IotDeviceFault"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `iot_device_fault`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">device_id,</if>
+            <if test="faultCode != null and faultCode != ''">fault_code,</if>
+            <if test="faultName != null and faultName != ''">fault_name,</if>
+            <if test="faultType != null">fault_type,</if>
+            <if test="severity != null">severity,</if>
+            <if test="faultDesc != null and faultDesc != ''">fault_desc,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="duration != null">duration,</if>
+            <if test="status != null">status,</if>
+            <if test="assignStatus != null">assign_status,</if>
+            <if test="handleUserId != null">handle_user_id,</if>
+            <if test="handleTime != null">handle_time,</if>
+            <if test="handleResult != null and handleResult != ''">handle_result,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">#{deviceId},</if>
+            <if test="faultCode != null and faultCode != ''">#{faultCode},</if>
+            <if test="faultName != null and faultName != ''">#{faultName},</if>
+            <if test="faultType != null">#{faultType},</if>
+            <if test="severity != null">#{severity},</if>
+            <if test="faultDesc != null and faultDesc != ''">#{faultDesc},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="duration != null">#{duration},</if>
+            <if test="status != null">#{status},</if>
+            <if test="assignStatus != null">#{assignStatus},</if>
+            <if test="handleUserId != null">#{handleUserId},</if>
+            <if test="handleTime != null">#{handleTime},</if>
+            <if test="handleResult != null and handleResult != ''">#{handleResult},</if>
+        </trim>
+    </insert>
+
+    <update id="softDeleteById">
+        UPDATE `iot_device_fault`
+        SET is_deleted = 1, status = 3
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="softDeleteBatchByIds">
+        UPDATE `iot_device_fault`
+        SET is_deleted = 1, status = 3
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+          AND is_deleted = 0
+    </update>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.IotDeviceFault">
+        UPDATE `iot_device_fault`
+        <set>
+            <if test="deviceId != null">device_id = #{deviceId},</if>
+            <if test="faultCode != null and faultCode != ''">fault_code = #{faultCode},</if>
+            <if test="faultName != null and faultName != ''">fault_name = #{faultName},</if>
+            <if test="faultType != null">fault_type = #{faultType},</if>
+            <if test="severity != null">severity = #{severity},</if>
+            <if test="faultDesc != null">fault_desc = #{faultDesc},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null and status != 2">end_time = #{endTime},</if>
+            <if test="duration != null and status != 2">duration = #{duration},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="assignStatus != null">assign_status = #{assignStatus},</if>
+            <if test="handleUserId != null">handle_user_id = #{handleUserId},</if>
+            <if test="status == 2">handle_time = COALESCE(handle_time, NOW()),</if>
+            <if test="status == 2">end_time = COALESCE(end_time, NOW()),</if>
+            <if test="status == 2">duration = TIMESTAMPDIFF(MINUTE, start_time, COALESCE(end_time, NOW())),</if>
+            <if test="handleTime != null and status != 2">handle_time = #{handleTime},</if>
+            <if test="handleResult != null">handle_result = #{handleResult},</if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `iot_device_fault`
+        SET status = #{status}
+        <if test="status == 2">
+            , handle_time = COALESCE(handle_time, NOW()),
+            end_time = NOW(),
+            duration = TIMESTAMPDIFF(MINUTE, start_time, NOW())
+        </if>
+        <if test="handleResult != null and handleResult != ''">
+            , handle_result = #{handleResult}
+        </if>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 图片地址与故障单绑定；调用方在同一事务中完成状态更新。 -->
+    <update id="updateCompletionImage">
+        UPDATE `iot_device_fault`
+        SET completion_image_url = #{imageUrl}
+        WHERE id = #{id} AND status = 2 AND is_deleted = 0
+    </update>
+
+    <!-- 服务层已校验设备归属；更新语句不 JOIN 设备表，避免与故障触发器更新设备表冲突。 -->
+    <update id="startOwnedFault">
+        UPDATE `iot_device_fault`
+        SET handle_user_id = #{ownerId}, assign_status = 2, status = 1,
+            handle_time = NOW()
+        WHERE id = #{id} AND status = 0 AND is_deleted = 0
+    </update>
+
+    <update id="updateAssignee">
+        UPDATE `iot_device_fault`
+        SET handle_user_id = #{handleUserId},
+            assign_status = 1,
+            status = CASE WHEN status IN (0, 1) THEN 0 ELSE status END
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <update id="updateAssignmentStatus">
+        UPDATE `iot_device_fault`
+        SET assign_status = #{assignStatus},
+            status = #{status}
+        <!-- 技术人员接单时间只写一次；完成时保留该时间用于维护记录。 -->
+        <if test="assignStatus == 2 and status == 1">
+            , handle_time = COALESCE(handle_time, NOW())
+        </if>
+        <if test="handleResult != null and handleResult != ''">
+            , handle_result = #{handleResult}
+        </if>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <select id="selectById" resultMap="IotDeviceFaultResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device_fault` f
+        <include refid="FaultJoin"/>
+        WHERE f.id = #{id} AND f.is_deleted = 0
+    </select>
+
+    <select id="selectOpenByDeviceId" resultMap="IotDeviceFaultResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device_fault` f
+        <include refid="FaultJoin"/>
+        WHERE f.device_id = #{deviceId}
+          AND f.is_deleted = 0
+          AND f.status IN (0, 1)
+        ORDER BY f.start_time DESC, f.id DESC
+        LIMIT 1
+    </select>
+
+    <select id="countActiveOwnedFault" resultType="int">
+        SELECT COUNT(1)
+        FROM `iot_device_fault` f
+        JOIN `iot_device` d ON d.id = f.device_id
+        WHERE f.id = #{id}
+          AND d.user_id = #{userId}
+          AND f.is_deleted = 0
+    </select>
+
+    <select id="selectList" resultMap="IotDeviceFaultResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `iot_device_fault` f
+        <include refid="FaultJoin"/>
+        <where>
+            AND f.is_deleted = 0
+            <if test="userId != null">
+                AND d.user_id = #{userId}
+            </if>
+            <if test="deviceId != null">
+                AND f.device_id = #{deviceId}
+            </if>
+            <if test="deviceName != null and deviceName != ''">
+                AND d.name LIKE CONCAT('%', #{deviceName}, '%')
+            </if>
+            <if test="faultCode != null and faultCode != ''">
+                AND f.fault_code LIKE CONCAT('%', #{faultCode}, '%')
+            </if>
+            <if test="faultName != null and faultName != ''">
+                AND f.fault_name LIKE CONCAT('%', #{faultName}, '%')
+            </if>
+            <if test="faultType != null">
+                AND f.fault_type = #{faultType}
+            </if>
+            <if test="severity != null">
+                AND f.severity = #{severity}
+            </if>
+            <if test="status != null">
+                AND f.status = #{status}
+            </if>
+            <if test="handleUserId != null">
+                AND f.handle_user_id = #{handleUserId}
+            </if>
+        </where>
+        ORDER BY f.status ASC, f.severity DESC, f.start_time DESC, f.id DESC
+    </select>
+
+</mapper>

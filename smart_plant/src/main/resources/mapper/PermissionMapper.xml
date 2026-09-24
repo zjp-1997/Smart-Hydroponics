@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.PermissionMapper">
+
+    <resultMap id="PermissionResultMap" type="com.smart_plant.smart_plant.entity.Permission">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="permission_name" property="permissionName"/>
+        <result column="permission_code" property="permissionCode"/>
+        <result column="type" property="type"/>
+        <result column="path" property="path"/>
+        <result column="component" property="component"/>
+        <result column="status" property="status"/>
+        <result column="sort" property="sort"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, parent_id, permission_name, permission_code, type, path, component,
+        status, sort, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.Permission" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `permission`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">parent_id,</if>
+            <if test="permissionName != null and permissionName != ''">permission_name,</if>
+            <if test="permissionCode != null and permissionCode != ''">permission_code,</if>
+            <if test="type != null">type,</if>
+            <if test="path != null">path,</if>
+            <if test="component != null">component,</if>
+            <if test="status != null">status,</if>
+            <if test="sort != null">sort,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">#{parentId},</if>
+            <if test="permissionName != null and permissionName != ''">#{permissionName},</if>
+            <if test="permissionCode != null and permissionCode != ''">#{permissionCode},</if>
+            <if test="type != null">#{type},</if>
+            <if test="path != null">#{path},</if>
+            <if test="component != null">#{component},</if>
+            <if test="status != null">#{status},</if>
+            <if test="sort != null">#{sort},</if>
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.Permission">
+        UPDATE `permission`
+        <set>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="permissionName != null and permissionName != ''">permission_name = #{permissionName},</if>
+            <if test="permissionCode != null and permissionCode != ''">permission_code = #{permissionCode},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="path != null">path = #{path},</if>
+            <if test="component != null">component = #{component},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            update_time = NOW(),
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM `permission` WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="PermissionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `permission`
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByPermissionCode" resultMap="PermissionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `permission`
+        WHERE permission_code = #{permissionCode}
+        LIMIT 1
+    </select>
+
+    <select id="selectList" resultMap="PermissionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `permission`
+        <where>
+            <if test="permissionName != null and permissionName != ''">
+                AND permission_name LIKE CONCAT('%', #{permissionName}, '%')
+            </if>
+            <if test="permissionCode != null and permissionCode != ''">
+                AND permission_code LIKE CONCAT('%', #{permissionCode}, '%')
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="selectEnabledMenuIdsByIds" resultType="long">
+        SELECT id
+        FROM `permission`
+        WHERE type = 1
+          AND status = 1
+          AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="selectEnabledMenus" resultMap="PermissionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `permission`
+        WHERE type = 1 AND status = 1
+        ORDER BY sort ASC, id ASC
+    </select>
+
+    <select id="countByPermissionCode" resultType="int">
+        SELECT COUNT(1)
+        FROM `permission`
+        WHERE permission_code = #{permissionCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+</mapper>

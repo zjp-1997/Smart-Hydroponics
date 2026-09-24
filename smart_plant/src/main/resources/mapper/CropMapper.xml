@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 作物信息 MyBatis 映射文件，对应 crop 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.CropMapper">
+
+    <!-- 作物信息字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="CropResultMap" type="com.smart_plant.smart_plant.entity.Crop">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="type_id" property="typeId"/>
+        <result column="type_name" property="typeName"/>
+        <result column="crop_name" property="cropName"/>
+        <result column="crop_code" property="cropCode"/>
+        <result column="variety" property="variety"/>
+        <result column="growth_days" property="growthDays"/>
+        <result column="suitable_temperature" property="suitableTemperature"/>
+        <result column="suitable_humidity" property="suitableHumidity"/>
+        <result column="suitable_ph" property="suitablePh"/>
+        <result column="suitable_co2" property="suitableCo2"/>
+        <result column="suitable_pm25" property="suitablePm25"/>
+        <result column="suitable_ec" property="suitableEc"/>
+        <result column="suitable_dissolved_oxygen" property="suitableDissolvedOxygen"/>
+        <result column="suitable_light" property="suitableLight"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 作物信息通用查询字段，作物类型名称通过左连接带出。 -->
+    <sql id="BaseColumns">
+        c.id, c.user_id, u.username, u.nickname, c.type_id, ct.type_name, c.crop_name, c.crop_code, c.variety,
+        c.growth_days, c.suitable_temperature, c.suitable_humidity, c.suitable_ph,
+        c.suitable_co2, c.suitable_pm25,
+        c.suitable_ec, c.suitable_dissolved_oxygen,
+        c.suitable_light,
+        c.image_url, c.description, c.status, c.remark, c.create_time, c.update_time
+    </sql>
+
+    <!-- 新增作物信息。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.Crop"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `crop`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="typeId != null">type_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="cropName != null and cropName != ''">crop_name,</if>
+            <if test="variety != null and variety != ''">variety,</if>
+            <if test="growthDays != null">growth_days,</if>
+            <if test="suitableTemperature != null and suitableTemperature != ''">suitable_temperature,</if>
+            <if test="suitableHumidity != null and suitableHumidity != ''">suitable_humidity,</if>
+            <if test="suitablePh != null and suitablePh != ''">suitable_ph,</if>
+            <if test="suitableCo2 != null and suitableCo2 != ''">suitable_co2,</if>
+            <if test="suitablePm25 != null and suitablePm25 != ''">suitable_pm25,</if>
+            <if test="suitableEc != null and suitableEc != ''">suitable_ec,</if>
+            <if test="suitableDissolvedOxygen != null and suitableDissolvedOxygen != ''">suitable_dissolved_oxygen,</if>
+            <if test="suitableLight != null and suitableLight != ''">suitable_light,</if>
+            <if test="imageUrl != null and imageUrl != ''">image_url,</if>
+            <if test="description != null and description != ''">description,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="typeId != null">#{typeId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="cropName != null and cropName != ''">#{cropName},</if>
+            <if test="variety != null and variety != ''">#{variety},</if>
+            <if test="growthDays != null">#{growthDays},</if>
+            <if test="suitableTemperature != null and suitableTemperature != ''">#{suitableTemperature},</if>
+            <if test="suitableHumidity != null and suitableHumidity != ''">#{suitableHumidity},</if>
+            <if test="suitablePh != null and suitablePh != ''">#{suitablePh},</if>
+            <if test="suitableCo2 != null and suitableCo2 != ''">#{suitableCo2},</if>
+            <if test="suitablePm25 != null and suitablePm25 != ''">#{suitablePm25},</if>
+            <if test="suitableEc != null and suitableEc != ''">#{suitableEc},</if>
+            <if test="suitableDissolvedOxygen != null and suitableDissolvedOxygen != ''">#{suitableDissolvedOxygen},</if>
+            <if test="suitableLight != null and suitableLight != ''">#{suitableLight},</if>
+            <if test="imageUrl != null and imageUrl != ''">#{imageUrl},</if>
+            <if test="description != null and description != ''">#{description},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID物理删除作物信息。 -->
+    <delete id="deleteById">
+        DELETE FROM `crop` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除作物信息。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `crop`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID动态更新作物信息。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.Crop">
+        UPDATE `crop`
+        <set>
+            type_id = #{typeId},
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="cropName != null and cropName != ''">crop_name = #{cropName},</if>
+            <if test="variety != null">variety = #{variety},</if>
+            <if test="growthDays != null">growth_days = #{growthDays},</if>
+            <if test="suitableTemperature != null">suitable_temperature = #{suitableTemperature},</if>
+            <if test="suitableHumidity != null">suitable_humidity = #{suitableHumidity},</if>
+            <if test="suitablePh != null">suitable_ph = #{suitablePh},</if>
+            <if test="suitableCo2 != null">suitable_co2 = #{suitableCo2},</if>
+            <if test="suitablePm25 != null">suitable_pm25 = #{suitablePm25},</if>
+            <if test="suitableEc != null">suitable_ec = #{suitableEc},</if>
+            <if test="suitableDissolvedOxygen != null">suitable_dissolved_oxygen = #{suitableDissolvedOxygen},</if>
+            <if test="suitableLight != null">suitable_light = #{suitableLight},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCropCode">
+        UPDATE `crop`
+        SET crop_code = #{cropCode}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 单独修改作物启用/禁用状态。 -->
+    <update id="updateStatus">
+        UPDATE `crop`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询作物详情。 -->
+    <select id="selectById" resultMap="CropResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `crop` c
+        LEFT JOIN `crop_type` ct ON ct.id = c.type_id
+        LEFT JOIN `user` u ON u.id = c.user_id
+        WHERE c.id = #{id}
+    </select>
+
+    <!-- 分页条件查询作物列表。 -->
+    <select id="selectList" resultMap="CropResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `crop` c
+        LEFT JOIN `crop_type` ct ON ct.id = c.type_id
+        LEFT JOIN `user` u ON u.id = c.user_id
+        <where>
+            <if test="userId != null">
+                AND (
+                    c.user_id = #{userId}
+                    OR EXISTS (
+                        SELECT 1
+                        FROM `planting_batch` pb
+                        WHERE pb.crop_id = c.id
+                          AND pb.user_id = #{userId}
+                    )
+                )
+            </if>
+            <if test="cropName != null and cropName != ''">
+                AND c.crop_name LIKE CONCAT('%', #{cropName}, '%')
+            </if>
+            <if test="typeId != null">
+                AND c.type_id = #{typeId}
+            </if>
+            <if test="status != null">
+                AND c.status = #{status}
+            </if>
+        </where>
+        ORDER BY c.id DESC
+    </select>
+
+    <select id="countVisibleByUserId" resultType="int">
+        SELECT COUNT(1)
+        FROM `crop` c
+        WHERE c.id = #{id}
+          AND (
+            c.user_id = #{userId}
+            OR EXISTS (
+                SELECT 1
+                FROM `planting_batch` pb
+                WHERE pb.crop_id = c.id
+                  AND pb.user_id = #{userId}
+            )
+          )
+    </select>
+
+    <!-- 地块编辑只列出启用且可见的作物，公共作物不会因 user_id 为空而遗漏。 -->
+    <select id="selectClientEditableCrops" resultMap="CropResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `crop` c
+        LEFT JOIN `crop_type` ct ON ct.id = c.type_id
+        LEFT JOIN `user` u ON u.id = c.user_id
+        WHERE c.status = 1
+          AND (c.user_id IS NULL OR c.user_id = #{userId}
+               OR EXISTS (SELECT 1 FROM `planting_batch` pb
+                          WHERE pb.crop_id = c.id AND pb.user_id = #{userId}))
+        ORDER BY c.crop_name, c.id
+    </select>
+
+    <select id="countOwnedByUserId" resultType="int">
+        SELECT COUNT(1)
+        FROM `crop`
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </select>
+</mapper>

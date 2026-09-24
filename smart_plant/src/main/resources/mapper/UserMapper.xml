@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.smart_plant.smart_plant.entity.User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="avatar" property="avatar"/>
+        <result column="nickname" property="nickname"/>
+        <result column="gender" property="gender"/>
+        <result column="role_id" property="roleId"/>
+        <result column="role_name" property="roleName"/>
+        <result column="role_code" property="roleCode"/>
+        <result column="farm_owner_id" property="farmOwnerId"/>
+        <result column="status" property="status"/>
+        <result column="region" property="region"/>
+        <result column="login_count" property="loginCount"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        u.id, u.username, u.password, u.phone, u.email, u.avatar, u.nickname, u.gender,
+        u.role_id, r.role_name, r.role_code, u.status, u.region, u.login_count, u.last_login_time,
+        u.remark, u.create_time, u.update_time,
+        <!-- 两类工作人员复用现有绑定表，单值表单展示技术员最近一次有效绑定。 -->
+        CASE WHEN LOWER(r.role_code) = 'user' THEN
+            (SELECT fou.owner_user_id FROM `farm_owner_user` fou WHERE fou.user_id = u.id LIMIT 1)
+        WHEN LOWER(r.role_code) = 'technician' THEN
+            (SELECT fot.owner_user_id FROM `farm_owner_technician` fot
+             WHERE fot.technician_user_id = u.id AND fot.status = 1 ORDER BY fot.bind_time DESC, fot.id DESC LIMIT 1)
+        ELSE NULL END AS farm_owner_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="username != null and username != ''">username,</if>
+            <if test="password != null and password != ''">password,</if>
+            <if test="phone != null and phone != ''">phone,</if>
+            <if test="email != null and email != ''">email,</if>
+            <if test="avatar != null and avatar != ''">avatar,</if>
+            <if test="nickname != null and nickname != ''">nickname,</if>
+            <if test="gender != null">gender,</if>
+            <if test="roleId != null">role_id,</if>
+            <if test="status != null">status,</if>
+            <if test="region != null and region != ''">region,</if>
+            <if test="loginCount != null">login_count,</if>
+            <if test="lastLoginTime != null">last_login_time,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="username != null and username != ''">#{username},</if>
+            <if test="password != null and password != ''">#{password},</if>
+            <if test="phone != null and phone != ''">#{phone},</if>
+            <if test="email != null and email != ''">#{email},</if>
+            <if test="avatar != null and avatar != ''">#{avatar},</if>
+            <if test="nickname != null and nickname != ''">#{nickname},</if>
+            <if test="gender != null">#{gender},</if>
+            <if test="roleId != null">#{roleId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="region != null and region != ''">#{region},</if>
+            <if test="loginCount != null">#{loginCount},</if>
+            <if test="lastLoginTime != null">#{lastLoginTime},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM `user` WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM `user`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.User">
+        UPDATE `user`
+        <set>
+            <if test="username != null and username != ''">username = #{username},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="roleId != null">role_id = #{roleId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="region != null">region = #{region},</if>
+            <if test="loginCount != null">login_count = #{loginCount},</if>
+            <if test="lastLoginTime != null">last_login_time = #{lastLoginTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePassword">
+        UPDATE `user`
+        SET password = #{password}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `user`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLastLogin">
+        UPDATE `user`
+        SET last_login_time = NOW(),
+            login_count = COALESCE(login_count, 0) + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 手机号绑定使用专用更新语句，禁止客户端借机修改角色、状态等敏感字段。 -->
+    <update id="updatePhone">
+        UPDATE `user`
+        SET phone = #{phone}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 个人中心采用字段白名单更新，避免把前端对象直接映射成权限字段。 -->
+    <update id="updateProfile">
+        UPDATE `user`
+        SET phone = #{profile.phone},
+            email = #{profile.email},
+            avatar = #{profile.avatar},
+            gender = #{profile.gender},
+            role_id = #{profile.roleId},
+            region = #{profile.region},
+            remark = #{profile.remark}
+        WHERE id = #{id}
+    </update>
+
+    <!-- farm 个人信息页使用独立字段白名单，防止请求覆盖角色、状态和密码。 -->
+    <update id="updateClientProfile">
+        UPDATE `user`
+        SET username = #{profile.username},
+            phone = #{profile.phone},
+            nickname = #{profile.nickname},
+            gender = #{profile.gender},
+            email = #{profile.email},
+            avatar = #{profile.avatar},
+            remark = #{profile.remark}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user` u
+        LEFT JOIN `role` r ON r.id = u.role_id
+        WHERE u.id = #{id}
+    </select>
+
+    <select id="selectByUsername" resultMap="UserResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user` u
+        LEFT JOIN `role` r ON r.id = u.role_id
+        WHERE u.username = #{username}
+        LIMIT 1
+    </select>
+
+    <!-- 手机验证码登录只允许精确匹配唯一手机号。 -->
+    <select id="selectByPhone" resultMap="UserResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user` u
+        LEFT JOIN `role` r ON r.id = u.role_id
+        WHERE u.phone = #{phone}
+        LIMIT 1
+    </select>
+
+    <select id="selectList" resultMap="UserResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user` u
+        LEFT JOIN `role` r ON r.id = u.role_id
+        <where>
+            <if test="username != null and username != ''">
+                AND u.username LIKE CONCAT('%', #{username}, '%')
+            </if>
+            <if test="phone != null and phone != ''">
+                AND u.phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+            <if test="roleCode != null and roleCode != ''">
+                AND LOWER(r.role_code) = LOWER(#{roleCode})
+            </if>
+            <if test="status != null">
+                AND u.status = #{status}
+            </if>
+            <!-- 农场主只查询本人绑定的普通用户和技术人员。 -->
+            <if test="ownerId != null">
+                AND ((LOWER(r.role_code) = 'user' AND EXISTS
+                    (SELECT 1 FROM `farm_owner_user` fou WHERE fou.user_id = u.id AND fou.owner_user_id = #{ownerId}))
+                  OR (LOWER(r.role_code) = 'technician' AND EXISTS
+                    (SELECT 1 FROM `farm_owner_technician` fot WHERE fot.technician_user_id = u.id
+                     AND fot.owner_user_id = #{ownerId} AND fot.status = 1)))
+            </if>
+        </where>
+        ORDER BY u.id DESC
+    </select>
+
+    <select id="selectActiveUsers" resultMap="UserResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user` u
+        LEFT JOIN `role` r ON r.id = u.role_id
+        WHERE u.status = 1
+        ORDER BY u.id ASC
+    </select>
+
+    <select id="countByRoleId" resultType="int">
+        SELECT COUNT(1)
+        FROM `user`
+        WHERE role_id = #{roleId}
+    </select>
+
+    <select id="countByRoleIds" resultType="int">
+        SELECT COUNT(1)
+        FROM `user`
+        WHERE role_id IN
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+    </select>
+
+    <select id="countByUsername" resultType="int">
+        SELECT COUNT(1)
+        FROM `user`
+        WHERE username = #{username}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countByPhone" resultType="int">
+        SELECT COUNT(1)
+        FROM `user`
+        WHERE phone = #{phone}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countByEmail" resultType="int">
+        SELECT COUNT(1)
+        FROM `user`
+        WHERE email = #{email}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="selectBoundTechnicianIdByOwnerId" resultType="long">
+        SELECT t.id
+        FROM `farm_owner_technician` fot
+        INNER JOIN `user` t ON t.id = fot.technician_user_id
+        INNER JOIN `role` r ON r.id = t.role_id
+        WHERE fot.owner_user_id = #{ownerId}
+          AND fot.status = 1
+          AND t.status = 1
+          AND LOWER(r.role_code) = 'technician'
+        ORDER BY fot.bind_time DESC, fot.id DESC
+        LIMIT 1
+    </select>
+
+    <select id="countActiveTechnicianBinding" resultType="int">
+        SELECT COUNT(1)
+        FROM `farm_owner_technician` fot
+        INNER JOIN `user` t ON t.id = fot.technician_user_id
+        INNER JOIN `role` r ON r.id = t.role_id
+        WHERE fot.owner_user_id = #{ownerId}
+          AND fot.technician_user_id = #{technicianId}
+          AND fot.status = 1
+          AND t.status = 1
+          AND LOWER(r.role_code) = 'technician'
+    </select>
+
+    <!-- 匿名注册页只查询启用中的农场主，返回时由 Controller 收敛为 ID 和展示名。 -->
+    <select id="selectActiveFarmOwners" resultMap="UserResultMap">
+        SELECT u.id, u.username, u.nickname
+        FROM `user` u
+        INNER JOIN `role` r ON r.id = u.role_id
+        WHERE u.status = 1 AND LOWER(r.role_code) = 'farm_owner'
+        ORDER BY u.id DESC
+    </select>
+
+    <!-- 技术员绑定沿用设备故障派单已经读取的关联表。 -->
+    <insert id="insertFarmOwnerTechnician">
+        INSERT INTO `farm_owner_technician` (owner_user_id, technician_user_id, status)
+        VALUES (#{ownerId}, #{technicianId}, 1)
+    </insert>
+
+    <!-- 普通用户单独绑定农场主，避免混入技术员专属派单关系。 -->
+    <insert id="insertFarmOwnerUser">
+        INSERT INTO `farm_owner_user` (owner_user_id, user_id)
+        VALUES (#{ownerId}, #{userId})
+    </insert>
+
+    <delete id="deleteFarmOwnerUserBindings">
+        DELETE FROM `farm_owner_user` WHERE user_id = #{userId}
+    </delete>
+
+    <delete id="deleteFarmOwnerTechnicianBindings">
+        DELETE FROM `farm_owner_technician` WHERE technician_user_id = #{technicianId}
+    </delete>
+
+    <select id="countManagedUserByOwnerId" resultType="int">
+        SELECT (SELECT COUNT(1) FROM `farm_owner_user` fou JOIN `user` u ON u.id = fou.user_id
+                JOIN `role` r ON r.id = u.role_id AND LOWER(r.role_code) = 'user'
+                WHERE fou.owner_user_id = #{ownerId} AND fou.user_id = #{userId})
+             + (SELECT COUNT(1) FROM `farm_owner_technician` fot JOIN `user` u ON u.id = fot.technician_user_id
+                JOIN `role` r ON r.id = u.role_id AND LOWER(r.role_code) = 'technician'
+                WHERE fot.owner_user_id = #{ownerId} AND fot.technician_user_id = #{userId} AND fot.status = 1)
+    </select>
+
+    <!-- 只接受启用中的普通用户和农场主，失效绑定不能继续读取原农场资料。 -->
+    <select id="selectBoundOwnerIdByUserId" resultType="long">
+        SELECT fou.owner_user_id FROM `farm_owner_user` fou
+        JOIN `user` owner ON owner.id = fou.owner_user_id AND owner.status = 1
+        JOIN `user` worker ON worker.id = fou.user_id AND worker.status = 1
+        JOIN `role` owner_role ON owner_role.id = owner.role_id AND LOWER(owner_role.role_code) = 'farm_owner'
+        JOIN `role` worker_role ON worker_role.id = worker.role_id AND LOWER(worker_role.role_code) = 'user'
+        WHERE fou.user_id = #{userId}
+    </select>
+
+    <select id="countBoundUserByOwnerId" resultType="int">
+        SELECT COUNT(1) FROM `farm_owner_user` fou
+        JOIN `user` worker ON worker.id = fou.user_id AND worker.status = 1
+        JOIN `role` worker_role ON worker_role.id = worker.role_id AND LOWER(worker_role.role_code) = 'user'
+        WHERE fou.owner_user_id = #{ownerId} AND fou.user_id = #{userId}
+    </select>
+    <insert id="insertFarmJoinRequest">
+        INSERT INTO farm_join_request (user_id, owner_user_id, requested_role, status)
+        VALUES (#{userId}, #{ownerId}, #{roleCode}, 0)
+    </insert>
+    <select id="selectFarmJoinRequestByUserId" resultType="com.smart_plant.smart_plant.entity.FarmJoinRequest">
+        SELECT * FROM farm_join_request WHERE user_id = #{userId}
+    </select>
+    <select id="lockFarmJoinRequest" resultType="com.smart_plant.smart_plant.entity.FarmJoinRequest">
+        SELECT * FROM farm_join_request WHERE user_id = #{userId} FOR UPDATE
+    </select>
+    <select id="selectFarmJoinRequests" resultType="com.smart_plant.smart_plant.entity.FarmJoinRequest">
+        SELECT q.*, u.username, u.nickname, COALESCE(o.nickname, o.username) AS owner_name
+        FROM farm_join_request q
+        JOIN `user` u ON u.id = q.user_id
+        LEFT JOIN `user` o ON o.id = q.owner_user_id
+        <where>
+            <if test="ownerId != null">q.owner_user_id = #{ownerId}</if>
+            <if test="status != null">AND q.status = #{status}</if>
+        </where>
+        ORDER BY q.id DESC
+    </select>
+    <!-- 与申请列表保持相同的申请人关联，只统计状态为0的待审核记录，不加载分页明细。 -->
+    <select id="countPendingFarmJoinRequests" resultType="long">
+        SELECT COUNT(*)
+        FROM farm_join_request q
+        JOIN `user` u ON u.id = q.user_id
+        WHERE q.status = 0
+        <if test="ownerId != null">AND q.owner_user_id = #{ownerId}</if>
+    </select>
+    <update id="decideFarmJoinRequest">
+        UPDATE farm_join_request SET status = #{status},
+        <choose>
+            <when test="status == 3">
+                revoked_by = #{reviewerId}, revoked_at = CURRENT_TIMESTAMP, revoke_reason = #{reason}
+            </when>
+            <otherwise>
+                reviewer_id = #{reviewerId}, reviewed_at = CURRENT_TIMESTAMP, review_reason = #{reason}
+            </otherwise>
+        </choose>
+        WHERE user_id = #{userId} AND status = #{expectedStatus}
+    </update>
+</mapper>

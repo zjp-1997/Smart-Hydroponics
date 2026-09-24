@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.NotificationMapper">
+
+    <resultMap id="NotificationResultMap" type="com.smart_plant.smart_plant.entity.Notification">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="notice_type" property="noticeType"/>
+        <result column="ref_type" property="refType"/>
+        <result column="ref_id" property="refId"/>
+        <result column="dedup_key" property="dedupKey"/>
+        <result column="task_id" property="taskId"/>
+        <result column="task_title" property="taskTitle"/>
+        <result column="task_type" property="taskType"/>
+        <result column="task_status" property="taskStatus"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="alert_id" property="alertId"/>
+        <result column="alert_title" property="alertTitle"/>
+        <result column="alert_level" property="alertLevel"/>
+        <result column="level" property="level"/>
+        <result column="is_read" property="isRead"/>
+        <result column="read_time" property="readTime"/>
+        <result column="send_time" property="sendTime"/>
+        <result column="publisher_id" property="publisherId"/>
+        <result column="publisher_name" property="publisherName"/>
+        <result column="recipient_count" property="recipientCount"/>
+        <result column="read_count" property="readCount"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        n.id, n.user_id, u.username, u.nickname,
+        n.title, n.content, n.notice_type, n.ref_type, n.ref_id, n.dedup_key,
+        n.task_id, NULL AS task_title, NULL AS task_type, NULL AS task_status, NULL AS plot_name,
+        n.alert_id,
+        ae.alert_title, ae.alert_level,
+        n.level, n.is_read, n.read_time, n.send_time,
+        n.publisher_id, n.publisher_name,
+        NULL AS recipient_count, NULL AS read_count,
+        n.status, n.remark, n.create_time,
+        n.update_time
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `user` u ON u.id = n.user_id
+        LEFT JOIN `alert_event` ae ON ae.id = n.alert_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.Notification"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `notification`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="content != null">content,</if>
+            <if test="noticeType != null">notice_type,</if>
+            <if test="refType != null">ref_type,</if>
+            <if test="refId != null">ref_id,</if>
+            <if test="dedupKey != null">dedup_key,</if>
+            <if test="taskId != null">task_id,</if>
+            <if test="alertId != null">alert_id,</if>
+            <if test="level != null">level,</if>
+            <if test="isRead != null">is_read,</if>
+            <if test="readTime != null">read_time,</if>
+            <if test="sendTime != null">send_time,</if>
+            <if test="publisherId != null">publisher_id,</if>
+            <if test="publisherName != null and publisherName != ''">publisher_name,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="content != null">#{content},</if>
+            <if test="noticeType != null">#{noticeType},</if>
+            <if test="refType != null">#{refType},</if>
+            <if test="refId != null">#{refId},</if>
+            <if test="dedupKey != null">#{dedupKey},</if>
+            <if test="taskId != null">#{taskId},</if>
+            <if test="alertId != null">#{alertId},</if>
+            <if test="level != null">#{level},</if>
+            <if test="isRead != null">#{isRead},</if>
+            <if test="readTime != null">#{readTime},</if>
+            <if test="sendTime != null">#{sendTime},</if>
+            <if test="publisherId != null">#{publisherId},</if>
+            <if test="publisherName != null and publisherName != ''">#{publisherName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateRefIdById">
+        UPDATE `notification`
+        SET ref_id = #{refId}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="NotificationResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `notification` n
+        <include refid="BaseJoins"/>
+        WHERE n.id = #{id}
+    </select>
+
+    <select id="selectByRef" resultMap="NotificationResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `notification` n
+        <include refid="BaseJoins"/>
+        WHERE n.user_id = #{userId}
+          AND n.notice_type = #{noticeType}
+          AND n.ref_type = #{refType}
+          AND n.ref_id = #{refId}
+          AND n.status = 1
+        ORDER BY n.id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 锁定读使用当前已提交版本，避免 REPEATABLE READ 快照看不到并发胜出的记录。 -->
+    <select id="selectByDedupKeyForUpdate" resultMap="NotificationResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `notification` n
+        <include refid="BaseJoins"/>
+        WHERE n.active_dedup_key = #{dedupKey}
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="selectList" resultMap="NotificationResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `notification` n
+        <include refid="BaseJoins"/>
+        <where>
+            n.status = 1
+            <if test="userId != null">
+                AND n.user_id = #{userId}
+            </if>
+            <if test="title != null and title != ''">
+                AND n.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="noticeType != null">
+                AND n.notice_type = #{noticeType}
+            </if>
+            <if test="level != null">
+                AND n.level = #{level}
+            </if>
+            <if test="isRead != null">
+                AND n.is_read = #{isRead}
+            </if>
+            <if test="refType != null and refType != ''">
+                AND n.ref_type = #{refType}
+            </if>
+            <if test="startTime != null">
+                AND n.send_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND n.send_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY n.id DESC
+    </select>
+
+    <!-- 公告移动端只返回当前用户的接收明细，保留每条消息独立的阅读状态。 -->
+    <select id="selectClientAnnouncements" resultMap="NotificationResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `notification` n
+        <include refid="BaseJoins"/>
+        WHERE n.user_id = #{userId}
+          AND n.notice_type = 1
+          AND n.status = 1
+          AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+        ORDER BY n.send_time DESC, n.id DESC
+    </select>
+
+    <!--
+      历史公告可能发布于用户注册之前，或来自旧版只保存单条公告的数据。
+      按公告组选择一条有效明细作为模板，只补当前用户缺失的数据，不覆盖已有已读状态。
+    -->
+    <insert id="insertMissingClientAnnouncementDeliveries">
+        INSERT IGNORE INTO `notification`
+            (user_id, title, content, notice_type, ref_type, ref_id, level, is_read,
+             send_time, publisher_id, publisher_name, status, remark)
+        SELECT
+            #{userId}, source.title, source.content, 1, 'system_announcement', grouped.announcement_id,
+            source.level, 0, source.send_time, source.publisher_id, source.publisher_name, 1, source.remark
+        FROM (
+            SELECT COALESCE(n.ref_id, n.id) AS announcement_id, MIN(n.id) AS source_id
+            FROM `notification` n
+            WHERE n.status = 1
+              AND n.notice_type = 1
+              AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+            GROUP BY COALESCE(n.ref_id, n.id)
+        ) grouped
+        INNER JOIN `notification` source ON source.id = grouped.source_id
+        LEFT JOIN `notification` existing
+          ON existing.user_id = #{userId}
+         AND existing.notice_type = 1
+         AND existing.status = 1
+         AND COALESCE(existing.ref_type, 'system_announcement') = 'system_announcement'
+         AND COALESCE(existing.ref_id, existing.id) = grouped.announcement_id
+        WHERE existing.id IS NULL
+    </insert>
+
+    <!-- 未读数与分页查询使用相同过滤条件。 -->
+    <select id="countClientUnreadAnnouncements" resultType="long">
+        SELECT COUNT(1)
+        FROM `notification` n
+        WHERE n.user_id = #{userId}
+          AND n.notice_type = 1
+          AND n.status = 1
+          AND n.is_read = 0
+          AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+    </select>
+
+    <!-- 条件更新使已读操作既有归属校验，又不会覆盖首次阅读时间。 -->
+    <update id="markClientAnnouncementRead">
+        UPDATE `notification` n
+        SET n.is_read = 1, n.read_time = #{readTime}
+        WHERE n.id = #{id} AND n.user_id = #{userId}
+          AND n.notice_type = 1 AND n.status = 1 AND n.is_read = 0
+          AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+    </update>
+
+    <update id="markAllClientAnnouncementsRead">
+        UPDATE `notification` n
+        SET n.is_read = 1, n.read_time = #{readTime}
+        WHERE n.user_id = #{userId} AND n.notice_type = 1
+          AND n.status = 1 AND n.is_read = 0
+          AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+    </update>
+
+    <select id="selectSystemAnnouncementList" resultMap="NotificationResultMap">
+        SELECT
+            MIN(n.id) AS id,
+            NULL AS user_id,
+            NULL AS username,
+            NULL AS nickname,
+            MAX(n.title) AS title,
+            MAX(n.content) AS content,
+            1 AS notice_type,
+            'system_announcement' AS ref_type,
+            COALESCE(n.ref_id, n.id) AS ref_id,
+            NULL AS task_id,
+            NULL AS task_title,
+            NULL AS task_type,
+            NULL AS task_status,
+            NULL AS plot_name,
+            NULL AS alert_id,
+            NULL AS alert_title,
+            NULL AS alert_level,
+            MAX(n.level) AS level,
+            NULL AS is_read,
+            NULL AS read_time,
+            MAX(n.send_time) AS send_time,
+            MAX(n.publisher_id) AS publisher_id,
+            MAX(n.publisher_name) AS publisher_name,
+            COUNT(1) AS recipient_count,
+            COALESCE(SUM(CASE WHEN n.is_read = 1 THEN 1 ELSE 0 END), 0) AS read_count,
+            1 AS status,
+            MAX(n.remark) AS remark,
+            MIN(n.create_time) AS create_time,
+            MAX(n.update_time) AS update_time
+        FROM `notification` n
+        <where>
+            n.status = 1
+            AND n.notice_type = 1
+            AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+            <if test="title != null and title != ''">
+                AND n.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="content != null and content != ''">
+                AND n.content LIKE CONCAT('%', #{content}, '%')
+            </if>
+            <if test="startTime != null">
+                AND n.send_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND n.send_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY COALESCE(n.ref_id, n.id)
+        ORDER BY MAX(n.send_time) DESC, MIN(n.id) DESC
+    </select>
+
+    <select id="selectSystemAnnouncementGroupById" resultMap="NotificationResultMap">
+        SELECT grouped.*
+        FROM (
+            SELECT
+                MIN(n.id) AS id,
+                NULL AS user_id,
+                NULL AS username,
+                NULL AS nickname,
+                MAX(n.title) AS title,
+                MAX(n.content) AS content,
+                1 AS notice_type,
+                'system_announcement' AS ref_type,
+                COALESCE(n.ref_id, n.id) AS ref_id,
+                NULL AS task_id,
+                NULL AS task_title,
+                NULL AS task_type,
+                NULL AS task_status,
+                NULL AS plot_name,
+                NULL AS alert_id,
+                NULL AS alert_title,
+                NULL AS alert_level,
+                MAX(n.level) AS level,
+                NULL AS is_read,
+                NULL AS read_time,
+                MAX(n.send_time) AS send_time,
+                MAX(n.publisher_id) AS publisher_id,
+                MAX(n.publisher_name) AS publisher_name,
+                COUNT(1) AS recipient_count,
+                COALESCE(SUM(CASE WHEN n.is_read = 1 THEN 1 ELSE 0 END), 0) AS read_count,
+                1 AS status,
+                MAX(n.remark) AS remark,
+                MIN(n.create_time) AS create_time,
+                MAX(n.update_time) AS update_time
+            FROM `notification` n
+            WHERE n.status = 1
+              AND n.notice_type = 1
+              AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+            GROUP BY COALESCE(n.ref_id, n.id)
+        ) grouped
+        WHERE grouped.id = #{id}
+           OR grouped.ref_id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END), 0) AS unreadCount,
+            COALESCE(SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END), 0) AS readCount,
+            COALESCE(SUM(CASE WHEN level = 3 THEN 1 ELSE 0 END), 0) AS urgentCount,
+            COALESCE(SUM(CASE WHEN notice_type = 2 THEN 1 ELSE 0 END), 0) AS taskNoticeCount
+        FROM `notification`
+        <where>
+            status = 1
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectSystemAnnouncementStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN grouped.level = 3 THEN 1 ELSE 0 END), 0) AS urgentCount,
+            COALESCE(SUM(CASE WHEN grouped.send_time &gt;= CURDATE() THEN 1 ELSE 0 END), 0) AS todayCount,
+            COALESCE(SUM(grouped.recipient_count - grouped.read_count), 0) AS unreadDeliveryCount
+        FROM (
+            SELECT
+                COALESCE(n.ref_id, n.id) AS announcement_id,
+                MAX(n.level) AS level,
+                MAX(n.send_time) AS send_time,
+                COUNT(1) AS recipient_count,
+                COALESCE(SUM(CASE WHEN n.is_read = 1 THEN 1 ELSE 0 END), 0) AS read_count
+            FROM `notification` n
+            WHERE n.status = 1
+              AND n.notice_type = 1
+              AND COALESCE(n.ref_type, 'system_announcement') = 'system_announcement'
+            GROUP BY COALESCE(n.ref_id, n.id)
+        ) grouped
+    </select>
+
+    <select id="selectFarmMessageList" resultMap="NotificationResultMap">
+        SELECT
+            MIN(n.id) AS id,
+            NULL AS user_id,
+            NULL AS username,
+            NULL AS nickname,
+            MAX(n.title) AS title,
+            MAX(n.content) AS content,
+            2 AS notice_type,
+            MAX(n.ref_type) AS ref_type,
+            COALESCE(n.ref_id, n.id) AS ref_id,
+            MAX(COALESCE(n.task_id, CASE WHEN n.ref_type = 'farm_task' THEN n.ref_id ELSE NULL END)) AS task_id,
+            MAX(ft.task_title) AS task_title,
+            MAX(ft.task_type) AS task_type,
+            MAX(ft.status) AS task_status,
+            MAX(p.plot_name) AS plot_name,
+            MAX(n.alert_id) AS alert_id,
+            NULL AS alert_title,
+            NULL AS alert_level,
+            MAX(n.level) AS level,
+            NULL AS is_read,
+            NULL AS read_time,
+            MAX(n.send_time) AS send_time,
+            MAX(n.publisher_id) AS publisher_id,
+            MAX(n.publisher_name) AS publisher_name,
+            COUNT(1) AS recipient_count,
+            COALESCE(SUM(CASE WHEN n.is_read = 1 THEN 1 ELSE 0 END), 0) AS read_count,
+            1 AS status,
+            MAX(n.remark) AS remark,
+            MIN(n.create_time) AS create_time,
+            MAX(n.update_time) AS update_time
+        FROM `notification` n
+        LEFT JOIN `farm_task` ft ON ft.id = COALESCE(n.task_id, CASE WHEN n.ref_type = 'farm_task' THEN n.ref_id ELSE NULL END)
+        LEFT JOIN `plot` p ON p.id = ft.plot_id
+        <where>
+            n.status = 1
+            AND n.notice_type = 2
+            AND COALESCE(n.ref_type, 'farm_task_message') IN ('farm_task_message', 'farm_task')
+            <if test="userId != null">
+                AND n.user_id = #{userId}
+            </if>
+            <if test="title != null and title != ''">
+                AND n.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="content != null and content != ''">
+                AND n.content LIKE CONCAT('%', #{content}, '%')
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="startTime != null">
+                AND n.send_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND n.send_time &lt;= #{endTime}
+            </if>
+        </where>
+        GROUP BY COALESCE(n.ref_id, n.id)
+        ORDER BY MAX(n.send_time) DESC, MIN(n.id) DESC
+    </select>
+
+    <select id="selectFarmMessageGroupById" resultMap="NotificationResultMap">
+        SELECT grouped.*
+        FROM (
+            SELECT
+                MIN(n.id) AS id,
+                NULL AS user_id,
+                NULL AS username,
+                NULL AS nickname,
+                MAX(n.title) AS title,
+                MAX(n.content) AS content,
+                2 AS notice_type,
+                MAX(n.ref_type) AS ref_type,
+                COALESCE(n.ref_id, n.id) AS ref_id,
+                MAX(COALESCE(n.task_id, CASE WHEN n.ref_type = 'farm_task' THEN n.ref_id ELSE NULL END)) AS task_id,
+                MAX(ft.task_title) AS task_title,
+                MAX(ft.task_type) AS task_type,
+                MAX(ft.status) AS task_status,
+                MAX(p.plot_name) AS plot_name,
+                MAX(n.alert_id) AS alert_id,
+                NULL AS alert_title,
+                NULL AS alert_level,
+                MAX(n.level) AS level,
+                NULL AS is_read,
+                NULL AS read_time,
+                MAX(n.send_time) AS send_time,
+                MAX(n.publisher_id) AS publisher_id,
+                MAX(n.publisher_name) AS publisher_name,
+                COUNT(1) AS recipient_count,
+                COALESCE(SUM(CASE WHEN n.is_read = 1 THEN 1 ELSE 0 END), 0) AS read_count,
+                1 AS status,
+                MAX(n.remark) AS remark,
+                MIN(n.create_time) AS create_time,
+                MAX(n.update_time) AS update_time
+            FROM `notification` n
+            LEFT JOIN `farm_task` ft ON ft.id = COALESCE(n.task_id, CASE WHEN n.ref_type = 'farm_task' THEN n.ref_id ELSE NULL END)
+            LEFT JOIN `plot` p ON p.id = ft.plot_id
+            WHERE n.status = 1
+              AND n.notice_type = 2
+              AND COALESCE(n.ref_type, 'farm_task_message') IN ('farm_task_message', 'farm_task')
+            GROUP BY COALESCE(n.ref_id, n.id)
+        ) grouped
+        WHERE grouped.id = #{id}
+           OR grouped.ref_id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectFarmMessageStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN grouped.send_time &gt;= CURDATE() THEN 1 ELSE 0 END), 0) AS todayCount,
+            COALESCE(SUM(grouped.recipient_count - grouped.read_count), 0) AS unreadDeliveryCount,
+            COALESCE(SUM(grouped.read_count), 0) AS readDeliveryCount
+        FROM (
+            SELECT
+                COALESCE(n.ref_id, n.id) AS message_group_id,
+                MAX(n.send_time) AS send_time,
+                COUNT(1) AS recipient_count,
+                COALESCE(SUM(CASE WHEN n.is_read = 1 THEN 1 ELSE 0 END), 0) AS read_count
+            FROM `notification` n
+            WHERE n.status = 1
+              AND n.notice_type = 2
+              AND COALESCE(n.ref_type, 'farm_task_message') IN ('farm_task_message', 'farm_task')
+            <if test="userId != null">
+              AND n.user_id = #{userId}
+            </if>
+            GROUP BY COALESCE(n.ref_id, n.id)
+        ) grouped
+    </select>
+
+    <update id="updateSystemAnnouncementGroup">
+        UPDATE `notification`
+        SET title = #{title},
+            content = #{content},
+            level = #{level}
+        WHERE status = 1
+          AND notice_type = 1
+          AND COALESCE(ref_type, 'system_announcement') = 'system_announcement'
+          AND COALESCE(ref_id, id) = #{refId}
+    </update>
+
+    <update id="updateFarmMessageGroup">
+        UPDATE `notification`
+        SET task_id = #{taskId},
+            title = #{title},
+            content = #{content},
+            level = #{level},
+            remark = CASE
+                WHEN remark = '农事任务产生后自动生成' THEN '用户已编辑：原自动农事消息'
+                ELSE remark
+            END
+        WHERE status = 1
+          AND notice_type = 2
+          AND COALESCE(ref_type, 'farm_task_message') IN ('farm_task_message', 'farm_task')
+          AND COALESCE(ref_id, id) = #{refId}
+    </update>
+
+    <update id="updateReadStatus">
+        UPDATE `notification`
+        SET is_read = #{isRead},
+            read_time = #{readTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="markAllRead">
+        UPDATE `notification`
+        SET is_read = 1,
+            read_time = #{readTime}
+        <where>
+            status = 1
+            AND is_read = 0
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </update>
+
+    <delete id="deleteById">
+        UPDATE `notification`
+        SET status = 0
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        UPDATE `notification`
+        SET status = 0
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSystemAnnouncementGroups">
+        UPDATE `notification`
+        SET status = 0
+        WHERE notice_type = 1
+          AND COALESCE(ref_type, 'system_announcement') = 'system_announcement'
+          AND COALESCE(ref_id, id) IN
+        <foreach collection="refIds" item="refId" open="(" separator="," close=")">
+            #{refId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteFarmMessageGroups">
+        UPDATE `notification`
+        SET status = 0
+        WHERE notice_type = 2
+          AND COALESCE(ref_type, 'farm_task_message') IN ('farm_task_message', 'farm_task')
+          AND COALESCE(ref_id, id) IN
+        <foreach collection="refIds" item="refId" open="(" separator="," close=")">
+            #{refId}
+        </foreach>
+    </delete>
+</mapper>

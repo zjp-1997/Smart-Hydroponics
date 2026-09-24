@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.IotDevicePlanMapper">
+
+    <resultMap id="DevicePlanResultMap" type="com.smart_plant.smart_plant.entity.IotDevicePlan">
+        <id column="plan_id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="user_id" property="userId"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="type_name" property="typeName"/>
+        <result column="online_status" property="onlineStatus"/>
+        <result column="health_status" property="healthStatus"/>
+        <result column="collection_enabled" property="collectionEnabled"/>
+        <result column="collection_interval_minutes" property="collectionIntervalMinutes"/>
+        <result column="control_enabled" property="controlEnabled"/>
+        <result column="timezone" property="timezone"/>
+        <result column="effective_from" property="effectiveFrom"/>
+        <result column="effective_to" property="effectiveTo"/>
+        <result column="apply_status" property="applyStatus"/>
+        <result column="last_applied_at" property="lastAppliedAt"/>
+        <result column="last_apply_error" property="lastApplyError"/>
+        <result column="version" property="version"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="ScheduleResultMap" type="com.smart_plant.smart_plant.entity.IotDeviceSchedule">
+        <id column="id" property="id"/>
+        <result column="plan_id" property="planId"/>
+        <result column="schedule_name" property="scheduleName"/>
+        <result column="weekdays_mask" property="weekdaysMask"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="enabled" property="enabled"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="PlanColumns">
+        dp.id AS plan_id, d.id AS device_id, d.user_id, d.plot_id, p.plot_name,
+        d.device_code, d.name AS device_name, dt.type_code, dt.type_name,
+        d.online_status, d.health_status,
+        dp.collection_enabled, dp.collection_interval_minutes, dp.control_enabled,
+        dp.timezone, dp.effective_from, dp.effective_to, dp.apply_status,
+        dp.last_applied_at, dp.last_apply_error, dp.version,
+        dp.create_by, dp.update_by, dp.create_time, dp.update_time
+    </sql>
+
+    <select id="selectDevicePlans" resultMap="DevicePlanResultMap">
+        SELECT <include refid="PlanColumns"/>
+        FROM `iot_device` d
+        JOIN `device_type` dt ON dt.id = d.type_id
+        LEFT JOIN `plot` p ON p.id = d.plot_id
+        LEFT JOIN `iot_device_plan` dp ON dp.device_id = d.id
+        <where>
+            dt.type_code IN ('ENV_SENSOR', 'WATER_QUALITY', 'GROW_LIGHT', 'WATER_PUMP')
+            <if test="userId != null">AND d.user_id = #{userId}</if>
+            <if test="plotId != null">AND d.plot_id = #{plotId}</if>
+            <if test="typeCode != null and typeCode != ''">AND dt.type_code = #{typeCode}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (d.name LIKE CONCAT('%', #{keyword}, '%') OR d.device_code LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY d.plot_id, dt.type_code, d.id
+    </select>
+
+    <select id="selectByDeviceId" resultMap="DevicePlanResultMap">
+        SELECT <include refid="PlanColumns"/>
+        FROM `iot_device` d
+        JOIN `device_type` dt ON dt.id = d.type_id
+        LEFT JOIN `plot` p ON p.id = d.plot_id
+        LEFT JOIN `iot_device_plan` dp ON dp.device_id = d.id
+        WHERE d.id = #{deviceId}
+    </select>
+
+    <select id="selectSchedulesByPlanIds" resultMap="ScheduleResultMap">
+        SELECT id, plan_id, schedule_name, weekdays_mask, start_time, end_time,
+               enabled, sort_order, create_time, update_time
+        FROM `iot_device_schedule`
+        WHERE plan_id IN
+        <foreach collection="planIds" item="planId" open="(" separator="," close=")">#{planId}</foreach>
+        ORDER BY plan_id, sort_order, start_time, id
+    </select>
+
+    <insert id="insertPlan" parameterType="com.smart_plant.smart_plant.entity.IotDevicePlan"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `iot_device_plan`
+        (device_id, collection_enabled, collection_interval_minutes, control_enabled,
+         timezone, effective_from, effective_to, apply_status, version, create_by, update_by)
+        VALUES
+        (#{deviceId}, #{collectionEnabled}, #{collectionIntervalMinutes}, #{controlEnabled},
+         #{timezone}, #{effectiveFrom}, #{effectiveTo}, 0, 0, #{createBy}, #{updateBy})
+    </insert>
+
+    <update id="updatePlan" parameterType="com.smart_plant.smart_plant.entity.IotDevicePlan">
+        UPDATE `iot_device_plan`
+        SET collection_enabled = #{collectionEnabled},
+            collection_interval_minutes = #{collectionIntervalMinutes},
+            control_enabled = #{controlEnabled},
+            timezone = #{timezone},
+            effective_from = #{effectiveFrom},
+            effective_to = #{effectiveTo},
+            apply_status = 0,
+            last_apply_error = NULL,
+            version = version + 1,
+            update_by = #{updateBy}
+        WHERE device_id = #{deviceId} AND version = #{version}
+    </update>
+
+    <delete id="deleteSchedulesByPlanId">
+        DELETE FROM `iot_device_schedule` WHERE plan_id = #{planId}
+    </delete>
+
+    <insert id="insertSchedules">
+        INSERT INTO `iot_device_schedule`
+        (plan_id, schedule_name, weekdays_mask, start_time, end_time, enabled, sort_order)
+        VALUES
+        <foreach collection="schedules" item="item" separator=",">
+            (#{item.planId}, #{item.scheduleName}, #{item.weekdaysMask}, #{item.startTime},
+             #{item.endTime}, #{item.enabled}, #{item.sortOrder})
+        </foreach>
+    </insert>
+
+    <delete id="deletePlanByDeviceId">
+        DELETE FROM `iot_device_plan` WHERE device_id = #{deviceId}
+    </delete>
+</mapper>

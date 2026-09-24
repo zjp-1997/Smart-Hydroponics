@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.FarmChatMessageMapper">
+
+    <resultMap id="MessageResultMap" type="com.smart_plant.smart_plant.entity.FarmChatMessage">
+        <id column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="message_type" property="messageType"/>
+        <result column="content" property="content"/>
+        <result column="media_url" property="mediaUrl"/>
+        <result column="is_read" property="isRead"/>
+        <result column="read_time" property="readTime"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 消息创建时间交给数据库生成，保证多端时钟不一致时排序稳定。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.FarmChatMessage"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `farm_chat_message`
+            (session_id, sender_id, receiver_id, message_type, content, media_url, is_read, status)
+        VALUES
+            (#{sessionId}, #{senderId}, #{receiverId}, #{messageType}, #{content}, #{mediaUrl}, #{isRead}, #{status})
+    </insert>
+
+    <select id="countMediaReferences" resultType="int">
+        SELECT COUNT(1) FROM `farm_chat_message`
+        WHERE media_url = #{mediaUrl} AND status = 1
+    </select>
+
+    <select id="countAccessibleMedia" resultType="int">
+        SELECT COUNT(1)
+        FROM `farm_chat_message` m
+        INNER JOIN `farm_chat_session` s ON s.id = m.session_id AND s.status = 1
+        WHERE m.media_url = #{mediaUrl} AND m.status = 1
+          AND (
+            #{admin} = TRUE
+            OR s.farm_owner_id = #{userId}
+            OR (s.member_user_id = #{userId} AND (
+                (s.member_role = 'user' AND EXISTS (
+                    SELECT 1 FROM `farm_owner_user` fou
+                    WHERE fou.owner_user_id = s.farm_owner_id AND fou.user_id = #{userId}
+                ))
+                OR (s.member_role = 'technician' AND EXISTS (
+                    SELECT 1 FROM `farm_owner_technician` fot
+                    WHERE fot.owner_user_id = s.farm_owner_id
+                      AND fot.technician_user_id = #{userId} AND fot.status = 1
+                ))
+            ))
+          )
+    </select>
+
+    <select id="selectCursor" resultMap="MessageResultMap">
+        SELECT * FROM `farm_chat_message`
+        WHERE session_id = #{sessionId} AND status = 1
+        <if test="beforeId != null">AND id &lt; #{beforeId}</if>
+        <if test="afterId != null">AND id &gt; #{afterId}</if>
+        <choose>
+            <when test="afterId != null">ORDER BY id ASC</when>
+            <otherwise>ORDER BY id DESC</otherwise>
+        </choose>
+        LIMIT #{limit}
+    </select>
+
+    <update id="markReceivedMessagesRead">
+        UPDATE `farm_chat_message`
+        SET is_read = 1, read_time = NOW()
+        WHERE session_id = #{sessionId} AND receiver_id = #{receiverId}
+          AND is_read = 0 AND status = 1
+    </update>
+</mapper>

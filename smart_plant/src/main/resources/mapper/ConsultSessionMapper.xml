@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.ConsultSessionMapper">
+
+    <!-- 咨询会话字段映射：用户和专家展示字段通过关联查询补充，不在主表冗余。 -->
+    <resultMap id="ConsultSessionResultMap" type="com.smart_plant.smart_plant.entity.ConsultSession">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="expert_id" property="expertId"/>
+        <result column="session_no" property="sessionNo"/>
+        <result column="session_title" property="sessionTitle"/>
+        <result column="status" property="status"/>
+        <result column="last_message_content" property="lastMessageContent"/>
+        <result column="last_message_time" property="lastMessageTime"/>
+        <result column="user_unread_count" property="userUnreadCount"/>
+        <result column="expert_unread_count" property="expertUnreadCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="user_avatar" property="userAvatar"/>
+        <result column="expert_name" property="expertName"/>
+        <result column="expert_avatar" property="expertAvatar"/>
+        <result column="expert_user_id" property="expertUserId"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        s.id, s.user_id, s.expert_id, s.session_no, s.session_title, s.status,
+        s.last_message_content, s.last_message_time,
+        COALESCE(s.user_unread_count, 0) AS user_unread_count,
+        COALESCE(s.expert_unread_count, 0) AS expert_unread_count,
+        s.create_time, s.update_time,
+        u.username, u.nickname, e.real_name AS expert_name, e.avatar AS expert_avatar, e.user_id AS expert_user_id
+    </sql>
+
+    <sql id="ClientSessionColumns">
+        s.id, s.user_id, s.expert_id, s.session_no, s.session_title, s.status,
+        s.last_message_content, s.last_message_time,
+        COALESCE(unread.user_unread_count, 0) AS user_unread_count,
+        COALESCE(s.expert_unread_count, 0) AS expert_unread_count,
+        s.create_time, s.update_time,
+        u.username, u.nickname, e.real_name AS expert_name, e.avatar AS expert_avatar, e.user_id AS expert_user_id
+    </sql>
+
+    <sql id="ExpertSessionColumns">
+        s.id, s.user_id, s.expert_id, s.session_no, s.session_title, s.status,
+        s.last_message_content, s.last_message_time,
+        COALESCE(s.user_unread_count, 0) AS user_unread_count,
+        COALESCE(unread.expert_unread_count, 0) AS expert_unread_count,
+        s.create_time, s.update_time,
+        u.username, u.nickname, u.avatar AS user_avatar,
+        e.real_name AS expert_name, e.avatar AS expert_avatar, e.user_id AS expert_user_id
+    </sql>
+
+    <sql id="BaseJoin">
+        INNER JOIN `user` u ON u.id = s.user_id
+        INNER JOIN `expert_profile` e ON e.id = s.expert_id
+    </sql>
+
+    <!-- 创建咨询会话，session_no 由服务层生成，保证业务编号可读且唯一。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.ConsultSession"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `consult_session`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="expertId != null">expert_id,</if>
+            <if test="sessionNo != null and sessionNo != ''">session_no,</if>
+            <if test="sessionTitle != null and sessionTitle != ''">session_title,</if>
+            <if test="status != null">status,</if>
+            <if test="lastMessageContent != null and lastMessageContent != ''">last_message_content,</if>
+            <if test="lastMessageTime != null">last_message_time,</if>
+            <if test="userUnreadCount != null">user_unread_count,</if>
+            <if test="expertUnreadCount != null">expert_unread_count,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="expertId != null">#{expertId},</if>
+            <if test="sessionNo != null and sessionNo != ''">#{sessionNo},</if>
+            <if test="sessionTitle != null and sessionTitle != ''">#{sessionTitle},</if>
+            <if test="status != null">#{status},</if>
+            <if test="lastMessageContent != null and lastMessageContent != ''">#{lastMessageContent},</if>
+            <if test="lastMessageTime != null">#{lastMessageTime},</if>
+            <if test="userUnreadCount != null">#{userUnreadCount},</if>
+            <if test="expertUnreadCount != null">#{expertUnreadCount},</if>
+        </trim>
+    </insert>
+
+    <select id="selectById" resultMap="ConsultSessionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `consult_session` s
+        <include refid="BaseJoin"/>
+        WHERE s.id = #{id}
+    </select>
+
+    <select id="selectActiveByUserAndExpert" resultMap="ConsultSessionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `consult_session` s
+        <include refid="BaseJoin"/>
+        WHERE s.user_id = #{userId}
+          AND s.expert_id = #{expertId}
+          AND s.status = 1
+        ORDER BY s.id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 查询当前用户与专家最新的非删除会话，统一专家列表入口和消息列表入口的会话来源。 -->
+    <select id="selectLatestByUserAndExpert" resultMap="ConsultSessionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `consult_session` s
+        <include refid="BaseJoin"/>
+        WHERE s.user_id = #{userId}
+          AND s.expert_id = #{expertId}
+          AND s.status != 0
+        ORDER BY COALESCE(s.last_message_time, s.update_time, s.create_time) DESC, s.id DESC
+        LIMIT 1
+    </select>
+
+    <!-- 返回第一位启用且可咨询的专家，供未指定专家的用户端入口兜底使用。 -->
+    <select id="selectDefaultExpert" resultMap="ConsultSessionResultMap">
+        SELECT
+            NULL AS id,
+            NULL AS user_id,
+            e.id AS expert_id,
+            NULL AS session_no,
+            NULL AS session_title,
+            NULL AS status,
+            NULL AS last_message_content,
+            NULL AS last_message_time,
+            NULL AS user_unread_count,
+            NULL AS expert_unread_count,
+            NULL AS create_time,
+            NULL AS update_time,
+            NULL AS username,
+            NULL AS nickname,
+            e.real_name AS expert_name,
+            e.avatar AS expert_avatar,
+            e.user_id AS expert_user_id
+        FROM `expert_profile` e
+        WHERE e.service_status = 1
+          AND e.consultation_status = 1
+          AND e.status = 1
+        ORDER BY e.rating DESC, e.id ASC
+        LIMIT 1
+    </select>
+
+    <!-- 查询当前用户的专家聊天会话列表，并在列表接口中直接聚合当前用户未读数，供 farm 消息页顶部汇总展示。 -->
+    <select id="selectClientSessionList" resultMap="ConsultSessionResultMap">
+        SELECT <include refid="ClientSessionColumns"/>
+        FROM `consult_session` s
+        <include refid="BaseJoin"/>
+        LEFT JOIN (
+            SELECT session_id, COUNT(1) AS user_unread_count
+            FROM `consult_message`
+            WHERE receiver_id = #{userId}
+              AND is_read = 0
+              AND status = 1
+            GROUP BY session_id
+        ) unread ON unread.session_id = s.id
+        WHERE s.user_id = #{userId}
+          AND s.status != 0
+          AND NOT EXISTS (
+              SELECT 1
+              FROM `consult_session` newer
+              WHERE newer.user_id = s.user_id
+                AND newer.expert_id = s.expert_id
+                AND newer.status != 0
+                AND (
+                    COALESCE(newer.last_message_time, newer.update_time, newer.create_time) &gt;
+                    COALESCE(s.last_message_time, s.update_time, s.create_time)
+                    OR (
+                        COALESCE(newer.last_message_time, newer.update_time, newer.create_time) =
+                        COALESCE(s.last_message_time, s.update_time, s.create_time)
+                        AND newer.id &gt; s.id
+                    )
+                )
+          )
+        ORDER BY COALESCE(s.last_message_time, s.update_time, s.create_time) DESC, s.id DESC
+    </select>
+
+    <!-- 专家会话列表以专家档案绑定账号为边界，未读数从消息明细实时统计。 -->
+    <select id="selectExpertSessionList" resultMap="ConsultSessionResultMap">
+        SELECT <include refid="ExpertSessionColumns"/>
+        FROM `consult_session` s
+        <include refid="BaseJoin"/>
+        LEFT JOIN (
+            SELECT session_id, COUNT(1) AS expert_unread_count
+            FROM `consult_message`
+            WHERE receiver_id = #{expertUserId} AND is_read = 0 AND status = 1
+            GROUP BY session_id
+        ) unread ON unread.session_id = s.id
+        WHERE e.user_id = #{expertUserId} AND s.status != 0
+        ORDER BY COALESCE(s.last_message_time, s.update_time, s.create_time) DESC, s.id DESC
+    </select>
+
+    <update id="resetExpertUnreadCount">
+        UPDATE `consult_session` s
+        INNER JOIN `expert_profile` e ON e.id = s.expert_id
+        SET s.expert_unread_count = 0
+        WHERE s.id = #{id} AND e.user_id = #{expertUserId}
+    </update>
+
+    <!-- 更新会话摘要和未读数：用户发给专家时增加专家未读，专家回复时增加用户未读。 -->
+    <update id="updateLastMessage">
+        UPDATE `consult_session`
+        SET last_message_content = #{lastMessageContent},
+            last_message_time = NOW(),
+            expert_unread_count = COALESCE(expert_unread_count, 0) + CASE WHEN #{receiverIsExpert} THEN 1 ELSE 0 END,
+            user_unread_count = COALESCE(user_unread_count, 0) + CASE WHEN #{receiverIsExpert} THEN 0 ELSE 1 END
+        WHERE id = #{id}
+    </update>
+
+    <!-- 用户进入聊天详情后清空用户侧未读数，消息页再次刷新时即可展示最新未读状态。 -->
+    <update id="resetUserUnreadCount">
+        UPDATE `consult_session`
+        SET user_unread_count = 0
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <update id="increaseExpertConsultationCount">
+        UPDATE `expert_profile`
+        SET consultation_count = COALESCE(consultation_count, 0) + 1
+        WHERE id = #{expertId}
+    </update>
+</mapper>

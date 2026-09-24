@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.FarmChatSessionMapper">
+
+    <!-- 会话主表字段映射，不把联系人展示信息冗余保存到会话表。 -->
+    <resultMap id="SessionResultMap" type="com.smart_plant.smart_plant.entity.FarmChatSession">
+        <id column="id" property="id"/>
+        <result column="session_no" property="sessionNo"/>
+        <result column="farm_owner_id" property="farmOwnerId"/>
+        <result column="member_user_id" property="memberUserId"/>
+        <result column="member_role" property="memberRole"/>
+        <result column="last_message_content" property="lastMessageContent"/>
+        <result column="last_message_time" property="lastMessageTime"/>
+        <result column="owner_unread_count" property="ownerUnreadCount"/>
+        <result column="member_unread_count" property="memberUnreadCount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 消息页联系人字段映射；未建立会话时 sessionId 和 chatTime 允许为空。 -->
+    <resultMap id="SessionListResultMap" type="com.smart_plant.smart_plant.dto.FarmChatSessionResponse">
+        <id column="session_id" property="sessionId"/>
+        <result column="peer_user_id" property="peerUserId"/>
+        <result column="peer_name" property="peerName"/>
+        <result column="peer_avatar" property="peerAvatar"/>
+        <result column="peer_role_code" property="peerRoleCode"/>
+        <result column="last_message_content" property="lastMessageContent"/>
+        <result column="chat_time" property="chatTime"/>
+        <result column="unread_count" property="unreadCount"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.FarmChatSession"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `farm_chat_session`
+            (session_no, farm_owner_id, member_user_id, member_role, status,
+             owner_unread_count, member_unread_count)
+        VALUES
+            (#{sessionNo}, #{farmOwnerId}, #{memberUserId}, #{memberRole}, #{status},
+             #{ownerUnreadCount}, #{memberUnreadCount})
+    </insert>
+
+    <select id="selectById" resultMap="SessionResultMap">
+        SELECT * FROM `farm_chat_session` WHERE id = #{id} AND status = 1
+    </select>
+
+    <select id="selectByParticipants" resultMap="SessionResultMap">
+        SELECT * FROM `farm_chat_session`
+        WHERE farm_owner_id = #{ownerId} AND member_user_id = #{memberId} AND status = 1
+        LIMIT 1
+    </select>
+
+    <!-- 农场主联系人由两张现有绑定表合并，技术人员只读取启用绑定。 -->
+    <select id="selectOwnerSessionList" resultMap="SessionListResultMap">
+        SELECT s.id AS session_id, member.id AS peer_user_id,
+               COALESCE(NULLIF(member.nickname, ''), member.username) AS peer_name,
+               member.avatar AS peer_avatar, LOWER(role.role_code) AS peer_role_code,
+               s.last_message_content, s.last_message_time AS chat_time,
+               COALESCE(s.owner_unread_count, 0) AS unread_count
+        FROM (
+            SELECT fou.owner_user_id, fou.user_id AS member_user_id
+            FROM `farm_owner_user` fou WHERE fou.owner_user_id = #{ownerId}
+            UNION ALL
+            SELECT fot.owner_user_id, fot.technician_user_id AS member_user_id
+            FROM `farm_owner_technician` fot
+            WHERE fot.owner_user_id = #{ownerId} AND fot.status = 1
+        ) binding
+        INNER JOIN `user` member ON member.id = binding.member_user_id AND member.status = 1
+        INNER JOIN `role` role ON role.id = member.role_id
+            AND LOWER(role.role_code) IN ('user', 'technician')
+        LEFT JOIN `farm_chat_session` s ON s.farm_owner_id = binding.owner_user_id
+            AND s.member_user_id = binding.member_user_id AND s.status = 1
+        ORDER BY s.last_message_time IS NULL, s.last_message_time DESC, member.id DESC
+    </select>
+
+    <select id="selectUserSessionList" resultMap="SessionListResultMap">
+        SELECT s.id AS session_id, owner.id AS peer_user_id,
+               COALESCE(NULLIF(owner.nickname, ''), owner.username) AS peer_name,
+               owner.avatar AS peer_avatar, 'farm_owner' AS peer_role_code,
+               s.last_message_content, s.last_message_time AS chat_time,
+               COALESCE(s.member_unread_count, 0) AS unread_count
+        FROM `farm_owner_user` binding
+        INNER JOIN `user` owner ON owner.id = binding.owner_user_id AND owner.status = 1
+        INNER JOIN `role` role ON role.id = owner.role_id AND LOWER(role.role_code) = 'farm_owner'
+        LEFT JOIN `farm_chat_session` s ON s.farm_owner_id = binding.owner_user_id
+            AND s.member_user_id = binding.user_id AND s.status = 1
+        WHERE binding.user_id = #{userId}
+        ORDER BY s.last_message_time IS NULL, s.last_message_time DESC
+    </select>
+
+    <select id="selectTechnicianSessionList" resultMap="SessionListResultMap">
+        SELECT s.id AS session_id, owner.id AS peer_user_id,
+               COALESCE(NULLIF(owner.nickname, ''), owner.username) AS peer_name,
+               owner.avatar AS peer_avatar, 'farm_owner' AS peer_role_code,
+               s.last_message_content, s.last_message_time AS chat_time,
+               COALESCE(s.member_unread_count, 0) AS unread_count
+        FROM `farm_owner_technician` binding
+        INNER JOIN `user` owner ON owner.id = binding.owner_user_id AND owner.status = 1
+        INNER JOIN `role` role ON role.id = owner.role_id AND LOWER(role.role_code) = 'farm_owner'
+        LEFT JOIN `farm_chat_session` s ON s.farm_owner_id = binding.owner_user_id
+            AND s.member_user_id = binding.technician_user_id AND s.status = 1
+        WHERE binding.technician_user_id = #{technicianId} AND binding.status = 1
+        ORDER BY s.last_message_time IS NULL, s.last_message_time DESC, owner.id DESC
+    </select>
+
+    <update id="updateLastMessage">
+        UPDATE `farm_chat_session`
+        SET last_message_content = #{lastMessageContent}, last_message_time = NOW(),
+            owner_unread_count = owner_unread_count + CASE WHEN #{senderIsOwner} THEN 0 ELSE 1 END,
+            member_unread_count = member_unread_count + CASE WHEN #{senderIsOwner} THEN 1 ELSE 0 END
+        WHERE id = #{id} AND status = 1
+    </update>
+
+    <update id="resetUnreadCount">
+        UPDATE `farm_chat_session`
+        SET owner_unread_count = CASE WHEN farm_owner_id = #{currentUserId} THEN 0 ELSE owner_unread_count END,
+            member_unread_count = CASE WHEN member_user_id = #{currentUserId} THEN 0 ELSE member_unread_count END
+        WHERE id = #{id} AND status = 1
+          AND (farm_owner_id = #{currentUserId} OR member_user_id = #{currentUserId})
+    </update>
+</mapper>

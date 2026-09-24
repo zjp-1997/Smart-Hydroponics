@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 作物生长期 MyBatis 映射文件，对应 growth_stage 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.GrowthStageMapper">
+
+    <!-- 作物生长期字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="GrowthStageResultMap" type="com.smart_plant.smart_plant.entity.GrowthStage">
+        <id column="id" property="id"/>
+        <result column="crop_id" property="cropId"/>
+        <result column="crop_name" property="cropName"/>
+        <result column="stage_name" property="stageName"/>
+        <result column="stage_code" property="stageCode"/>
+        <result column="stage_order" property="stageOrder"/>
+        <result column="start_day" property="startDay"/>
+        <result column="end_day" property="endDay"/>
+        <result column="duration" property="duration"/>
+        <result column="light_hours" property="lightHours"/>
+        <result column="temp_min" property="tempMin"/>
+        <result column="temp_max" property="tempMax"/>
+        <result column="humidity_min" property="humidityMin"/>
+        <result column="humidity_max" property="humidityMax"/>
+        <result column="ph_min" property="phMin"/>
+        <result column="ph_max" property="phMax"/>
+        <result column="ec_min" property="ecMin"/>
+        <result column="ec_max" property="ecMax"/>
+        <result column="water_interval_days" property="waterIntervalDays"/>
+        <result column="fertilizer_interval_days" property="fertilizerIntervalDays"/>
+        <result column="management_advice" property="managementAdvice"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 作物生长期通用查询字段，作物名称通过左连接带出。 -->
+    <sql id="BaseColumns">
+        gs.id, gs.crop_id, c.crop_name, gs.stage_name, gs.stage_code, gs.stage_order,
+        gs.start_day, gs.end_day, gs.duration, gs.light_hours, gs.temp_min, gs.temp_max,
+        gs.humidity_min, gs.humidity_max, gs.ph_min, gs.ph_max, gs.ec_min, gs.ec_max,
+        gs.water_interval_days, gs.fertilizer_interval_days, gs.management_advice,
+        gs.status, gs.remark, gs.create_time, gs.update_time
+    </sql>
+
+    <!-- 新增作物生长期。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.GrowthStage"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `growth_stage`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="cropId != null">crop_id,</if>
+            <if test="stageName != null and stageName != ''">stage_name,</if>
+            <if test="stageCode != null and stageCode != ''">stage_code,</if>
+            <if test="stageOrder != null">stage_order,</if>
+            <if test="startDay != null">start_day,</if>
+            <if test="endDay != null">end_day,</if>
+            <if test="duration != null">duration,</if>
+            <if test="lightHours != null">light_hours,</if>
+            <if test="tempMin != null">temp_min,</if>
+            <if test="tempMax != null">temp_max,</if>
+            <if test="humidityMin != null">humidity_min,</if>
+            <if test="humidityMax != null">humidity_max,</if>
+            <if test="phMin != null">ph_min,</if>
+            <if test="phMax != null">ph_max,</if>
+            <if test="ecMin != null">ec_min,</if>
+            <if test="ecMax != null">ec_max,</if>
+            <if test="waterIntervalDays != null">water_interval_days,</if>
+            <if test="fertilizerIntervalDays != null">fertilizer_interval_days,</if>
+            <if test="managementAdvice != null and managementAdvice != ''">management_advice,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="cropId != null">#{cropId},</if>
+            <if test="stageName != null and stageName != ''">#{stageName},</if>
+            <if test="stageCode != null and stageCode != ''">#{stageCode},</if>
+            <if test="stageOrder != null">#{stageOrder},</if>
+            <if test="startDay != null">#{startDay},</if>
+            <if test="endDay != null">#{endDay},</if>
+            <if test="duration != null">#{duration},</if>
+            <if test="lightHours != null">#{lightHours},</if>
+            <if test="tempMin != null">#{tempMin},</if>
+            <if test="tempMax != null">#{tempMax},</if>
+            <if test="humidityMin != null">#{humidityMin},</if>
+            <if test="humidityMax != null">#{humidityMax},</if>
+            <if test="phMin != null">#{phMin},</if>
+            <if test="phMax != null">#{phMax},</if>
+            <if test="ecMin != null">#{ecMin},</if>
+            <if test="ecMax != null">#{ecMax},</if>
+            <if test="waterIntervalDays != null">#{waterIntervalDays},</if>
+            <if test="fertilizerIntervalDays != null">#{fertilizerIntervalDays},</if>
+            <if test="managementAdvice != null and managementAdvice != ''">#{managementAdvice},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID物理删除作物生长期。 -->
+    <delete id="deleteById">
+        DELETE FROM `growth_stage` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除作物生长期。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `growth_stage`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID动态更新作物生长期。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.GrowthStage">
+        UPDATE `growth_stage`
+        <set>
+            <if test="cropId != null">crop_id = #{cropId},</if>
+            <if test="stageName != null and stageName != ''">stage_name = #{stageName},</if>
+            <if test="stageCode != null">stage_code = #{stageCode},</if>
+            <if test="stageOrder != null">stage_order = #{stageOrder},</if>
+            <if test="startDay != null">start_day = #{startDay},</if>
+            <if test="endDay != null">end_day = #{endDay},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="lightHours != null">light_hours = #{lightHours},</if>
+            <if test="tempMin != null">temp_min = #{tempMin},</if>
+            <if test="tempMax != null">temp_max = #{tempMax},</if>
+            <if test="humidityMin != null">humidity_min = #{humidityMin},</if>
+            <if test="humidityMax != null">humidity_max = #{humidityMax},</if>
+            <if test="phMin != null">ph_min = #{phMin},</if>
+            <if test="phMax != null">ph_max = #{phMax},</if>
+            <if test="ecMin != null">ec_min = #{ecMin},</if>
+            <if test="ecMax != null">ec_max = #{ecMax},</if>
+            <if test="waterIntervalDays != null">water_interval_days = #{waterIntervalDays},</if>
+            <if test="fertilizerIntervalDays != null">fertilizer_interval_days = #{fertilizerIntervalDays},</if>
+            <if test="managementAdvice != null">management_advice = #{managementAdvice},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 单独修改作物生长期启用/禁用状态。 -->
+    <update id="updateStatus">
+        UPDATE `growth_stage`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询作物生长期详情。 -->
+    <select id="selectById" resultMap="GrowthStageResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `growth_stage` gs
+        LEFT JOIN `crop` c ON c.id = gs.crop_id
+        WHERE gs.id = #{id}
+    </select>
+
+    <!-- 分页条件查询作物生长期列表。 -->
+    <select id="selectList" resultMap="GrowthStageResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `growth_stage` gs
+        LEFT JOIN `crop` c ON c.id = gs.crop_id
+        <where>
+            <if test="cropId != null">
+                AND gs.crop_id = #{cropId}
+            </if>
+            <if test="stageName != null and stageName != ''">
+                AND gs.stage_name LIKE CONCAT('%', #{stageName}, '%')
+            </if>
+            <if test="status != null">
+                AND gs.status = #{status}
+            </if>
+        </where>
+        ORDER BY gs.crop_id ASC, gs.stage_order ASC, gs.id DESC
+    </select>
+
+    <!-- 统计同一作物下阶段顺序数量，排除当前编辑记录。 -->
+    <select id="countByCropIdAndStageOrder" resultType="int">
+        SELECT COUNT(1)
+        FROM `growth_stage`
+        WHERE crop_id = #{cropId}
+          AND stage_order = #{stageOrder}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+</mapper>

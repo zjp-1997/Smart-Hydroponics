@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    病虫害防治措施 MyBatis 映射文件。
+    负责 disease_control 表的字段映射、增删改查和条件查询。
+-->
+<mapper namespace="com.smart_plant.smart_plant.mapper.DiseaseControlMapper">
+
+    <!-- 字段映射：将数据库下划线字段映射到 DiseaseControl 的驼峰属性。 -->
+    <resultMap id="DiseaseControlResultMap" type="com.smart_plant.smart_plant.entity.DiseaseControl">
+        <id column="id" property="id"/>
+        <result column="disease_id" property="diseaseId"/>
+        <result column="disease_name" property="diseaseName"/>
+        <result column="control_type" property="controlType"/>
+        <result column="control_category" property="controlCategory"/>
+        <result column="method" property="method"/>
+        <result column="drug_name" property="drugName"/>
+        <result column="usage_method" property="usageMethod"/>
+        <result column="dosage_spec" property="dosageSpec"/>
+        <result column="safety_interval_days" property="safetyIntervalDays"/>
+        <result column="precautions" property="precautions"/>
+        <result column="suitable_stage" property="suitableStage"/>
+        <result column="status" property="status"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 通用查询列：额外关联 disease_pest.name 作为 diseaseName 返回给前端展示。 -->
+    <sql id="BaseColumns">
+        dc.id, dc.disease_id, dp.name AS disease_name, dc.control_type, dc.control_category,
+        dc.method, dc.drug_name, dc.usage_method, dc.dosage_spec,
+        dc.safety_interval_days, dc.precautions, dc.suitable_stage,
+        dc.status, dc.sort_order, dc.remark, dc.create_time, dc.update_time
+    </sql>
+
+    <!-- 新增防治措施：只写入有值字段，未传字段交给数据库默认值处理。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.DiseaseControl"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `disease_control`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="diseaseId != null">disease_id,</if>
+            <if test="controlType != null">control_type,</if>
+            <if test="controlCategory != null">control_category,</if>
+            <if test="method != null and method != ''">method,</if>
+            <if test="drugName != null and drugName != ''">drug_name,</if>
+            <if test="usageMethod != null and usageMethod != ''">usage_method,</if>
+            <if test="dosageSpec != null and dosageSpec != ''">dosage_spec,</if>
+            <if test="safetyIntervalDays != null">safety_interval_days,</if>
+            <if test="precautions != null and precautions != ''">precautions,</if>
+            <if test="suitableStage != null and suitableStage != ''">suitable_stage,</if>
+            <if test="status != null">status,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="diseaseId != null">#{diseaseId},</if>
+            <if test="controlType != null">#{controlType},</if>
+            <if test="controlCategory != null">#{controlCategory},</if>
+            <if test="method != null and method != ''">#{method},</if>
+            <if test="drugName != null and drugName != ''">#{drugName},</if>
+            <if test="usageMethod != null and usageMethod != ''">#{usageMethod},</if>
+            <if test="dosageSpec != null and dosageSpec != ''">#{dosageSpec},</if>
+            <if test="safetyIntervalDays != null">#{safetyIntervalDays},</if>
+            <if test="precautions != null and precautions != ''">#{precautions},</if>
+            <if test="suitableStage != null and suitableStage != ''">#{suitableStage},</if>
+            <if test="status != null">#{status},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID物理删除单条防治措施。 -->
+    <delete id="deleteById">
+        DELETE FROM `disease_control` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除防治措施。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `disease_control`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID动态更新防治措施，未传字段保持原值。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.DiseaseControl">
+        UPDATE `disease_control`
+        <set>
+            <if test="diseaseId != null">disease_id = #{diseaseId},</if>
+            <if test="controlType != null">control_type = #{controlType},</if>
+            <if test="controlCategory != null">control_category = #{controlCategory},</if>
+            <if test="method != null and method != ''">method = #{method},</if>
+            <if test="drugName != null">drug_name = #{drugName},</if>
+            <if test="usageMethod != null">usage_method = #{usageMethod},</if>
+            <if test="dosageSpec != null">dosage_spec = #{dosageSpec},</if>
+            <if test="safetyIntervalDays != null">safety_interval_days = #{safetyIntervalDays},</if>
+            <if test="precautions != null">precautions = #{precautions},</if>
+            <if test="suitableStage != null">suitable_stage = #{suitableStage},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 单独修改启用/停用状态。 -->
+    <update id="updateStatus">
+        UPDATE `disease_control`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询防治措施详情，并带出病虫害名称。 -->
+    <select id="selectById" resultMap="DiseaseControlResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `disease_control` dc
+        LEFT JOIN `disease_pest` dp ON dp.id = dc.disease_id
+        WHERE dc.id = #{id}
+    </select>
+
+    <!-- 条件查询防治措施列表，支持病虫害ID、病虫害名称、防治类型和状态筛选。 -->
+    <select id="selectList" resultMap="DiseaseControlResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `disease_control` dc
+        LEFT JOIN `disease_pest` dp ON dp.id = dc.disease_id
+        <where>
+            <if test="diseaseId != null">
+                AND dc.disease_id = #{diseaseId}
+            </if>
+            <if test="diseaseName != null and diseaseName != ''">
+                AND dp.name LIKE CONCAT('%', #{diseaseName}, '%')
+            </if>
+            <if test="controlType != null">
+                AND dc.control_type = #{controlType}
+            </if>
+            <if test="controlCategory != null">
+                AND dc.control_category = #{controlCategory}
+            </if>
+            <if test="status != null">
+                AND dc.status = #{status}
+            </if>
+        </where>
+        ORDER BY dc.disease_id ASC, dc.sort_order ASC, dc.control_type ASC, dc.id ASC
+    </select>
+</mapper>

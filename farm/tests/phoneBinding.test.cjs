@@ -1,0 +1,21 @@
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
+
+// 静态检查绑定弹框、真实接口调用和验证码登录链路，防止页面退回到“建设中”占位交互。
+const projectRoot = path.resolve(__dirname, '..')
+const accountPage = fs.readFileSync(path.join(projectRoot, 'pages/secondPage/account_setting/index.vue'), 'utf8')
+const codeLoginPage = fs.readFileSync(path.join(projectRoot, 'pages/login/code_index.vue'), 'utf8')
+const authApi = fs.readFileSync(path.join(projectRoot, 'api/clientAuth.js'), 'utf8')
+
+assert.match(accountPage, /@tap="openPhoneDialog"/)
+assert.match(accountPage, /class="phone-dialog"/)
+assert.match(accountPage, /this\.isPhoneBound \? sendChangePhoneSmsCode : sendBindPhoneSmsCode/)
+assert.match(accountPage, /this\.isPhoneBound \? this\.boundPhone : '未绑定'/)
+assert.match(accountPage, /class="phone-dialog password-dialog"/)
+assert.match(accountPage, /await resetPassword\(this\.passwordForm\)/)
+assert.match(codeLoginPage, /await loginBySms\(/)
+assert.match(authApi, /\/client\/auth\/sms-code\/login/)
+assert.match(authApi, /\/client\/auth\/phone\/bind/)
+assert.match(authApi, /\/client\/auth\/phone\/change/)
+assert.match(authApi, /\/client\/auth\/password\/reset/)

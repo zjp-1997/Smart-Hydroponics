@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.PlantingBatchMapper">
+
+    <resultMap id="PlantingBatchResultMap" type="com.smart_plant.smart_plant.entity.PlantingBatch">
+        <id column="id" property="id"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="crop_id" property="cropId"/>
+        <result column="crop_name" property="cropName"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="batch_no" property="batchNo"/>
+        <result column="planting_area" property="plantingArea"/>
+        <result column="area_unit" property="areaUnit"/>
+        <result column="planted_at" property="plantedAt"/>
+        <result column="expected_harvest_at" property="expectedHarvestAt"/>
+        <result column="actual_harvest_at" property="actualHarvestAt"/>
+        <result column="harvester" property="harvester"/>
+        <result column="growth_stage" property="growthStage"/>
+        <result column="growth_stage_id" property="growthStageId"/>
+        <result column="growth_stage_name" property="growthStageName"/>
+        <result column="expected_yield_amount" property="expectedYieldAmount"/>
+        <result column="grown_days" property="grownDays"/>
+        <result column="crop_image" property="cropImage"/>
+        <result column="status" property="status"/>
+        <result column="yield_amount" property="yieldAmount"/>
+        <result column="yield_unit" property="yieldUnit"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        pb.id, pb.plot_id, p.plot_name, pb.crop_id, c.crop_name,
+        pb.user_id, u.username, u.nickname,
+        CONCAT('Batch_', LPAD(CAST(pb.id AS CHAR),
+            GREATEST(3, CHAR_LENGTH(CAST(pb.id AS CHAR))), '0')) AS batch_no,
+        pb.planting_area, pb.area_unit, pb.planted_at, pb.expected_harvest_at,
+        pb.actual_harvest_at, pb.harvester, gs.stage_order AS growth_stage, gs.id AS growth_stage_id,
+        gs.stage_name AS growth_stage_name, pb.expected_yield_amount,
+        CASE
+            WHEN pb.status = 1 AND pb.planted_at IS NOT NULL
+                THEN GREATEST(DATEDIFF(CURDATE(), pb.planted_at), 0)
+            ELSE COALESCE(pb.grown_days, 0)
+        END AS grown_days,
+        COALESCE(pb.crop_image, c.image_url) AS crop_image, pb.status, pb.yield_amount,
+        pb.yield_unit, pb.remark, pb.create_time, pb.update_time
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `plot` p ON p.id = pb.plot_id
+        LEFT JOIN `crop` c ON c.id = pb.crop_id
+        LEFT JOIN `user` u ON u.id = pb.user_id
+        LEFT JOIN `growth_stage` gs ON gs.id = (
+            SELECT gs2.id
+            FROM `growth_stage` gs2
+            WHERE gs2.crop_id = pb.crop_id
+              AND gs2.status = 1
+              AND CASE
+                  WHEN pb.status = 1 AND pb.planted_at IS NOT NULL
+                      THEN GREATEST(DATEDIFF(CURDATE(), pb.planted_at), 0)
+                  ELSE COALESCE(pb.grown_days, 0)
+              END &gt;= COALESCE(gs2.start_day, 0)
+              AND CASE
+                  WHEN pb.status = 1 AND pb.planted_at IS NOT NULL
+                      THEN GREATEST(DATEDIFF(CURDATE(), pb.planted_at), 0)
+                  ELSE COALESCE(pb.grown_days, 0)
+              END &lt;= COALESCE(
+                  gs2.end_day,
+                  COALESCE(gs2.start_day, 0) + gs2.duration - 1
+              )
+            ORDER BY COALESCE(gs2.start_day, 0) DESC, gs2.stage_order DESC, gs2.id DESC
+            LIMIT 1
+        )
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.PlantingBatch" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `planting_batch`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="plotId != null">plot_id,</if>
+            <if test="cropId != null">crop_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="batchNo != null and batchNo != ''">batch_no,</if>
+            <if test="plantingArea != null">planting_area,</if>
+            <if test="areaUnit != null and areaUnit != ''">area_unit,</if>
+            <if test="plantedAt != null">planted_at,</if>
+            <if test="expectedHarvestAt != null">expected_harvest_at,</if>
+            <if test="actualHarvestAt != null">actual_harvest_at,</if>
+            <if test="harvester != null and harvester != ''">harvester,</if>
+            <if test="growthStageId != null">growth_stage_id,</if>
+            <if test="expectedYieldAmount != null">expected_yield_amount,</if>
+            <if test="grownDays != null">grown_days,</if>
+            <if test="cropImage != null and cropImage != ''">crop_image,</if>
+            <if test="status != null">status,</if>
+            <if test="yieldAmount != null">yield_amount,</if>
+            <if test="yieldUnit != null and yieldUnit != ''">yield_unit,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="plotId != null">#{plotId},</if>
+            <if test="cropId != null">#{cropId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="batchNo != null and batchNo != ''">#{batchNo},</if>
+            <if test="plantingArea != null">#{plantingArea},</if>
+            <if test="areaUnit != null and areaUnit != ''">#{areaUnit},</if>
+            <if test="plantedAt != null">#{plantedAt},</if>
+            <if test="expectedHarvestAt != null">#{expectedHarvestAt},</if>
+            <if test="actualHarvestAt != null">#{actualHarvestAt},</if>
+            <if test="harvester != null and harvester != ''">#{harvester},</if>
+            <if test="growthStageId != null">#{growthStageId},</if>
+            <if test="expectedYieldAmount != null">#{expectedYieldAmount},</if>
+            <if test="grownDays != null">#{grownDays},</if>
+            <if test="cropImage != null and cropImage != ''">#{cropImage},</if>
+            <if test="status != null">#{status},</if>
+            <if test="yieldAmount != null">#{yieldAmount},</if>
+            <if test="yieldUnit != null and yieldUnit != ''">#{yieldUnit},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM `planting_batch` WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM `planting_batch`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.PlantingBatch">
+        UPDATE `planting_batch`
+        <set>
+            <if test="plotId != null">plot_id = #{plotId},</if>
+            <if test="cropId != null">crop_id = #{cropId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="batchNo != null">batch_no = #{batchNo},</if>
+            <if test="plantingArea != null">planting_area = #{plantingArea},</if>
+            <if test="areaUnit != null">area_unit = #{areaUnit},</if>
+            <if test="plantedAt != null">planted_at = #{plantedAt},</if>
+            <if test="expectedHarvestAt != null">expected_harvest_at = #{expectedHarvestAt},</if>
+            <if test="actualHarvestAt != null">actual_harvest_at = #{actualHarvestAt},</if>
+            <if test="harvester != null">harvester = #{harvester},</if>
+            <if test="growthStageId != null">growth_stage_id = #{growthStageId},</if>
+            <if test="expectedYieldAmount != null">expected_yield_amount = #{expectedYieldAmount},</if>
+            <if test="grownDays != null">grown_days = #{grownDays},</if>
+            <if test="cropImage != null">crop_image = #{cropImage},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="yieldAmount != null">yield_amount = #{yieldAmount},</if>
+            <if test="yieldUnit != null">yield_unit = #{yieldUnit},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `planting_batch`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="completeHarvest">
+        UPDATE `planting_batch`
+        SET harvester = #{harvester},
+            yield_amount = #{yieldAmount},
+            yield_unit = #{yieldUnit},
+            actual_harvest_at = #{actualHarvestAt},
+            grown_days = GREATEST(DATEDIFF(#{actualHarvestAt}, planted_at), 0),
+            status = 2
+        WHERE id = #{id}
+          AND status = 1
+    </update>
+
+    <select id="selectById" resultMap="PlantingBatchResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `planting_batch` pb
+        <include refid="BaseJoins"/>
+        WHERE pb.id = #{id}
+    </select>
+
+    <select id="selectList" resultMap="PlantingBatchResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `planting_batch` pb
+        <include refid="BaseJoins"/>
+        <where>
+            <if test="plotId != null">
+                AND pb.plot_id = #{plotId}
+            </if>
+            <if test="cropId != null">
+                AND pb.crop_id = #{cropId}
+            </if>
+            <if test="userId != null">
+                AND pb.user_id = #{userId}
+            </if>
+            <if test="batchNo != null and batchNo != ''">
+                AND CONCAT('Batch_', LPAD(CAST(pb.id AS CHAR),
+                    GREATEST(3, CHAR_LENGTH(CAST(pb.id AS CHAR))), '0')) LIKE CONCAT('%', #{batchNo}, '%')
+            </if>
+            <if test="status != null">
+                AND pb.status = #{status}
+            </if>
+        </where>
+        ORDER BY pb.id DESC
+    </select>
+
+    <select id="selectActiveByPlotIdForUpdate" resultMap="PlantingBatchResultMap">
+        SELECT pb.*
+        FROM `planting_batch` pb
+        WHERE pb.plot_id = #{plotId}
+          AND pb.status = 1
+        ORDER BY pb.planted_at DESC, pb.create_time DESC, pb.id DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="countByUserIdAndBatchNo" resultType="int">
+        SELECT COUNT(1)
+        FROM `planting_batch`
+        WHERE user_id = #{userId}
+          AND batch_no = #{batchNo}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countActiveByPlotId" resultType="int">
+        SELECT COUNT(1)
+        FROM `planting_batch`
+        WHERE plot_id = #{plotId}
+          AND status = 1
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+</mapper>

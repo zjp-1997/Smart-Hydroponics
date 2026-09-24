@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 专家证书 MyBatis 映射文件，对应精简后的 expert_certificate 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.ExpertCertificateMapper">
+
+    <!-- 专家证书字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="ExpertCertificateResultMap" type="com.smart_plant.smart_plant.entity.ExpertCertificate">
+        <id column="id" property="id"/>
+        <result column="expert_id" property="expertId"/>
+        <result column="certificate_name" property="certificateName"/>
+        <result column="certificate_url" property="certificateUrl"/>
+        <result column="audit_status" property="auditStatus"/>
+        <result column="is_expired" property="isExpired"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 新增专家证书记录。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.ExpertCertificate"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `expert_certificate`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="expertId != null">expert_id,</if>
+            <if test="certificateName != null and certificateName != ''">certificate_name,</if>
+            <if test="certificateUrl != null and certificateUrl != ''">certificate_url,</if>
+            <if test="auditStatus != null">audit_status,</if>
+            <if test="isExpired != null">is_expired,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="expertId != null">#{expertId},</if>
+            <if test="certificateName != null and certificateName != ''">#{certificateName},</if>
+            <if test="certificateUrl != null and certificateUrl != ''">#{certificateUrl},</if>
+            <if test="auditStatus != null">#{auditStatus},</if>
+            <if test="isExpired != null">#{isExpired},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据专家ID删除证书记录。 -->
+    <delete id="deleteByExpertId">
+        DELETE FROM `expert_certificate` WHERE expert_id = #{expertId}
+    </delete>
+
+    <!-- 根据专家ID集合批量删除证书记录。 -->
+    <delete id="deleteBatchByExpertIds">
+        DELETE FROM `expert_certificate`
+        WHERE expert_id IN
+        <foreach collection="expertIds" item="expertId" open="(" separator="," close=")">
+            #{expertId}
+        </foreach>
+    </delete>
+
+    <!-- 查询第一条证书记录，用于专家管理列表兼容展示。 -->
+    <select id="selectFirstByExpertId" resultMap="ExpertCertificateResultMap">
+        SELECT id, expert_id, certificate_name, certificate_url, audit_status, is_expired, create_time, update_time
+        FROM `expert_certificate`
+        WHERE expert_id = #{expertId}
+        ORDER BY id ASC
+        LIMIT 1
+    </select>
+</mapper>

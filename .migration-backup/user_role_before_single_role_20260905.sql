@@ -1,0 +1,46 @@
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+/*!40000 ALTER TABLE `user_role` DISABLE KEYS */;
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (1,3,1,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (2,5,1,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (3,20,1,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (4,22,1,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (5,6,2,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (6,19,3,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (7,24,3,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (8,7,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (9,8,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (10,9,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (11,10,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (12,11,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (13,12,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (14,13,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (15,14,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (16,15,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (17,16,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (18,17,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (19,18,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (20,21,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (21,23,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (22,25,4,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (23,26,5,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (24,27,5,'2026-07-16 22:25:21');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (341,32,1,'2026-09-01 14:00:13');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (342,33,5,'2026-09-01 14:00:13');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (359,20,4,'2026-09-01 16:05:24');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (365,19,4,'2026-09-02 13:39:38');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (390,31,1,'2026-09-02 18:46:31');
+INSERT INTO `user_role` (`id`, `user_id`, `role_id`, `create_time`) VALUES (413,34,1,'2026-09-03 08:58:47');
+/*!40000 ALTER TABLE `user_role` ENABLE KEYS */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+

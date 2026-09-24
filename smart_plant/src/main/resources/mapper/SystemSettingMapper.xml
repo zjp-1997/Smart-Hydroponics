@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.SystemSettingMapper">
+
+    <!-- 显式映射全部配置字段，避免后续数据库字段扩展意外进入接口。 -->
+    <resultMap id="SystemSettingResultMap" type="com.smart_plant.smart_plant.entity.SystemSetting">
+        <id column="id" property="id"/>
+        <result column="system_name" property="systemName"/>
+        <result column="logo_url" property="logoUrl"/>
+        <result column="favicon_url" property="faviconUrl"/>
+        <result column="system_description" property="systemDescription"/>
+        <result column="copyright_info" property="copyrightInfo"/>
+        <result column="home_title" property="homeTitle"/>
+        <result column="login_background_url" property="loginBackgroundUrl"/>
+        <result column="theme_color" property="themeColor"/>
+        <result column="timezone" property="timezone"/>
+        <result column="datetime_format" property="datetimeFormat"/>
+        <result column="default_page_size" property="defaultPageSize"/>
+        <result column="max_upload_size_mb" property="maxUploadSizeMb"/>
+        <result column="allowed_upload_types" property="allowedUploadTypes"/>
+        <result column="record_number" property="recordNumber"/>
+        <result column="official_website" property="officialWebsite"/>
+        <result column="contact_email" property="contactEmail"/>
+        <result column="service_phone" property="servicePhone"/>
+        <result column="version" property="version"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectSingleton" resultMap="SystemSettingResultMap">
+        SELECT id, system_name, logo_url, favicon_url, system_description, copyright_info,
+               home_title, login_background_url, theme_color, timezone, datetime_format,
+               default_page_size, max_upload_size_mb, allowed_upload_types, record_number,
+               official_website, contact_email, service_phone, version, update_by,
+               create_time, update_time
+        FROM `system_setting`
+        WHERE id = 1
+    </select>
+
+    <!-- 所有字段整体保存，并使用版本号阻止后提交的数据覆盖先提交的数据。 -->
+    <update id="updateSingleton">
+        UPDATE `system_setting`
+        SET system_name = #{setting.systemName},
+            logo_url = #{setting.logoUrl},
+            favicon_url = #{setting.faviconUrl},
+            system_description = #{setting.systemDescription},
+            copyright_info = #{setting.copyrightInfo},
+            home_title = #{setting.homeTitle},
+            login_background_url = #{setting.loginBackgroundUrl},
+            theme_color = #{setting.themeColor},
+            timezone = #{setting.timezone},
+            datetime_format = #{setting.datetimeFormat},
+            default_page_size = #{setting.defaultPageSize},
+            max_upload_size_mb = #{setting.maxUploadSizeMb},
+            allowed_upload_types = #{setting.allowedUploadTypes},
+            record_number = #{setting.recordNumber},
+            official_website = #{setting.officialWebsite},
+            contact_email = #{setting.contactEmail},
+            service_phone = #{setting.servicePhone},
+            version = version + 1,
+            update_by = #{updateBy}
+        WHERE id = 1 AND version = #{setting.version}
+    </update>
+</mapper>

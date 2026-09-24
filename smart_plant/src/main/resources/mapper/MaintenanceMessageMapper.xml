@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.MaintenanceMessageMapper">
+    <!-- 故障ID唯一键是发布幂等边界；快照只在首次发布时写入。 -->
+    <insert id="insertFromFault">
+        INSERT INTO maintenance_message(fault_id,device_id,device_name,owner_id,plot_id,plot_name,title,content,level)
+        SELECT f.id,d.id,d.name,d.user_id,d.plot_id,p.plot_name,LEFT(CONCAT('设备维护：',f.fault_name),100),
+               CONCAT(p.plot_name,'的',d.name,'发生故障，请技术人员或农场主及时处理'),
+               CASE WHEN f.severity &gt;= 3 THEN 3 WHEN f.severity = 2 THEN 2 ELSE 1 END
+        FROM iot_device_fault f JOIN iot_device d ON d.id=f.device_id JOIN plot p ON p.id=d.plot_id
+        WHERE f.id=#{faultId}
+        ON DUPLICATE KEY UPDATE fault_id=VALUES(fault_id)
+    </insert>
+    <select id="lockByFaultId" resultType="long">
+        SELECT id FROM maintenance_message WHERE fault_id=#{faultId} FOR UPDATE
+    </select>
+    <!-- EXISTS 可兼容同一农场主绑定多名技术人员；包括已删除明细的去重检查防止重复提醒。 -->
+    <insert id="deliver">
+        INSERT INTO notification(user_id,title,content,notice_type,ref_type,ref_id,maintenance_message_id,level,publisher_id,publisher_name,send_time,is_read,status)
+        SELECT u.id,m.title,m.content,3,'maintenance_message',m.id,m.id,m.level,m.publisher_id,m.publisher_name,m.send_time,0,1
+        FROM maintenance_message m JOIN `user` u ON u.status=1 JOIN role r ON r.id=u.role_id
+        WHERE m.id=#{id} AND m.status=1 AND (
+            (u.id=m.owner_id AND LOWER(r.role_code)='farm_owner') OR
+            (LOWER(r.role_code)='technician' AND EXISTS (
+                SELECT 1 FROM farm_owner_technician b
+                WHERE b.owner_user_id=m.owner_id AND b.technician_user_id=u.id AND b.status=1)))
+        AND NOT EXISTS (SELECT 1 FROM notification n WHERE n.notice_type=3
+            AND n.ref_type='maintenance_message' AND n.ref_id=m.id AND n.user_id=u.id)
+    </insert>
+    <!-- 非管理员查询按实际接收人隔离；管理员保留无接收人的消息以便发现绑定配置问题。 -->
+    <sql id="joinsAndScope">
+        FROM maintenance_message m LEFT JOIN notification n ON n.ref_id=m.id
+            AND n.ref_type='maintenance_message' AND n.notice_type=3 AND n.status=1
+        <where>
+            m.status=1
+            <if test="userId != null">AND n.user_id=#{userId}</if>
+        </where>
+    </sql>
+    <select id="selectList" resultType="com.smart_plant.smart_plant.entity.MaintenanceMessage">
+        SELECT m.id,m.fault_id,m.device_id,m.device_name,m.version,m.publisher_id,m.plot_id,m.plot_name,m.title,m.content,m.level,m.publisher_name,m.send_time,
+               COUNT(n.id) recipient_count,COALESCE(SUM(n.is_read=1),0) read_count
+        FROM maintenance_message m LEFT JOIN notification n ON n.ref_id=m.id
+            AND n.ref_type='maintenance_message' AND n.notice_type=3 AND n.status=1
+        <where>
+            m.status=1
+            <if test="userId != null">AND n.user_id=#{userId}</if>
+            <if test="id != null">AND m.id=#{id}</if>
+            <if test="title != null">AND m.title LIKE CONCAT('%',#{title},'%')</if>
+            <if test="content != null">AND m.content LIKE CONCAT('%',#{content},'%')</if>
+            <if test="plotName != null">AND m.plot_name LIKE CONCAT('%',#{plotName},'%')</if>
+        </where>
+        GROUP BY m.id ORDER BY m.send_time DESC,m.id DESC
+    </select>
+    <select id="statistics" resultType="map">
+        SELECT COUNT(DISTINCT m.id) totalCount,
+               COUNT(DISTINCT CASE WHEN m.send_time &gt;= CURDATE() AND m.send_time &lt; CURDATE()+INTERVAL 1 DAY THEN m.id END) todayCount,
+               COALESCE(SUM(n.is_read=0),0) unreadDeliveryCount,COALESCE(SUM(n.is_read=1),0) readDeliveryCount
+        <include refid="joinsAndScope"/>
+    </select>
+    <update id="markRead">
+        UPDATE notification SET is_read=1,read_time=COALESCE(read_time,NOW())
+        WHERE notice_type=3 AND ref_type='maintenance_message' AND ref_id=#{id} AND user_id=#{userId} AND status=1
+    </update>
+
+    <!-- 独立候选接口避免依赖设备管理菜单权限，所有候选和提交均按相同归属校验。 -->
+    <select id="selectDevices" resultType="com.smart_plant.smart_plant.entity.IotDevice">
+        SELECT d.id,d.name,d.user_id,d.plot_id,p.plot_name
+        FROM iot_device d JOIN plot p ON p.id=d.plot_id
+        <where>
+            <if test="userId != null">
+                AND (d.user_id=#{userId} OR EXISTS (SELECT 1 FROM farm_owner_technician b
+                    WHERE b.owner_user_id=d.user_id AND b.technician_user_id=#{userId} AND b.status=1))
+            </if>
+            <if test="id != null">AND d.id=#{id}</if>
+            <if test="keyword != null">AND (d.name LIKE CONCAT('%',#{keyword},'%') OR p.plot_name LIKE CONCAT('%',#{keyword},'%'))</if>
+        </where>
+        ORDER BY d.id DESC LIMIT 50
+        <if test="id != null">FOR UPDATE</if>
+    </select>
+    <!-- 人工发布保存请求正文，即使恰好等于旧模板也标记为自定义，防止迁移覆盖。 -->
+    <insert id="insertManual" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO maintenance_message(device_id,device_name,owner_id,plot_id,plot_name,title,content,level,publisher_id,publisher_name,content_customized)
+        SELECT d.id,d.name,d.user_id,d.plot_id,p.plot_name,#{title},
+               #{content},#{level},#{publisherId},#{publisherName},1
+        FROM iot_device d JOIN plot p ON p.id=d.plot_id WHERE d.id=#{deviceId}
+    </insert>
+    <select id="lockById" resultType="long">
+        SELECT id FROM maintenance_message WHERE id=#{id} AND status=1 FOR UPDATE
+    </select>
+    <!-- 自动/人工消息统一保存用户正文，不再通过CONCAT覆盖输入。 -->
+    <update id="updateMessage">
+        UPDATE maintenance_message SET title=#{title},level=#{level},
+            content=#{content},content_customized=1,version=version+1
+        WHERE id=#{id} AND status=1 AND version=#{version}
+    </update>
+    <update id="syncDeliveries">
+        UPDATE notification n JOIN maintenance_message m ON n.ref_id=m.id
+        SET n.title=m.title,n.content=m.content,n.level=m.level
+        WHERE m.id=#{id} AND m.status=1 AND n.ref_type='maintenance_message' AND n.notice_type=3 AND n.status=1
+    </update>
+    <update id="deleteMessage">
+        UPDATE maintenance_message SET status=0,version=version+1 WHERE id=#{id} AND status=1
+    </update>
+    <update id="deleteDeliveries">
+        UPDATE notification SET status=0 WHERE ref_type='maintenance_message' AND notice_type=3 AND ref_id=#{id} AND status=1
+    </update>
+</mapper>

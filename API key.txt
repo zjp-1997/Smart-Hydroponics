@@ -1,0 +1,8 @@
+base_url (OpenAI)：https://api.deepseek.com
+deepseek API key：sk-d0057d76cf4a4efabae7e2daff9a97db
+model：deepseek-v4-flash
+
+高德地图Web JS API:
+	key名称：smart_map
+	key：a38931606aae581c13774fb70e38b470
+	密钥：531a6dc730ac4cadeec49199a4db7a91

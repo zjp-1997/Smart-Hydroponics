@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="默认作物图片">
+  <defs>
+    <linearGradient id="bg" x1="12" x2="84" y1="10" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f0fdf4"/>
+      <stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="16" fill="url(#bg)"/>
+  <path d="M48 72V39" fill="none" stroke="#15803d" stroke-width="6" stroke-linecap="round"/>
+  <path d="M48 48c-14-1-23-9-26-23 16 0 27 8 26 23Z" fill="#22c55e"/>
+  <path d="M50 54c3-14 13-23 28-24-1 16-11 26-28 24Z" fill="#16a34a"/>
+  <path d="M33 31c6 4 11 9 15 17M66 37c-7 4-12 10-16 17" fill="none" stroke="#dcfce7" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="48" cy="75" rx="20" ry="6" fill="#86efac" opacity=".8"/>
+</svg>

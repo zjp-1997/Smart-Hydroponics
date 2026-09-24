@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.UserOauthAccountMapper">
+
+    <resultMap id="UserOauthAccountResultMap" type="com.smart_plant.smart_plant.entity.UserOauthAccount">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="provider" property="provider"/>
+        <result column="open_id" property="openId"/>
+        <result column="union_id" property="unionId"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar" property="avatar"/>
+        <result column="access_token" property="accessToken"/>
+        <result column="refresh_token" property="refreshToken"/>
+        <result column="token_expire_time" property="tokenExpireTime"/>
+        <result column="bind_time" property="bindTime"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, user_id, provider, open_id, union_id, nickname, avatar, access_token, refresh_token,
+        token_expire_time, bind_time, last_login_time, status, remark, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.UserOauthAccount"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user_oauth_account`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="provider != null">provider,</if>
+            <if test="openId != null and openId != ''">open_id,</if>
+            <if test="unionId != null and unionId != ''">union_id,</if>
+            <if test="nickname != null and nickname != ''">nickname,</if>
+            <if test="avatar != null and avatar != ''">avatar,</if>
+            <if test="accessToken != null and accessToken != ''">access_token,</if>
+            <if test="refreshToken != null and refreshToken != ''">refresh_token,</if>
+            <if test="tokenExpireTime != null">token_expire_time,</if>
+            <if test="bindTime != null">bind_time,</if>
+            <if test="lastLoginTime != null">last_login_time,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="provider != null">#{provider},</if>
+            <if test="openId != null and openId != ''">#{openId},</if>
+            <if test="unionId != null and unionId != ''">#{unionId},</if>
+            <if test="nickname != null and nickname != ''">#{nickname},</if>
+            <if test="avatar != null and avatar != ''">#{avatar},</if>
+            <if test="accessToken != null and accessToken != ''">#{accessToken},</if>
+            <if test="refreshToken != null and refreshToken != ''">#{refreshToken},</if>
+            <if test="tokenExpireTime != null">#{tokenExpireTime},</if>
+            <if test="bindTime != null">#{bindTime},</if>
+            <if test="lastLoginTime != null">#{lastLoginTime},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM `user_oauth_account` WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM `user_oauth_account`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.UserOauthAccount">
+        UPDATE `user_oauth_account`
+        <set>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `user_oauth_account`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="UserOauthAccountResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user_oauth_account`
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultMap="UserOauthAccountResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `user_oauth_account`
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="provider != null">
+                AND provider = #{provider}
+            </if>
+            <if test="openId != null and openId != ''">
+                AND open_id LIKE CONCAT('%', #{openId}, '%')
+            </if>
+            <if test="nickname != null and nickname != ''">
+                AND nickname LIKE CONCAT('%', #{nickname}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY id DESC
+    </select>
+
+    <select id="countByProviderAndOpenId" resultType="int">
+        SELECT COUNT(1)
+        FROM `user_oauth_account`
+        WHERE provider = #{provider}
+          AND open_id = #{openId}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+</mapper>

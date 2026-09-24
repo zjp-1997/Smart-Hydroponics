@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 专家服务评价 MyBatis 映射文件，对应 expert_review 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.ExpertReviewMapper">
+
+    <!-- 专家服务评价字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="ExpertReviewResultMap" type="com.smart_plant.smart_plant.entity.ExpertReview">
+        <id column="id" property="id"/>
+        <result column="expert_id" property="expertId"/>
+        <result column="user_id" property="userId"/>
+        <result column="expert_name" property="expertName"/>
+        <result column="user_name" property="userName"/>
+        <result column="rating" property="rating"/>
+        <result column="content" property="content"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 新增专家服务评价。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.ExpertReview"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `expert_review`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="expertId != null">expert_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="rating != null">rating,</if>
+            <if test="content != null and content != ''">content,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="expertId != null">#{expertId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="rating != null">#{rating},</if>
+            <if test="content != null and content != ''">#{content},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID动态更新专家服务评价，编辑后由业务层重算专家评分汇总。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.ExpertReview">
+        UPDATE `expert_review`
+        <set>
+            <if test="rating != null">rating = #{rating},</if>
+            <if test="content != null">content = #{content},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID物理删除专家服务评价。 -->
+    <delete id="deleteById">
+        DELETE FROM `expert_review` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除专家服务评价。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `expert_review`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID查询专家服务评价。 -->
+    <select id="selectById" resultMap="ExpertReviewResultMap">
+        SELECT r.id, r.expert_id, r.user_id, p.real_name AS expert_name,
+               COALESCE(u.nickname, u.username) AS user_name,
+               r.rating, r.content, r.create_time, r.update_time
+        FROM `expert_review` r
+        INNER JOIN `expert_profile` p ON p.id = r.expert_id
+        LEFT JOIN `user` u ON u.id = r.user_id
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 分页条件查询专家服务评价列表，不查询专家审核状态和服务状态。 -->
+    <select id="selectList" resultMap="ExpertReviewResultMap">
+        SELECT r.id, r.expert_id, r.user_id, p.real_name AS expert_name,
+               COALESCE(u.nickname, u.username) AS user_name,
+               r.rating, r.content, r.create_time, r.update_time
+        FROM `expert_review` r
+        INNER JOIN `expert_profile` p ON p.id = r.expert_id
+        LEFT JOIN `user` u ON u.id = r.user_id
+        <where>
+            AND p.audit_status = 2
+            <if test="expertId != null">
+                AND r.expert_id = #{expertId}
+            </if>
+            <if test="expertName != null and expertName != ''">
+                AND p.real_name LIKE CONCAT('%', #{expertName}, '%')
+            </if>
+            <if test="userId != null">
+                AND r.user_id = #{userId}
+            </if>
+            <if test="userName != null and userName != ''">
+                AND (
+                    u.nickname LIKE CONCAT('%', #{userName}, '%')
+                    OR u.username LIKE CONCAT('%', #{userName}, '%')
+                )
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND r.create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND r.create_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY r.id DESC
+    </select>
+
+    <!-- 专家评价管理统计数据，统计范围与评价列表一致：仅统计审核通过专家的评价。 -->
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS reviewTotalCount,
+            COUNT(DISTINCT r.user_id) AS reviewUserCount,
+            COALESCE(ROUND(AVG(r.rating), 2), 0) AS averageRating,
+            COALESCE(MIN(r.rating), 0) AS minRating,
+            COALESCE(SUM(CASE WHEN DATE(r.create_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN DATE(r.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS reviewTotalTrend,
+            COUNT(DISTINCT CASE WHEN DATE(r.create_time) = CURDATE() THEN r.user_id END)
+                - COUNT(DISTINCT CASE WHEN DATE(r.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN r.user_id END)
+                AS reviewUserTrend,
+            COALESCE(ROUND(AVG(CASE WHEN DATE(r.create_time) = CURDATE() THEN r.rating END), 2), 0)
+                - COALESCE(ROUND(AVG(CASE WHEN DATE(r.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN r.rating END), 2), 0)
+                AS averageRatingTrend,
+            COALESCE(MIN(CASE WHEN DATE(r.create_time) = CURDATE() THEN r.rating END), 0)
+                - COALESCE(MIN(CASE WHEN DATE(r.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN r.rating END), 0)
+                AS minRatingTrend
+        FROM `expert_review` r
+        INNER JOIN `expert_profile` p ON p.id = r.expert_id
+        WHERE p.audit_status = 2
+    </select>
+</mapper>

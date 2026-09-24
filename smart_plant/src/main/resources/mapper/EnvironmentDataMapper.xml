@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 环境监测数据 MyBatis 映射文件，对应 environment_data 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.EnvironmentDataMapper">
+
+    <!-- 环境监测数据字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="EnvironmentDataResultMap" type="com.smart_plant.smart_plant.entity.EnvironmentData">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="message_key" property="messageKey"/>
+        <result column="owner_user_id" property="ownerUserId"/>
+        <result column="device_code" property="deviceCode"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="type_id" property="typeId"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="type_name" property="typeName"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="air_temperature" property="airTemperature"/>
+        <result column="air_humidity" property="airHumidity"/>
+        <result column="wind_speed" property="windSpeed"/>
+        <result column="air_pressure" property="airPressure"/>
+        <result column="co2_concentration" property="co2Concentration"/>
+        <result column="pm25" property="pm25"/>
+        <result column="data_status" property="dataStatus"/>
+        <result column="abnormal_detail" property="abnormalDetail"/>
+        <result column="cumulative_runtime" property="cumulativeRuntime"/>
+        <result column="collect_time" property="collectTime"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 环境监测数据通用查询字段。 -->
+    <sql id="BaseColumns">
+        ed.id, ed.device_id, ed.message_key,
+        COALESCE(ed.owner_user_id, d.user_id) AS owner_user_id,
+        d.device_code, d.name AS device_name, d.type_id,
+        dt.type_code, dt.type_name,
+        COALESCE(ed.plot_id_at_collection, d.plot_id) AS plot_id, p.plot_name, p.plot_code,
+        ed.air_temperature, ed.air_humidity,
+        ed.wind_speed, ed.air_pressure,
+        ed.co2_concentration, ed.pm25, ed.data_status, ed.abnormal_detail,
+        ed.cumulative_runtime, ed.collect_time, ed.remark, ed.create_time
+    </sql>
+
+    <!-- 环境数据关联设备、设备类型和地块，列表与详情查询复用。 -->
+    <sql id="DataJoin">
+        LEFT JOIN `iot_device` d ON d.id = ed.device_id
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+        LEFT JOIN `plot` p ON p.id = COALESCE(ed.plot_id_at_collection, d.plot_id)
+    </sql>
+
+    <!-- 环境数据公共查询条件，支持地块、设备、状态和采集时间范围筛选。 -->
+    <sql id="QueryWhere">
+        <where>
+            <if test="userId != null">
+                AND COALESCE(ed.owner_user_id, d.user_id) = #{userId}
+            </if>
+            <if test="plotId != null">
+                AND COALESCE(ed.plot_id_at_collection, d.plot_id) = #{plotId}
+            </if>
+            <if test="deviceId != null">
+                AND ed.device_id = #{deviceId}
+            </if>
+            <if test="deviceCode != null and deviceCode != ''">
+                AND d.device_code LIKE CONCAT('%', #{deviceCode}, '%')
+            </if>
+            <if test="dataStatus != null">
+                AND ed.data_status = #{dataStatus}
+            </if>
+            <if test="startTime != null">
+                AND ed.collect_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ed.collect_time &lt;= #{endTime}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 新增环境监测数据。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.EnvironmentData"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `environment_data`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">device_id, owner_user_id, plot_id_at_collection,</if>
+            <if test="messageKey != null and messageKey != ''">message_key,</if>
+            <if test="airTemperature != null">air_temperature,</if>
+            <if test="airHumidity != null">air_humidity,</if>
+            <if test="windSpeed != null">wind_speed,</if>
+            <if test="airPressure != null">air_pressure,</if>
+            <if test="co2Concentration != null">co2_concentration,</if>
+            <if test="pm25 != null">pm25,</if>
+            <if test="dataStatus != null">data_status,</if>
+            <if test="abnormalDetail != null and abnormalDetail != ''">abnormal_detail,</if>
+            <if test="cumulativeRuntime != null">cumulative_runtime,</if>
+            <if test="collectTime != null">collect_time,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">
+                #{deviceId},
+                (SELECT user_id FROM `iot_device` WHERE id = #{deviceId}),
+                (SELECT plot_id FROM `iot_device` WHERE id = #{deviceId}),
+            </if>
+            <if test="messageKey != null and messageKey != ''">#{messageKey},</if>
+            <if test="airTemperature != null">#{airTemperature},</if>
+            <if test="airHumidity != null">#{airHumidity},</if>
+            <if test="windSpeed != null">#{windSpeed},</if>
+            <if test="airPressure != null">#{airPressure},</if>
+            <if test="co2Concentration != null">#{co2Concentration},</if>
+            <if test="pm25 != null">#{pm25},</if>
+            <if test="dataStatus != null">#{dataStatus},</if>
+            <if test="abnormalDetail != null and abnormalDetail != ''">#{abnormalDetail},</if>
+            <if test="cumulativeRuntime != null">#{cumulativeRuntime},</if>
+            <if test="collectTime != null">#{collectTime},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID物理删除环境监测数据。 -->
+    <delete id="deleteById">
+        DELETE FROM `environment_data` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除环境监测数据。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `environment_data`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID动态更新环境监测数据。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.EnvironmentData">
+        UPDATE `environment_data`
+        <set>
+            <if test="deviceId != null">device_id = #{deviceId},</if>
+            <if test="airTemperature != null">air_temperature = #{airTemperature},</if>
+            <if test="airHumidity != null">air_humidity = #{airHumidity},</if>
+            <if test="windSpeed != null">wind_speed = #{windSpeed},</if>
+            <if test="airPressure != null">air_pressure = #{airPressure},</if>
+            <if test="co2Concentration != null">co2_concentration = #{co2Concentration},</if>
+            <if test="pm25 != null">pm25 = #{pm25},</if>
+            <if test="dataStatus != null">data_status = #{dataStatus},</if>
+            <if test="abnormalDetail != null">abnormal_detail = #{abnormalDetail},</if>
+            <if test="cumulativeRuntime != null">cumulative_runtime = #{cumulativeRuntime},</if>
+            <if test="collectTime != null">collect_time = #{collectTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID查询环境监测数据详情。 -->
+    <select id="selectById" resultMap="EnvironmentDataResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `environment_data` ed
+        <include refid="DataJoin"/>
+        WHERE ed.id = #{id}
+    </select>
+
+    <!-- 分页条件查询环境监测数据列表，支持地块、设备、数据状态和采集时间范围筛选。 -->
+    <select id="selectList" resultMap="EnvironmentDataResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `environment_data` ed
+        <include refid="DataJoin"/>
+        <include refid="QueryWhere"/>
+        ORDER BY ed.collect_time DESC
+    </select>
+
+    <!-- 环境监测数据统计，用于页面顶部统计卡片和趋势概览。 -->
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN ed.data_status = 1 THEN 1 ELSE 0 END), 0) AS normalCount,
+            COALESCE(SUM(CASE WHEN ed.data_status = 2 THEN 1 ELSE 0 END), 0) AS abnormalCount,
+            COUNT(DISTINCT ed.device_id) AS deviceCount,
+            COUNT(DISTINCT COALESCE(ed.plot_id_at_collection, d.plot_id)) AS plotCount,
+            MIN(ed.collect_time) AS firstCollectTime,
+            MAX(ed.collect_time) AS latestCollectTime,
+            ROUND(AVG(ed.air_temperature), 2) AS avgAirTemperature,
+            ROUND(AVG(ed.air_humidity), 2) AS avgAirHumidity,
+            ROUND(AVG(ed.wind_speed), 2) AS avgWindSpeed,
+            ROUND(AVG(ed.air_pressure), 2) AS avgAirPressure,
+            ROUND(AVG(ed.co2_concentration), 2) AS avgCo2Concentration,
+            ROUND(AVG(ed.pm25), 2) AS avgPm25,
+            ROUND(AVG(ed.cumulative_runtime), 2) AS avgCumulativeRuntime
+        FROM `environment_data` ed
+        <include refid="DataJoin"/>
+        <include refid="QueryWhere"/>
+    </select>
+
+</mapper>

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.CameraDeviceMapper">
+
+    <resultMap id="CameraDeviceResultMap" type="com.smart_plant.smart_plant.entity.CameraDevice">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="name" property="name"/>
+        <result column="stream_protocol" property="streamProtocol"/>
+        <result column="stream_url" property="streamUrl"/>
+        <result column="snapshot_url" property="snapshotUrl"/>
+        <result column="resolution" property="resolution"/>
+        <result column="online_status" property="onlineStatus"/>
+        <result column="direction" property="direction"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- farm 实时监控页只接收页面所需字段，避免直接复用后台管理实体。 -->
+    <resultMap id="ClientMonitorResultMap" type="com.smart_plant.smart_plant.dto.ClientMonitorResponse">
+        <id column="id" property="id"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="crop_name" property="cropName"/>
+        <result column="camera_name" property="cameraName"/>
+        <result column="stream_protocol" property="streamProtocol"/>
+        <result column="stream_url" property="streamUrl"/>
+        <result column="snapshot_url" property="snapshotUrl"/>
+        <result column="cover_url" property="coverUrl"/>
+        <result column="resolution" property="resolution"/>
+        <result column="online_status" property="onlineStatus"/>
+        <result column="direction" property="direction"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        c.id, c.device_id, c.plot_id, p.plot_name, p.plot_code,
+        p.user_id, u.username, u.nickname,
+        c.name, c.stream_protocol, c.stream_url, c.snapshot_url,
+        c.resolution, c.online_status, c.direction, c.create_time
+    </sql>
+
+    <sql id="PlotJoin">
+        LEFT JOIN `plot` p ON p.id = c.plot_id
+        LEFT JOIN `user` u ON u.id = p.user_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.CameraDevice"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `camera_device`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">device_id,</if>
+            <if test="plotId != null">plot_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="streamProtocol != null and streamProtocol != ''">stream_protocol,</if>
+            <if test="streamUrl != null and streamUrl != ''">stream_url,</if>
+            <if test="snapshotUrl != null and snapshotUrl != ''">snapshot_url,</if>
+            <if test="resolution != null and resolution != ''">resolution,</if>
+            <if test="onlineStatus != null">online_status,</if>
+            <if test="direction != null and direction != ''">direction,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null">#{deviceId},</if>
+            <if test="plotId != null">#{plotId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="streamProtocol != null and streamProtocol != ''">#{streamProtocol},</if>
+            <if test="streamUrl != null and streamUrl != ''">#{streamUrl},</if>
+            <if test="snapshotUrl != null and snapshotUrl != ''">#{snapshotUrl},</if>
+            <if test="resolution != null and resolution != ''">#{resolution},</if>
+            <if test="onlineStatus != null">#{onlineStatus},</if>
+            <if test="direction != null and direction != ''">#{direction},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM `camera_device` WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM `camera_device`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.CameraDevice">
+        UPDATE `camera_device`
+        <set>
+            <if test="deviceId != null">device_id = #{deviceId},</if>
+            <if test="plotId != null">plot_id = #{plotId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="streamProtocol != null">stream_protocol = #{streamProtocol},</if>
+            <if test="streamUrl != null">stream_url = #{streamUrl},</if>
+            <if test="snapshotUrl != null">snapshot_url = #{snapshotUrl},</if>
+            <if test="resolution != null">resolution = #{resolution},</if>
+            <if test="onlineStatus != null">online_status = #{onlineStatus},</if>
+            <if test="direction != null">direction = #{direction},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateOnlineStatus">
+        UPDATE `camera_device`
+        SET online_status = #{onlineStatus}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateDirection">
+        UPDATE `camera_device` c
+        JOIN `plot` p ON p.id = c.plot_id
+        SET c.direction = #{direction}
+        WHERE c.id = #{id} AND p.user_id = #{userId}
+    </update>
+
+    <select id="selectById" resultMap="CameraDeviceResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `camera_device` c
+        <include refid="PlotJoin"/>
+        WHERE c.id = #{id}
+    </select>
+
+    <select id="selectList" resultMap="CameraDeviceResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `camera_device` c
+        <include refid="PlotJoin"/>
+        <where>
+            <if test="userId != null">
+                AND p.user_id = #{userId}
+            </if>
+            <if test="plotId != null">
+                AND c.plot_id = #{plotId}
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="name != null and name != ''">
+                AND c.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="streamProtocol != null and streamProtocol != ''">
+                AND c.stream_protocol = #{streamProtocol}
+            </if>
+            <if test="onlineStatus != null">
+                AND c.online_status = #{onlineStatus}
+            </if>
+        </where>
+        ORDER BY c.id DESC
+    </select>
+
+    <!-- 取地块最近一个生长中的种植批次，供监控卡片显示当前作物。 -->
+    <sql id="ClientMonitorColumns">
+        c.id, c.device_id, c.plot_id, p.plot_name,
+        COALESCE(NULLIF(TRIM(cr.crop_name), ''), '暂无作物') AS crop_name,
+        c.name AS camera_name, c.stream_protocol, c.stream_url,
+        COALESCE(NULLIF(TRIM(c.snapshot_url), ''), NULLIF(TRIM(ccr.image_url), '')) AS snapshot_url,
+        COALESCE(NULLIF(TRIM(c.snapshot_url), ''), NULLIF(TRIM(ccr.image_url), ''), NULLIF(TRIM(p.crop_image), ''),
+                 NULLIF(TRIM(pb.crop_image), ''), NULLIF(TRIM(cr.image_url), '')) AS cover_url,
+        c.resolution, c.online_status, c.direction
+    </sql>
+
+    <sql id="ClientMonitorJoins">
+        JOIN `plot` p ON p.id = c.plot_id
+        LEFT JOIN `planting_batch` pb ON pb.id = (
+            SELECT pb2.id
+            FROM `planting_batch` pb2
+            WHERE pb2.plot_id = p.id AND pb2.status = 1
+            ORDER BY pb2.planted_at DESC, pb2.create_time DESC, pb2.id DESC
+            LIMIT 1
+        )
+        LEFT JOIN `crop` cr ON cr.id = pb.crop_id
+        LEFT JOIN `camera_capture_record` ccr ON ccr.id = (
+            SELECT ccr2.id
+            FROM `camera_capture_record` ccr2
+            WHERE ccr2.device_id = c.id AND ccr2.status = 1
+            ORDER BY ccr2.capture_time DESC, ccr2.id DESC
+            LIMIT 1
+        )
+    </sql>
+
+    <select id="selectClientMonitors" resultMap="ClientMonitorResultMap">
+        SELECT <include refid="ClientMonitorColumns"/>
+        FROM `camera_device` c
+        <include refid="ClientMonitorJoins"/>
+        WHERE p.user_id = #{userId}
+        <if test="plotId != null">
+            AND c.plot_id = #{plotId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (c.name LIKE CONCAT('%', #{keyword}, '%')
+                 OR p.plot_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR cr.crop_name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY c.online_status DESC, c.id DESC
+    </select>
+
+    <select id="selectClientMonitorById" resultMap="ClientMonitorResultMap">
+        SELECT <include refid="ClientMonitorColumns"/>
+        FROM `camera_device` c
+        <include refid="ClientMonitorJoins"/>
+        WHERE c.id = #{id} AND p.user_id = #{userId}
+    </select>
+
+    <select id="countByDeviceId" resultType="int">
+        SELECT COUNT(1)
+        FROM `camera_device`
+        WHERE device_id = #{deviceId}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countReferencesByCameraId" resultType="int">
+        SELECT
+            (SELECT COUNT(1) FROM `camera_capture_plan` WHERE device_id = #{cameraId})
+            + (SELECT COUNT(1) FROM `camera_capture_record` WHERE device_id = #{cameraId})
+            + (SELECT COUNT(1) FROM `ai_recognition_result` ar
+               JOIN `ai_recognition_record` rr ON rr.id = ar.record_id
+               WHERE rr.camera_id = #{cameraId})
+    </select>
+</mapper>

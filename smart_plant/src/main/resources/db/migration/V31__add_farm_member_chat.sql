@@ -1,0 +1,50 @@
+-- 农场成员聊天会话：每个农场主与成员只保留一个会话，避免重复会话导致未读数分散。
+CREATE TABLE `farm_chat_session` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '成员聊天会话ID',
+    `session_no` VARCHAR(50) NOT NULL COMMENT '会话编号',
+    `farm_owner_id` BIGINT NOT NULL COMMENT '农场主用户ID',
+    `member_user_id` BIGINT NOT NULL COMMENT '普通用户或技术人员用户ID',
+    `member_role` VARCHAR(20) NOT NULL COMMENT '成员角色：user或technician',
+    `last_message_content` VARCHAR(255) DEFAULT NULL COMMENT '最后一条消息摘要',
+    `last_message_time` DATETIME DEFAULT NULL COMMENT '最后消息时间',
+    `owner_unread_count` INT NOT NULL DEFAULT 0 COMMENT '农场主未读数量',
+    `member_unread_count` INT NOT NULL DEFAULT 0 COMMENT '成员未读数量',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1正常，0停用',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_farm_chat_session_no` (`session_no`),
+    UNIQUE KEY `uk_farm_chat_participants` (`farm_owner_id`, `member_user_id`),
+    KEY `idx_farm_chat_owner_time` (`farm_owner_id`, `last_message_time`),
+    KEY `idx_farm_chat_member_time` (`member_user_id`, `last_message_time`),
+    CONSTRAINT `fk_farm_chat_session_owner` FOREIGN KEY (`farm_owner_id`) REFERENCES `user` (`id`),
+    CONSTRAINT `fk_farm_chat_session_member` FOREIGN KEY (`member_user_id`) REFERENCES `user` (`id`),
+    CONSTRAINT `chk_farm_chat_member_role` CHECK (`member_role` IN ('user', 'technician')),
+    CONSTRAINT `chk_farm_chat_session_status` CHECK (`status` IN (0, 1)),
+    CONSTRAINT `chk_farm_chat_unread` CHECK (`owner_unread_count` >= 0 AND `member_unread_count` >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='农场主与成员聊天会话';
+
+-- 农场成员聊天消息独立于专家咨询，确保两类业务的权限和未读统计互不影响。
+CREATE TABLE `farm_chat_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '成员聊天消息ID',
+    `session_id` BIGINT NOT NULL COMMENT '成员聊天会话ID',
+    `sender_id` BIGINT NOT NULL COMMENT '发送人用户ID',
+    `receiver_id` BIGINT NOT NULL COMMENT '接收人用户ID',
+    `message_type` TINYINT NOT NULL DEFAULT 1 COMMENT '消息类型：1文本，2图片，3语音，4文件',
+    `content` TEXT DEFAULT NULL COMMENT '文本内容或附件显示名称',
+    `media_url` VARCHAR(500) DEFAULT NULL COMMENT '图片、语音或文件地址',
+    `is_read` TINYINT NOT NULL DEFAULT 0 COMMENT '是否已读：0未读，1已读',
+    `read_time` DATETIME DEFAULT NULL COMMENT '阅读时间',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1正常，0删除',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_farm_chat_message_session_time` (`session_id`, `create_time`, `id`),
+    KEY `idx_farm_chat_message_receiver_read` (`receiver_id`, `is_read`),
+    CONSTRAINT `fk_farm_chat_message_session` FOREIGN KEY (`session_id`) REFERENCES `farm_chat_session` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_farm_chat_message_sender` FOREIGN KEY (`sender_id`) REFERENCES `user` (`id`),
+    CONSTRAINT `fk_farm_chat_message_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `user` (`id`),
+    CONSTRAINT `chk_farm_chat_message_type` CHECK (`message_type` IN (1, 2, 3, 4)),
+    CONSTRAINT `chk_farm_chat_message_read` CHECK (`is_read` IN (0, 1)),
+    CONSTRAINT `chk_farm_chat_message_status` CHECK (`status` IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='农场主与成员聊天消息';

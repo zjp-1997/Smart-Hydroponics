@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 专家详情 MyBatis 映射文件，对应 expert_detail 表。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.ExpertDetailMapper">
+
+    <!-- 专家详情字段和 Java 实体属性的映射关系。 -->
+    <resultMap id="ExpertDetailResultMap" type="com.smart_plant.smart_plant.entity.ExpertDetail">
+        <id column="id" property="id"/>
+        <result column="expert_id" property="expertId"/>
+        <result column="specialty" property="specialty"/>
+        <result column="introduction" property="introduction"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 新增或更新专家详情，依赖 expert_id 唯一索引保证一名专家只有一条详情。 -->
+    <insert id="upsertByExpertId" parameterType="com.smart_plant.smart_plant.entity.ExpertDetail">
+        INSERT INTO `expert_detail` (`expert_id`, `specialty`, `introduction`)
+        VALUES (#{expertId}, #{specialty}, #{introduction})
+        ON DUPLICATE KEY UPDATE
+            `specialty` = VALUES(`specialty`),
+            `introduction` = VALUES(`introduction`)
+    </insert>
+
+    <!-- 根据专家ID删除详情记录。 -->
+    <delete id="deleteByExpertId">
+        DELETE FROM `expert_detail` WHERE expert_id = #{expertId}
+    </delete>
+
+    <!-- 根据专家ID集合批量删除详情记录。 -->
+    <delete id="deleteBatchByExpertIds">
+        DELETE FROM `expert_detail`
+        WHERE expert_id IN
+        <foreach collection="expertIds" item="expertId" open="(" separator="," close=")">
+            #{expertId}
+        </foreach>
+    </delete>
+
+    <!-- 根据专家ID查询详情记录。 -->
+    <select id="selectByExpertId" resultMap="ExpertDetailResultMap">
+        SELECT id, expert_id, specialty, introduction, create_time, update_time
+        FROM `expert_detail`
+        WHERE expert_id = #{expertId}
+        LIMIT 1
+    </select>
+</mapper>

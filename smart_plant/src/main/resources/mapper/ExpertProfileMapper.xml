@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 专家信息 MyBatis 映射文件：主表 expert_profile，查询时聚合 expert_detail 和 expert_certificate。 -->
+<mapper namespace="com.smart_plant.smart_plant.mapper.ExpertProfileMapper">
+
+    <!-- 专家信息字段和 Java 聚合实体属性的映射关系。 -->
+    <resultMap id="ExpertProfileResultMap" type="com.smart_plant.smart_plant.entity.ExpertProfile">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="institution_id" property="institutionId"/>
+        <result column="organization" property="organization"/>
+        <result column="username" property="username"/>
+        <result column="password_hash" property="passwordHash"/>
+        <result column="real_name" property="realName"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="specialty" property="specialty"/>
+        <result column="introduction" property="introduction"/>
+        <result column="certificate_url" property="certificateUrl"/>
+        <result column="certificate_name" property="certificateName"/>
+        <result column="certificate_audit_status" property="certificateAuditStatus"/>
+        <result column="avatar" property="avatar"/>
+        <result column="rating" property="rating"/>
+        <result column="review_count" property="reviewCount"/>
+        <result column="consultation_count" property="consultationCount"/>
+        <result column="audit_status" property="auditStatus"/>
+        <result column="audit_pass_time" property="auditPassTime"/>
+        <result column="service_status" property="serviceStatus"/>
+        <result column="consultation_status" property="consultationStatus"/>
+        <result column="consultable" property="consultable"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 专家信息通用查询字段，详情和证书字段通过左连接带出。 -->
+    <sql id="BaseColumns">
+        p.id, p.user_id, p.institution_id,
+        COALESCE(NULLIF(p.organization, ''), i.institution_name) AS organization,
+        p.username, p.password_hash, p.real_name, p.job_title, p.phone, p.email,
+        d.specialty, d.introduction,
+        c.certificate_url, c.certificate_name, c.audit_status AS certificate_audit_status,
+        p.avatar, p.rating, p.review_count, p.consultation_count, p.audit_status,
+        p.audit_pass_time, p.service_status, p.consultation_status, p.status, p.remark,
+        p.create_time, p.update_time
+    </sql>
+
+    <!-- 查询时统一连接机构、详情和第一条证书记录，避免一个专家多证书导致列表重复。 -->
+    <sql id="JoinInstitutionDetailAndCertificate">
+        LEFT JOIN `institution` i ON i.id = p.institution_id
+        LEFT JOIN `expert_detail` d ON d.expert_id = p.id
+        LEFT JOIN `expert_certificate` c ON c.id = (
+            SELECT MIN(c2.id)
+            FROM `expert_certificate` c2
+            WHERE c2.expert_id = p.id
+        )
+    </sql>
+
+    <!-- 新增专家主表信息，详情和证书由各自 Mapper 单独维护。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.ExpertProfile"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `expert_profile`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="institutionId != null">institution_id,</if>
+            <if test="organization != null and organization != ''">organization,</if>
+            <if test="username != null and username != ''">username,</if>
+            <if test="passwordHash != null and passwordHash != ''">password_hash,</if>
+            <if test="realName != null and realName != ''">real_name,</if>
+            <if test="jobTitle != null and jobTitle != ''">job_title,</if>
+            <if test="phone != null and phone != ''">phone,</if>
+            <if test="email != null and email != ''">email,</if>
+            <if test="avatar != null and avatar != ''">avatar,</if>
+            <if test="rating != null">rating,</if>
+            <if test="reviewCount != null">review_count,</if>
+            <if test="consultationCount != null">consultation_count,</if>
+            <if test="auditStatus != null">audit_status,</if>
+            <if test="auditPassTime != null">audit_pass_time,</if>
+            <if test="serviceStatus != null">service_status,</if>
+            <if test="consultationStatus != null">consultation_status,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="institutionId != null">#{institutionId},</if>
+            <if test="organization != null and organization != ''">#{organization},</if>
+            <if test="username != null and username != ''">#{username},</if>
+            <if test="passwordHash != null and passwordHash != ''">#{passwordHash},</if>
+            <if test="realName != null and realName != ''">#{realName},</if>
+            <if test="jobTitle != null and jobTitle != ''">#{jobTitle},</if>
+            <if test="phone != null and phone != ''">#{phone},</if>
+            <if test="email != null and email != ''">#{email},</if>
+            <if test="avatar != null and avatar != ''">#{avatar},</if>
+            <if test="rating != null">#{rating},</if>
+            <if test="reviewCount != null">#{reviewCount},</if>
+            <if test="consultationCount != null">#{consultationCount},</if>
+            <if test="auditStatus != null">#{auditStatus},</if>
+            <if test="auditPassTime != null">#{auditPassTime},</if>
+            <if test="serviceStatus != null">#{serviceStatus},</if>
+            <if test="consultationStatus != null">#{consultationStatus},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据ID物理删除专家主表信息，详情和证书通过数据库外键级联删除。 -->
+    <delete id="deleteById">
+        DELETE FROM `expert_profile` WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID集合批量物理删除专家主表信息，详情和证书通过数据库外键级联删除。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `expert_profile`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据ID动态更新专家主表信息。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.ExpertProfile">
+        UPDATE `expert_profile`
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="institutionId != null">institution_id = #{institutionId},</if>
+            <if test="organization != null">organization = #{organization},</if>
+            <if test="username != null and username != ''">username = #{username},</if>
+            <if test="passwordHash != null and passwordHash != ''">password_hash = #{passwordHash},</if>
+            <if test="realName != null and realName != ''">real_name = #{realName},</if>
+            <if test="jobTitle != null">job_title = #{jobTitle},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="rating != null">rating = #{rating},</if>
+            <if test="reviewCount != null">review_count = #{reviewCount},</if>
+            <if test="consultationCount != null">consultation_count = #{consultationCount},</if>
+            <if test="auditStatus != null">audit_status = #{auditStatus},</if>
+            <if test="auditStatus != null">
+                audit_pass_time = CASE
+                    WHEN #{auditStatus} = 2 THEN COALESCE(#{auditPassTime}, NOW())
+                    ELSE NULL
+                END,
+            </if>
+            <if test="auditStatus == null and auditPassTime != null">audit_pass_time = #{auditPassTime},</if>
+            <if test="serviceStatus != null">service_status = #{serviceStatus},</if>
+            <if test="consultationStatus != null">consultation_status = #{consultationStatus},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 单独修改专家账号启用/禁用状态。 -->
+    <update id="updateStatus">
+        UPDATE `expert_profile`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 单独修改专家咨询状态，同时同步服务状态，保证用户端列表和发起咨询校验一致。 -->
+    <update id="updateConsultationStatus">
+        UPDATE `expert_profile`
+        SET service_status = #{consultationStatus},
+            consultation_status = #{consultationStatus},
+            status = CASE WHEN #{consultationStatus} = 1 THEN 1 ELSE status END
+        WHERE id = #{id}
+    </update>
+
+    <!-- 用户账号禁用时，专家档案同步进入不可登录、不可咨询状态；重新启用用户不自动恢复咨询。 -->
+    <update id="disableByUserId">
+        UPDATE `expert_profile`
+        SET status = 0,
+            service_status = 0,
+            consultation_status = 0
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 修改专家入驻审核状态；通过后启用咨询，拒绝后保持停用。 -->
+    <update id="updateAuditStatus">
+        UPDATE `expert_profile`
+        SET audit_status = #{auditStatus},
+            audit_pass_time = CASE
+                WHEN #{auditStatus} = 2 THEN NOW()
+                ELSE NULL
+            END,
+            status = CASE WHEN #{auditStatus} = 2 THEN 1 ELSE 0 END,
+            service_status = CASE WHEN #{auditStatus} = 2 THEN 1 ELSE 0 END,
+            consultation_status = CASE WHEN #{auditStatus} = 2 THEN 1 ELSE 0 END
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据评价表重新计算专家平均评分和评价数量。 -->
+    <update id="updateRatingSummary">
+        UPDATE `expert_profile` p
+        LEFT JOIN (
+            SELECT expert_id, COUNT(1) AS review_count, ROUND(AVG(rating), 2) AS avg_rating
+            FROM `expert_review`
+            WHERE expert_id = #{expertId}
+            GROUP BY expert_id
+        ) r ON r.expert_id = p.id
+        SET p.review_count = COALESCE(r.review_count, 0),
+            p.rating = COALESCE(r.avg_rating, 5.00)
+        WHERE p.id = #{expertId}
+    </update>
+
+    <!-- 根据ID查询专家详情。 -->
+    <select id="selectById" resultMap="ExpertProfileResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `expert_profile` p
+        <include refid="JoinInstitutionDetailAndCertificate"/>
+        WHERE p.id = #{id}
+    </select>
+
+    <!-- 根据关联用户ID查询专家资料。 -->
+    <select id="selectByUserId" resultMap="ExpertProfileResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `expert_profile` p
+        <include refid="JoinInstitutionDetailAndCertificate"/>
+        WHERE p.user_id = #{userId}
+        LIMIT 1
+    </select>
+
+    <!-- 分页条件查询专家列表。 -->
+    <select id="selectList" resultMap="ExpertProfileResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `expert_profile` p
+        <include refid="JoinInstitutionDetailAndCertificate"/>
+        <where>
+            <if test="realName != null and realName != ''">
+                AND p.real_name LIKE CONCAT('%', #{realName}, '%')
+            </if>
+            <if test="organization != null and organization != ''">
+                AND COALESCE(NULLIF(p.organization, ''), i.institution_name) LIKE CONCAT('%', #{organization}, '%')
+            </if>
+            <if test="specialty != null and specialty != ''">
+                AND d.specialty LIKE CONCAT('%', #{specialty}, '%')
+            </if>
+            <if test="auditStatus != null">
+                AND p.audit_status = #{auditStatus}
+            </if>
+            <if test="serviceStatus != null">
+                AND p.service_status = #{serviceStatus}
+            </if>
+            <if test="status != null">
+                AND p.status = #{status}
+            </if>
+        </where>
+        ORDER BY p.id DESC
+    </select>
+
+    <!-- 用户端只展示审核通过的专家，咨询能力再由专家自身状态决定。 -->
+    <select id="selectClientList" resultMap="ExpertProfileResultMap">
+        SELECT <include refid="BaseColumns"/>,
+            CASE WHEN p.service_status = 1
+                AND p.consultation_status = 1
+                AND p.status = 1
+            THEN TRUE ELSE FALSE END AS consultable
+        FROM `expert_profile` p
+        <include refid="JoinInstitutionDetailAndCertificate"/>
+        <where>
+            p.audit_status = 2
+            <if test="realName != null and realName != ''">
+                AND p.real_name LIKE CONCAT('%', #{realName}, '%')
+            </if>
+        </where>
+        ORDER BY p.rating DESC, p.id ASC
+    </select>
+
+    <!-- 专家管理统计数据。审核总数为进入审核流程的专家档案总量，已审核数为审核通过与审核不通过之和。 -->
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN p.audit_status IN (1, 2, 3) THEN 1 ELSE 0 END), 0) AS auditTotalCount,
+            COALESCE(SUM(CASE WHEN p.audit_status = 1 THEN 1 ELSE 0 END), 0) AS pendingCount,
+            COALESCE(SUM(CASE WHEN p.audit_status = 2 THEN 1 ELSE 0 END), 0) AS approvedCount,
+            COALESCE(SUM(CASE WHEN p.audit_status = 3 THEN 1 ELSE 0 END), 0) AS rejectedCount,
+            COALESCE(SUM(CASE WHEN p.audit_status IN (2, 3) THEN 1 ELSE 0 END), 0) AS reviewedCount,
+            COALESCE(SUM(CASE WHEN p.service_status = 1 AND p.status != 0 THEN 1 ELSE 0 END), 0) AS availableCount,
+            COALESCE(SUM(CASE WHEN p.service_status = 0 THEN 1 ELSE 0 END), 0) AS suspendedCount,
+            COALESCE(SUM(CASE WHEN p.status = 0 THEN 1 ELSE 0 END), 0) AS disabledCount,
+            COUNT(DISTINCT COALESCE(CONCAT('id:', p.institution_id), CONCAT('name:', p.organization))) AS institutionCount,
+            COALESCE(ROUND(AVG(p.rating), 2), 0) AS averageRating,
+            COALESCE(SUM(p.consultation_count), 0) AS totalConsultations,
+            COALESCE(SUM(CASE WHEN DATE(p.create_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS totalTrend,
+            COALESCE(SUM(CASE WHEN DATE(p.create_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS auditTotalTrend,
+            COALESCE(SUM(CASE WHEN p.audit_status = 1 AND DATE(p.create_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN p.audit_status = 1 AND DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS pendingTrend,
+            COALESCE(SUM(CASE WHEN p.audit_status = 2 AND DATE(COALESCE(p.audit_pass_time, p.update_time)) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN p.audit_status = 2 AND DATE(COALESCE(p.audit_pass_time, p.update_time)) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS approvedTrend,
+            COALESCE(SUM(CASE WHEN p.audit_status = 3 AND DATE(p.update_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN p.audit_status = 3 AND DATE(p.update_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS rejectedTrend,
+            COALESCE(SUM(CASE WHEN p.audit_status IN (2, 3) AND DATE(COALESCE(p.audit_pass_time, p.update_time)) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN p.audit_status IN (2, 3) AND DATE(COALESCE(p.audit_pass_time, p.update_time)) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS reviewedTrend,
+            COALESCE(SUM(CASE WHEN p.service_status = 1 AND p.status != 0 AND DATE(p.create_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN p.service_status = 1 AND p.status != 0 AND DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS availableTrend,
+            COALESCE(SUM(CASE WHEN p.status = 0 AND DATE(p.update_time) = CURDATE() THEN 1 ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN p.status = 0 AND DATE(p.update_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END), 0)
+                AS disabledTrend,
+            COUNT(DISTINCT CASE WHEN COALESCE(p.organization, CAST(p.institution_id AS CHAR)) IS NOT NULL AND DATE(p.create_time) = CURDATE()
+                THEN COALESCE(CONCAT('id:', p.institution_id), CONCAT('name:', p.organization)) END)
+                - COUNT(DISTINCT CASE WHEN COALESCE(p.organization, CAST(p.institution_id AS CHAR)) IS NOT NULL
+                    AND DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+                    THEN COALESCE(CONCAT('id:', p.institution_id), CONCAT('name:', p.organization)) END)
+                AS institutionTrend,
+            COALESCE(ROUND(AVG(CASE WHEN DATE(p.create_time) = CURDATE() THEN p.rating END), 2), 0)
+                - COALESCE(ROUND(AVG(CASE WHEN DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN p.rating END), 2), 0)
+                AS averageRatingTrend,
+            COALESCE(SUM(CASE WHEN DATE(p.create_time) = CURDATE() THEN p.consultation_count ELSE 0 END), 0)
+                - COALESCE(SUM(CASE WHEN DATE(p.create_time) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN p.consultation_count ELSE 0 END), 0)
+                AS totalConsultationsTrend
+        FROM `expert_profile` p
+    </select>
+
+    <!-- 统计用户绑定专家资料数量，排除当前编辑记录。 -->
+    <select id="selectAuditList" resultMap="ExpertProfileResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `expert_profile` p
+        <include refid="JoinInstitutionDetailAndCertificate"/>
+        <where>
+            p.audit_status IN (1, 2, 3)
+            <if test="realName != null and realName != ''">
+                AND p.real_name LIKE CONCAT('%', #{realName}, '%')
+            </if>
+            <if test="organization != null and organization != ''">
+                AND COALESCE(NULLIF(p.organization, ''), i.institution_name) LIKE CONCAT('%', #{organization}, '%')
+            </if>
+            <if test="specialty != null and specialty != ''">
+                AND d.specialty LIKE CONCAT('%', #{specialty}, '%')
+            </if>
+            <if test="auditStatus != null">
+                AND p.audit_status = #{auditStatus}
+            </if>
+            <if test="status != null">
+                AND p.status = #{status}
+            </if>
+        </where>
+        ORDER BY
+            CASE p.audit_status
+                WHEN 1 THEN 0
+                WHEN 2 THEN 1
+                WHEN 3 THEN 2
+                ELSE 3
+            END,
+            p.id DESC
+    </select>
+
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(1)
+        FROM `expert_profile`
+        WHERE user_id = #{userId}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countByUserIds" resultType="int">
+        SELECT COUNT(1)
+        FROM `expert_profile`
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <select id="countApprovedByUserId" resultType="int">
+        SELECT COUNT(1)
+        FROM `expert_profile`
+        WHERE user_id = #{userId}
+          AND audit_status = 2
+    </select>
+
+    <select id="countApprovedByUserIds" resultType="int">
+        SELECT COUNT(1)
+        FROM `expert_profile`
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+          AND audit_status = 2
+    </select>
+
+    <delete id="deleteUnapprovedByUserId">
+        DELETE FROM `expert_profile`
+        WHERE user_id = #{userId}
+          AND (audit_status IS NULL OR audit_status != 2)
+    </delete>
+
+    <delete id="deleteUnapprovedByUserIds">
+        DELETE FROM `expert_profile`
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+          AND (audit_status IS NULL OR audit_status != 2)
+    </delete>
+</mapper>

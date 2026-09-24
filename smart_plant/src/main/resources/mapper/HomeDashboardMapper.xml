@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.HomeDashboardMapper">
+
+    <resultMap id="OperationOverviewResultMap" type="com.smart_plant.smart_plant.dto.HomeOperationOverviewItem">
+        <result column="metric_key" property="metricKey"/>
+        <result column="label" property="label"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="online_count" property="onlineCount"/>
+        <result column="active_count" property="activeCount"/>
+        <result column="online_rate" property="onlineRate"/>
+    </resultMap>
+
+    <resultMap id="HomeStatsResultMap" type="com.smart_plant.smart_plant.dto.HomeStatsResponse">
+        <result column="farms" property="farms"/>
+        <result column="plots" property="plots"/>
+        <result column="batches" property="batches"/>
+        <result column="devices" property="devices"/>
+        <result column="faults" property="faults"/>
+    </resultMap>
+
+    <!-- 首页只需要总数，避免调用五个完整分页列表接口。 -->
+    <select id="selectHomeStats" resultMap="HomeStatsResultMap">
+        SELECT
+            (SELECT COUNT(1) FROM `farm` f
+             WHERE 1 = 1 <if test="userId != null">AND f.user_id = #{userId}</if>) AS farms,
+            (SELECT COUNT(1) FROM `plot` p
+             WHERE 1 = 1 <if test="userId != null">AND p.user_id = #{userId}</if>) AS plots,
+            (SELECT COUNT(1) FROM `planting_batch` pb
+             WHERE 1 = 1 <if test="userId != null">AND pb.user_id = #{userId}</if>) AS batches,
+            (SELECT COUNT(1) FROM `iot_device` d
+             WHERE 1 = 1 <if test="userId != null">AND d.user_id = #{userId}</if>) AS devices,
+            (SELECT COUNT(1)
+             FROM `iot_device_fault` f
+             INNER JOIN `iot_device` d ON d.id = f.device_id
+             WHERE 1 = 1 <if test="userId != null">AND d.user_id = #{userId}</if>) AS faults
+    </select>
+
+    <!-- 搜索结果统一映射成轻量 DTO，避免向首页暴露完整业务实体。 -->
+    <resultMap id="SearchResultMap" type="com.smart_plant.smart_plant.dto.HomeSearchResultItem">
+        <id column="id" property="id"/>
+        <result column="type" property="type"/>
+        <result column="title" property="title"/>
+        <result column="description" property="description"/>
+    </resultMap>
+
+    <sql id="IotDeviceScope">
+        <if test="userId != null">
+            AND d.user_id = #{userId}
+        </if>
+    </sql>
+
+    <sql id="IotDeviceOnlineCount">
+        COALESCE(SUM(CASE WHEN d.online_status = 1 AND d.health_status = 0 THEN 1 ELSE 0 END), 0)
+    </sql>
+
+    <sql id="IotDeviceRunningCount">
+        COALESCE(SUM(CASE
+            WHEN d.control_status = 1 AND d.online_status = 1 AND d.health_status = 0 THEN 1
+            ELSE 0
+        END), 0)
+    </sql>
+
+    <sql id="IotDeviceRate">
+        ROUND(
+            CASE
+                WHEN COUNT(1) = 0 THEN 0
+                ELSE (<include refid="IotDeviceOnlineCount"/>) * 100.0 / COUNT(1)
+            END,
+            1
+        )
+    </sql>
+
+    <select id="selectIotDeviceOperationOverview" resultMap="OperationOverviewResultMap">
+        SELECT
+            'sensorOnline' AS metric_key,
+            '传感器在线' AS label,
+            COUNT(1) AS total_count,
+            <include refid="IotDeviceOnlineCount"/> AS online_count,
+            <include refid="IotDeviceOnlineCount"/> AS active_count,
+            <include refid="IotDeviceRate"/> AS online_rate
+        FROM `iot_device` d
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+        WHERE (
+            UPPER(COALESCE(dt.type_code, '')) IN ('ENV_SENSOR', 'WATER_QUALITY', 'NUTRIENT_SENSOR', 'NUTRITION_SENSOR', 'NUTRITION_DETECTOR')
+            OR dt.type_name LIKE '%环境%'
+            OR dt.type_name LIKE '%水质%'
+            OR dt.type_name LIKE '%营养%'
+            OR d.name LIKE '%环境%'
+            OR d.name LIKE '%水质%'
+            OR d.name LIKE '%营养%'
+        )
+        <include refid="IotDeviceScope"/>
+
+        UNION ALL
+
+        SELECT
+            'pumpRunning' AS metric_key,
+            '水泵运行' AS label,
+            COUNT(1) AS total_count,
+            <include refid="IotDeviceOnlineCount"/> AS online_count,
+            <include refid="IotDeviceRunningCount"/> AS active_count,
+            <include refid="IotDeviceRate"/> AS online_rate
+        FROM `iot_device` d
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+        WHERE (
+            UPPER(COALESCE(dt.type_code, '')) = 'WATER_PUMP'
+            OR dt.type_name LIKE '%水泵%'
+            OR d.name LIKE '%水泵%'
+            OR d.name LIKE '%泵%'
+        )
+        <include refid="IotDeviceScope"/>
+
+        UNION ALL
+
+        SELECT
+            'lightRunning' AS metric_key,
+            '补光灯照明' AS label,
+            COUNT(1) AS total_count,
+            <include refid="IotDeviceOnlineCount"/> AS online_count,
+            <include refid="IotDeviceRunningCount"/> AS active_count,
+            <include refid="IotDeviceRate"/> AS online_rate
+        FROM `iot_device` d
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+        WHERE (
+            UPPER(COALESCE(dt.type_code, '')) = 'GROW_LIGHT'
+            OR dt.type_name LIKE '%补光%'
+            OR dt.type_name LIKE '%灯%'
+            OR d.name LIKE '%补光%'
+            OR d.name LIKE '%灯%'
+        )
+        <include refid="IotDeviceScope"/>
+
+        UNION ALL
+
+        SELECT
+            'fanRunning' AS metric_key,
+            '风机运行' AS label,
+            COUNT(1) AS total_count,
+            <include refid="IotDeviceOnlineCount"/> AS online_count,
+            <include refid="IotDeviceRunningCount"/> AS active_count,
+            <include refid="IotDeviceRate"/> AS online_rate
+        FROM `iot_device` d
+        LEFT JOIN `device_type` dt ON dt.id = d.type_id
+        WHERE (
+            UPPER(COALESCE(dt.type_code, '')) = 'FAN'
+            OR LOWER(COALESCE(dt.type_code, '')) LIKE '%fan%'
+            OR dt.type_name LIKE '%风机%'
+            OR d.name LIKE '%风机%'
+            OR LOWER(d.name) LIKE '%fan%'
+        )
+        <include refid="IotDeviceScope"/>
+    </select>
+
+    <select id="selectCameraOperationOverview" resultMap="OperationOverviewResultMap">
+        SELECT
+            'realtimeMonitoring' AS metric_key,
+            '实时监测' AS label,
+            COUNT(1) AS total_count,
+            COALESCE(SUM(CASE WHEN c.online_status = 1 THEN 1 ELSE 0 END), 0) AS online_count,
+            COALESCE(SUM(CASE WHEN c.online_status = 1 THEN 1 ELSE 0 END), 0) AS active_count,
+            ROUND(
+                CASE
+                    WHEN COUNT(1) = 0 THEN 0
+                    ELSE COALESCE(SUM(CASE WHEN c.online_status = 1 THEN 1 ELSE 0 END), 0) * 100.0 / COUNT(1)
+                END,
+                1
+            ) AS online_rate
+        FROM `camera_device` c
+        LEFT JOIN `plot` p ON p.id = c.plot_id
+        WHERE 1 = 1
+        <if test="userId != null">
+            AND p.user_id = #{userId}
+        </if>
+    </select>
+
+    <!-- 当前库存按物资首次入库单价估值并按分类汇总；零库存或零单价不参与占比。 -->
+    <select id="selectWarehouseValueAnalysis" resultType="com.smart_plant.smart_plant.dto.HomeWarehouseValueCategory">
+        SELECT
+            wi.category,
+            CASE wi.category
+                WHEN 1 THEN '种子'
+                WHEN 2 THEN '肥料'
+                WHEN 3 THEN '农药'
+                WHEN 4 THEN '工具'
+                WHEN 5 THEN '设备耗材'
+                ELSE '其他'
+            END AS category_name,
+            ROUND(SUM(wi.stock_qty * iir.price), 2) AS total_value
+        FROM `warehouse_item` wi
+        JOIN `warehouse_record` iir ON iir.id = (
+            SELECT wr.id
+            FROM `warehouse_record` wr
+            WHERE wr.item_id = wi.id
+              AND wr.record_type = 1
+              AND wr.status = 1
+            ORDER BY wr.id ASC
+            LIMIT 1
+        )
+        WHERE wi.is_deleted = 0
+          AND wi.stock_qty &gt; 0
+          AND iir.price &gt; 0
+        <!-- user_id 是创建账号；首页归属范围必须按所属农场主过滤。 -->
+        <if test="userId != null">AND wi.farm_owner_id = #{userId}</if>
+        GROUP BY wi.category
+        ORDER BY wi.category
+    </select>
+
+    <!-- 管理员统计全局未读公告组，其他角色统计当前账号自己的有效未读明细。 -->
+    <select id="selectUnreadNoticeCount" resultType="long">
+        SELECT
+        <choose>
+            <when test="userId == null">COUNT(DISTINCT COALESCE(ref_id, id))</when>
+            <otherwise>COUNT(1)</otherwise>
+        </choose>
+        FROM `notification`
+        WHERE status = 1
+          AND is_read = 0
+        <choose>
+            <when test="userId == null">
+                AND notice_type = 1
+                AND ref_type = 'system_announcement'
+            </when>
+            <otherwise>AND user_id = #{userId}</otherwise>
+        </choose>
+    </select>
+
+    <!--
+      三类业务数据在数据库侧统一搜索并限制结果数；每个分支都应用相同的数据权限条件，
+      防止通过顶部搜索看到侧栏列表中无权访问的农场数据。
+    -->
+    <select id="search" resultMap="SearchResultMap">
+        SELECT result.type, result.id, result.title, result.description
+        FROM (
+            SELECT
+                'farmTask' AS type,
+                ft.id AS id,
+                ft.task_title AS title,
+                CONCAT('农事任务 · ', COALESCE(p.plot_name, '未关联地块')) AS description,
+                1 AS type_order
+            FROM `farm_task` ft
+            LEFT JOIN `plot` p ON p.id = ft.plot_id
+            WHERE (ft.task_title LIKE CONCAT('%', #{keyword}, '%')
+                   OR ft.task_content LIKE CONCAT('%', #{keyword}, '%'))
+            <if test="userId != null">
+                AND ft.user_id = #{userId}
+            </if>
+
+            UNION ALL
+
+            SELECT
+                'iotDevice' AS type,
+                d.id AS id,
+                d.name AS title,
+                CONCAT('设备 · ', d.device_code, ' · ', COALESCE(p.plot_name, '未关联地块')) AS description,
+                2 AS type_order
+            FROM `iot_device` d
+            LEFT JOIN `plot` p ON p.id = d.plot_id
+            WHERE (d.name LIKE CONCAT('%', #{keyword}, '%')
+                   OR d.device_code LIKE CONCAT('%', #{keyword}, '%'))
+            <if test="userId != null">
+                AND d.user_id = #{userId}
+            </if>
+
+            UNION ALL
+
+            SELECT
+                'plot' AS type,
+                p.id AS id,
+                p.plot_name AS title,
+                CONCAT('地块 · ', COALESCE(p.plot_code, '暂无编号')) AS description,
+                3 AS type_order
+            FROM `plot` p
+            WHERE (p.plot_name LIKE CONCAT('%', #{keyword}, '%')
+                   OR p.plot_code LIKE CONCAT('%', #{keyword}, '%'))
+            <if test="userId != null">
+                AND p.user_id = #{userId}
+            </if>
+        ) result
+        ORDER BY result.type_order, result.id DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.PlotMapper">
+
+    <resultMap id="PlotResultMap" type="com.smart_plant.smart_plant.entity.Plot">
+        <id column="id" property="id"/>
+        <result column="farm_id" property="farmId"/>
+        <result column="farm_name" property="farmName"/>
+        <result column="farm_code" property="farmCode"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="crop_image" property="cropImage"/>
+        <result column="type" property="type"/>
+        <result column="area" property="area"/>
+        <result column="area_unit" property="areaUnit"/>
+        <result column="address" property="address"/>
+        <result column="coordinate" property="coordinate"/>
+        <result column="longitude" property="longitude"/>
+        <result column="latitude" property="latitude"/>
+        <result column="boundary_points" property="boundaryPoints"
+                typeHandler="com.smart_plant.smart_plant.typehandler.PlotBoundaryPointListTypeHandler"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="current_batch_id" property="currentBatchId"/>
+        <result column="current_batch_no" property="currentBatchNo"/>
+        <result column="current_crop_id" property="currentCropId"/>
+        <result column="current_crop_name" property="currentCropName"/>
+        <result column="current_crop_variety" property="currentCropVariety"/>
+        <result column="current_crop_image" property="currentCropImage"/>
+        <result column="current_planting_area" property="currentPlantingArea"/>
+        <result column="current_planting_area_unit" property="currentPlantingAreaUnit"/>
+        <result column="current_planted_at" property="currentPlantedAt"/>
+        <result column="current_expected_harvest_at" property="currentExpectedHarvestAt"/>
+        <result column="current_actual_harvest_at" property="currentActualHarvestAt"/>
+        <result column="current_growth_stage_id" property="currentGrowthStageId"/>
+        <result column="current_growth_stage_name" property="currentGrowthStageName"/>
+        <result column="current_growth_stage_order" property="currentGrowthStageOrder"/>
+        <result column="current_batch_status" property="currentBatchStatus"/>
+        <result column="current_expected_yield_amount" property="currentExpectedYieldAmount"/>
+        <result column="current_grown_days" property="currentGrownDays"/>
+        <result column="current_yield_amount" property="currentYieldAmount"/>
+        <result column="current_yield_unit" property="currentYieldUnit"/>
+        <result column="current_batch_remark" property="currentBatchRemark"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        p.id, p.farm_id, f.farm_name, f.farm_code, p.user_id, u.username, u.nickname, p.plot_name, p.plot_code,
+        p.crop_image, p.type,
+        p.area, p.area_unit, p.address, p.coordinate, p.longitude, p.latitude, p.boundary_points, p.status, p.remark,
+        p.create_time, p.update_time,
+        pb.id AS current_batch_id,
+        CONCAT('Batch_', LPAD(CAST(pb.id AS CHAR),
+            GREATEST(3, CHAR_LENGTH(CAST(pb.id AS CHAR))), '0')) AS current_batch_no,
+        pb.crop_id AS current_crop_id,
+        c.crop_name AS current_crop_name,
+        c.variety AS current_crop_variety,
+        CASE WHEN pb.id IS NULL THEN NULL
+            ELSE COALESCE(NULLIF(TRIM(p.crop_image), ''), pb.crop_image, c.image_url)
+        END AS current_crop_image,
+        pb.planting_area AS current_planting_area,
+        pb.area_unit AS current_planting_area_unit,
+        pb.planted_at AS current_planted_at,
+        pb.expected_harvest_at AS current_expected_harvest_at,
+        pb.actual_harvest_at AS current_actual_harvest_at,
+        gs.id AS current_growth_stage_id,
+        gs.stage_name AS current_growth_stage_name,
+        gs.stage_order AS current_growth_stage_order,
+        pb.status AS current_batch_status,
+        pb.expected_yield_amount AS current_expected_yield_amount,
+        CASE
+            WHEN pb.planted_at IS NULL THEN 0
+            ELSE GREATEST(DATEDIFF(CURDATE(), pb.planted_at), 0)
+        END AS current_grown_days,
+        pb.yield_amount AS current_yield_amount,
+        pb.yield_unit AS current_yield_unit,
+        pb.remark AS current_batch_remark
+    </sql>
+
+    <sql id="CurrentPlantingJoins">
+        LEFT JOIN `user` u ON u.id = p.user_id
+        LEFT JOIN `farm` f ON f.id = p.farm_id
+        LEFT JOIN `planting_batch` pb ON pb.id = (
+            SELECT pb2.id
+            FROM `planting_batch` pb2
+            WHERE pb2.plot_id = p.id
+              AND pb2.status = 1
+            ORDER BY pb2.planted_at DESC, pb2.create_time DESC, pb2.id DESC
+            LIMIT 1
+        )
+        LEFT JOIN `crop` c ON c.id = pb.crop_id
+        LEFT JOIN `growth_stage` gs ON gs.id = (
+            SELECT gs2.id
+            FROM `growth_stage` gs2
+            WHERE gs2.crop_id = pb.crop_id
+              AND gs2.status = 1
+              AND GREATEST(DATEDIFF(CURDATE(), pb.planted_at), 0) &gt;= COALESCE(gs2.start_day, 0)
+              AND GREATEST(DATEDIFF(CURDATE(), pb.planted_at), 0) &lt;= COALESCE(
+                  gs2.end_day,
+                  COALESCE(gs2.start_day, 0) + gs2.duration - 1
+              )
+            ORDER BY COALESCE(gs2.start_day, 0) DESC, gs2.stage_order DESC, gs2.id DESC
+            LIMIT 1
+        )
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.Plot" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `plot`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="farmId != null">farm_id,</if>
+            <if test="plotName != null and plotName != ''">plot_name,</if>
+            <if test="plotCode != null and plotCode != ''">plot_code,</if>
+            <if test="cropImage != null and cropImage != ''">crop_image,</if>
+            <if test="type != null">type,</if>
+            <if test="area != null">area,</if>
+            <if test="areaUnit != null and areaUnit != ''">area_unit,</if>
+            <if test="address != null and address != ''">address,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="boundaryPoints != null">boundary_points,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="farmId != null">#{farmId},</if>
+            <if test="plotName != null and plotName != ''">#{plotName},</if>
+            <if test="plotCode != null and plotCode != ''">#{plotCode},</if>
+            <if test="cropImage != null and cropImage != ''">#{cropImage},</if>
+            <if test="type != null">#{type},</if>
+            <if test="area != null">#{area},</if>
+            <if test="areaUnit != null and areaUnit != ''">#{areaUnit},</if>
+            <if test="address != null and address != ''">#{address},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="boundaryPoints != null">#{boundaryPoints,typeHandler=com.smart_plant.smart_plant.typehandler.PlotBoundaryPointListTypeHandler},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM `plot` WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM `plot`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.Plot">
+        UPDATE `plot`
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="farmId != null">farm_id = #{farmId},</if>
+            <if test="plotName != null and plotName != ''">plot_name = #{plotName},</if>
+            <if test="plotCode != null">plot_code = #{plotCode},</if>
+            <if test="cropImage != null">crop_image = #{cropImage},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="area != null">area = #{area},</if>
+            <if test="areaUnit != null">area_unit = #{areaUnit},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="boundaryPoints != null">boundary_points = #{boundaryPoints,typeHandler=com.smart_plant.smart_plant.typehandler.PlotBoundaryPointListTypeHandler},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE `plot`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="PlotResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `plot` p
+        <include refid="CurrentPlantingJoins"/>
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="selectList" resultMap="PlotResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `plot` p
+        <include refid="CurrentPlantingJoins"/>
+        <where>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="plotCode != null and plotCode != ''">
+                AND p.plot_code LIKE CONCAT('%', #{plotCode}, '%')
+            </if>
+            <if test="farmId != null">
+                AND p.farm_id = #{farmId}
+            </if>
+            <if test="userId != null">
+                AND p.user_id = #{userId}
+            </if>
+            <if test="type != null">
+                AND p.type = #{type}
+            </if>
+            <if test="status != null">
+                AND p.status = #{status}
+            </if>
+        </where>
+        ORDER BY p.id DESC
+    </select>
+
+    <select id="selectStatistics" resultType="com.smart_plant.smart_plant.dto.PlotStatisticsResponse">
+        SELECT
+            COUNT(p.id) AS plotTotalCount,
+            COALESCE(SUM(CASE
+                WHEN p.status = 1 AND NOT EXISTS (
+                    SELECT 1
+                    FROM `planting_batch` idle_pb
+                    WHERE idle_pb.plot_id = p.id
+                      AND idle_pb.status = 1
+                ) THEN 1
+                ELSE 0
+            END), 0) AS idlePlotCount,
+            COALESCE((
+                SELECT COUNT(DISTINCT crop_pb.crop_id)
+                FROM `planting_batch` crop_pb
+                INNER JOIN `plot` crop_plot ON crop_plot.id = crop_pb.plot_id
+                WHERE crop_pb.status = 1
+                  AND (#{userId} IS NULL OR crop_plot.user_id = #{userId})
+            ), 0) AS cropTypeCount,
+            COALESCE(ROUND(SUM(CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM `planting_batch` area_pb
+                    WHERE area_pb.plot_id = p.id
+                      AND area_pb.status = 1
+                ) THEN CASE COALESCE(NULLIF(TRIM(p.area_unit), ''), '亩')
+                    WHEN '亩' THEN COALESCE(p.area, 0)
+                    WHEN '平方米' THEN COALESCE(p.area, 0) / 666.6666667
+                    WHEN '㎡' THEN COALESCE(p.area, 0) / 666.6666667
+                    WHEN 'm²' THEN COALESCE(p.area, 0) / 666.6666667
+                    WHEN '公顷' THEN COALESCE(p.area, 0) * 15
+                    WHEN 'ha' THEN COALESCE(p.area, 0) * 15
+                    ELSE 0
+                END
+                ELSE 0
+            END), 2), 0) AS plantingArea,
+            '亩' AS areaUnit
+        FROM `plot` p
+        <where>
+            <if test="userId != null">
+                p.user_id = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <select id="countByUserIdAndPlotCode" resultType="int">
+        SELECT COUNT(1)
+        FROM `plot`
+        WHERE user_id = #{userId}
+          AND plot_code = #{plotCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <select id="countPlantingBatchByPlotId" resultType="int">
+        SELECT COUNT(1)
+        FROM `planting_batch`
+        WHERE plot_id = #{plotId}
+    </select>
+</mapper>

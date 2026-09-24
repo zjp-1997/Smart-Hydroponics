@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.SmsCodeMapper">
+
+    <!-- 公共字段映射确保数据库下划线字段能够稳定映射到 Java 驼峰属性。 -->
+    <resultMap id="SmsCodeResultMap" type="com.smart_plant.smart_plant.entity.SmsCode">
+        <id column="id" property="id"/>
+        <result column="phone" property="phone"/>
+        <result column="code" property="code"/>
+        <result column="scene" property="scene"/>
+        <result column="expire_time" property="expireTime"/>
+        <result column="used" property="used"/>
+        <result column="used_time" property="usedTime"/>
+        <result column="send_ip" property="sendIp"/>
+        <result column="user_agent" property="userAgent"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 保存模拟验证码及其有效期，后续可直接将发码动作替换为真实短信供应商。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.SmsCode" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sms_code (phone, code, scene, expire_time, used, send_ip, user_agent, status, remark)
+        VALUES (#{phone}, #{code}, #{scene}, #{expireTime}, 0, #{sendIp}, #{userAgent}, 1, #{remark})
+    </insert>
+
+    <!-- 最近一次记录包含已使用数据，因为这里只用于计算发码冷却时间。 -->
+    <select id="selectLatest" resultMap="SmsCodeResultMap">
+        SELECT id, phone, code, scene, expire_time, used, used_time, send_ip, user_agent, status, remark, create_time
+        FROM sms_code
+        WHERE phone = #{phone} AND scene = #{scene}
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <!-- FOR UPDATE 将验证码消费过程串行化，阻止同一验证码被两个并发请求重复使用。 -->
+    <select id="selectLatestValidForUpdate" resultMap="SmsCodeResultMap">
+        SELECT id, phone, code, scene, expire_time, used, used_time, send_ip, user_agent, status, remark, create_time
+        FROM sms_code
+        WHERE phone = #{phone}
+          AND scene = #{scene}
+          AND used = 0
+          AND status = 1
+          AND expire_time &gt; NOW()
+        ORDER BY id DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <!-- 新验证码生成后，旧验证码立即失效，避免用户误用旧短信。 -->
+    <update id="invalidateActive">
+        UPDATE sms_code
+        SET status = 0
+        WHERE phone = #{phone} AND scene = #{scene} AND used = 0 AND status = 1
+    </update>
+
+    <!-- WHERE 条件提供额外的幂等保护，只有尚未使用的正常记录才会被消费。 -->
+    <update id="markUsed">
+        UPDATE sms_code
+        SET used = 1, used_time = NOW()
+        WHERE id = #{id} AND used = 0 AND status = 1
+    </update>
+</mapper>

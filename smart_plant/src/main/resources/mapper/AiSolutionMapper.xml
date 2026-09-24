@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.AiSolutionMapper">
+
+    <resultMap id="AiSolutionResultMap" type="com.smart_plant.smart_plant.entity.AiSolution">
+        <id column="id" property="id"/>
+        <result column="record_id" property="recordId"/>
+        <result column="result_id" property="resultId"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="nickname" property="nickname"/>
+        <result column="plot_id" property="plotId"/>
+        <result column="plot_name" property="plotName"/>
+        <result column="plot_code" property="plotCode"/>
+        <result column="camera_id" property="cameraId"/>
+        <result column="camera_name" property="cameraName"/>
+        <result column="solution_title" property="solutionTitle"/>
+        <result column="solution_summary" property="solutionSummary"/>
+        <result column="solution_detail" property="solutionDetail"/>
+        <result column="priority_level" property="priorityLevel"/>
+        <result column="generate_task" property="generateTask"/>
+        <result column="task_generated" property="taskGenerated"/>
+        <result column="farm_task_id" property="farmTaskId"/>
+        <result column="farm_task_title" property="farmTaskTitle"/>
+        <result column="farm_task_status" property="farmTaskStatus"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        s.id, s.record_id, s.result_id, s.user_id, u.username, u.nickname,
+        s.plot_id, p.plot_name, p.plot_code,
+        s.camera_id, cd.name AS camera_name,
+        s.solution_title, s.solution_summary, s.solution_detail,
+        s.priority_level, s.generate_task, s.task_generated,
+        s.farm_task_id, ft.task_title AS farm_task_title,
+        ft.status AS farm_task_status, s.status, s.remark,
+        s.create_time, s.update_time
+    </sql>
+
+    <sql id="BaseJoins">
+        LEFT JOIN `user` u ON u.id = s.user_id
+        LEFT JOIN `plot` p ON p.id = s.plot_id
+        LEFT JOIN `camera_device` cd ON cd.id = s.camera_id
+        LEFT JOIN `farm_task` ft ON ft.id = s.farm_task_id
+    </sql>
+
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.AiSolution"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `ai_solution`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="recordId != null">record_id,</if>
+            <if test="resultId != null">result_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="plotId != null">plot_id,</if>
+            <if test="cameraId != null">camera_id,</if>
+            <if test="solutionTitle != null and solutionTitle != ''">solution_title,</if>
+            <if test="solutionSummary != null">solution_summary,</if>
+            <if test="solutionDetail != null">solution_detail,</if>
+            <if test="priorityLevel != null">priority_level,</if>
+            <if test="generateTask != null">generate_task,</if>
+            <if test="taskGenerated != null">task_generated,</if>
+            <if test="farmTaskId != null">farm_task_id,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="recordId != null">#{recordId},</if>
+            <if test="resultId != null">#{resultId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="plotId != null">#{plotId},</if>
+            <if test="cameraId != null">#{cameraId},</if>
+            <if test="solutionTitle != null and solutionTitle != ''">#{solutionTitle},</if>
+            <if test="solutionSummary != null">#{solutionSummary},</if>
+            <if test="solutionDetail != null">#{solutionDetail},</if>
+            <if test="priorityLevel != null">#{priorityLevel},</if>
+            <if test="generateTask != null">#{generateTask},</if>
+            <if test="taskGenerated != null">#{taskGenerated},</if>
+            <if test="farmTaskId != null">#{farmTaskId},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.AiSolution">
+        UPDATE `ai_solution`
+        <set>
+            <if test="solutionTitle != null and solutionTitle != ''">solution_title = #{solutionTitle},</if>
+            <if test="solutionSummary != null">solution_summary = #{solutionSummary},</if>
+            <if test="solutionDetail != null">solution_detail = #{solutionDetail},</if>
+            <if test="priorityLevel != null">priority_level = #{priorityLevel},</if>
+            <if test="generateTask != null">generate_task = #{generateTask},</if>
+            <if test="taskGenerated != null">task_generated = #{taskGenerated},</if>
+            <if test="farmTaskId != null">farm_task_id = #{farmTaskId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateTaskLink">
+        UPDATE `ai_solution`
+        SET generate_task = 1,
+            farm_task_id = #{farmTaskId},
+            task_generated = #{taskGenerated},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="clearTaskLinkByFarmTaskId">
+        UPDATE `ai_solution`
+        SET farm_task_id = NULL,
+            task_generated = 0,
+            status = 1
+        WHERE farm_task_id = #{farmTaskId}
+    </update>
+
+    <update id="clearTaskLinkByFarmTaskIds">
+        UPDATE `ai_solution`
+        SET farm_task_id = NULL,
+            task_generated = 0,
+            status = 1
+        WHERE farm_task_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="deleteByRecordId">
+        DELETE FROM `ai_solution`
+        WHERE record_id = #{recordId}
+    </delete>
+
+    <delete id="deleteByRecordIds">
+        DELETE FROM `ai_solution`
+        WHERE record_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectById" resultMap="AiSolutionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `ai_solution` s
+        <include refid="BaseJoins"/>
+        WHERE s.id = #{id}
+    </select>
+
+    <select id="selectLatestByRecordId" resultMap="AiSolutionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `ai_solution` s
+        <include refid="BaseJoins"/>
+        WHERE s.record_id = #{recordId}
+        ORDER BY s.id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectList" resultMap="AiSolutionResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `ai_solution` s
+        <include refid="BaseJoins"/>
+        <where>
+            <if test="userId != null">
+                AND s.user_id = #{userId}
+            </if>
+            <if test="plotName != null and plotName != ''">
+                AND p.plot_name LIKE CONCAT('%', #{plotName}, '%')
+            </if>
+            <if test="cameraName != null and cameraName != ''">
+                AND cd.name LIKE CONCAT('%', #{cameraName}, '%')
+            </if>
+            <if test="solutionTitle != null and solutionTitle != ''">
+                AND s.solution_title LIKE CONCAT('%', #{solutionTitle}, '%')
+            </if>
+            <if test="priorityLevel != null">
+                AND s.priority_level = #{priorityLevel}
+            </if>
+            <if test="taskGenerated != null">
+                AND s.task_generated = #{taskGenerated}
+            </if>
+            <if test="status != null">
+                AND s.status = #{status}
+            </if>
+            <if test="startTime != null">
+                AND s.create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND s.create_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY s.id DESC
+    </select>
+
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN task_generated = 1 THEN 1 ELSE 0 END), 0) AS generatedTaskCount,
+            COALESCE(SUM(CASE WHEN task_generated = 0 THEN 1 ELSE 0 END), 0) AS pendingTaskCount,
+            COALESCE(SUM(CASE WHEN priority_level = 4 THEN 1 ELSE 0 END), 0) AS urgentCount,
+            COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS activeCount
+        FROM `ai_solution`
+        <where>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart_plant.smart_plant.mapper.AiRecognitionTypeMapper">
+
+    <!-- AI识别类型结果映射：把 ai_recognition_type 表字段转换为 Java 驼峰属性。 -->
+    <resultMap id="AiRecognitionTypeResultMap" type="com.smart_plant.smart_plant.entity.AiRecognitionType">
+        <id column="id" property="id"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="type_name" property="typeName"/>
+        <result column="description" property="description"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- AI识别类型基础字段片段：列表和详情查询复用，避免字段遗漏。 -->
+    <sql id="BaseColumns">
+        id, type_code, type_name, description, status, create_time, update_time
+    </sql>
+
+    <!-- AI识别类型公共查询条件，支持按编码、名称和状态筛选。 -->
+    <sql id="QueryWhere">
+        <where>
+            <if test="typeCode != null and typeCode != ''">
+                AND type_code LIKE CONCAT('%', #{typeCode}, '%')
+            </if>
+            <if test="typeName != null and typeName != ''">
+                AND type_name LIKE CONCAT('%', #{typeName}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </sql>
+
+    <!-- 新增AI识别类型：使用动态列，只写入业务层校验和补齐后的字段。 -->
+    <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.AiRecognitionType"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `ai_recognition_type`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="typeCode != null and typeCode != ''">type_code,</if>
+            <if test="typeName != null and typeName != ''">type_name,</if>
+            <if test="description != null and description != ''">description,</if>
+            <if test="status != null">status,</if>
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <if test="typeCode != null and typeCode != ''">#{typeCode},</if>
+            <if test="typeName != null and typeName != ''">#{typeName},</if>
+            <if test="description != null and description != ''">#{description},</if>
+            <if test="status != null">#{status},</if>
+        </trim>
+    </insert>
+
+    <!-- 根据主键删除单条AI识别类型。 -->
+    <delete id="deleteById">
+        DELETE FROM `ai_recognition_type` WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除AI识别类型，foreach 会把 ID 集合展开成 IN 条件。 -->
+    <delete id="deleteBatchByIds">
+        DELETE FROM `ai_recognition_type`
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 动态修改AI识别类型信息：只更新非空字段，避免覆盖未提交的数据。 -->
+    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.AiRecognitionType">
+        UPDATE `ai_recognition_type`
+        <set>
+            <if test="typeCode != null and typeCode != ''">type_code = #{typeCode},</if>
+            <if test="typeName != null and typeName != ''">type_name = #{typeName},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 单独修改AI识别类型状态。 -->
+    <update id="updateStatus">
+        UPDATE `ai_recognition_type`
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据主键查询AI识别类型详情。 -->
+    <select id="selectById" resultMap="AiRecognitionTypeResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `ai_recognition_type`
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据唯一类型编码查询AI识别类型。 -->
+    <select id="selectByTypeCode" resultMap="AiRecognitionTypeResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `ai_recognition_type`
+        WHERE type_code = #{typeCode}
+        LIMIT 1
+    </select>
+
+    <!-- 分页前置列表查询：支持按编码、名称和状态筛选。 -->
+    <select id="selectList" resultMap="AiRecognitionTypeResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM `ai_recognition_type`
+        <include refid="QueryWhere"/>
+        ORDER BY id ASC
+    </select>
+
+    <!-- 统计同编码记录数量，excludeId 用于修改时排除当前记录。 -->
+    <select id="countByTypeCode" resultType="int">
+        SELECT COUNT(1)
+        FROM `ai_recognition_type`
+        WHERE type_code = #{typeCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 统计识别结果表引用数量，用于AI识别类型删除保护。 -->
+    <select id="countRecognitionResultsByTypeId" resultType="int">
+        SELECT COUNT(1)
+        FROM `ai_recognition_result`
+        WHERE recognition_type = #{typeId}
+    </select>
+
+    <!-- AI识别类型统计，用于页面顶部统计卡片。 -->
+    <select id="selectStatistics" resultType="map">
+        SELECT
+            COUNT(1) AS totalCount,
+            COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS enabledCount,
+            COALESCE(SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END), 0) AS disabledCount,
+            COALESCE(SUM((
+                SELECT COUNT(1)
+                FROM `ai_recognition_result` r
+                WHERE r.recognition_type = t.id
+            )), 0) AS resultCount,
+            MIN(create_time) AS firstCreateTime,
+            MAX(create_time) AS latestCreateTime
+        FROM `ai_recognition_type` t
+        <include refid="QueryWhere"/>
+    </select>
+</mapper>
