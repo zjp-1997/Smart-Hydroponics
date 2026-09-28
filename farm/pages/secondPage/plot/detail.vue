@@ -156,7 +156,11 @@
 						</view>
 						<view v-if="canManageFarm && !plot.idle"
 							class="switch-control"
-							:class="{ active: item.enabled }"
+							:class="{ active: item.enabled, disabled: item.updating }"
+							role="switch"
+							:aria-label="`${item.name}${item.enabled ? '已开启' : '已关闭'}`"
+							:aria-checked="item.enabled"
+							:aria-disabled="item.updating"
 							@tap="toggleDevice(item)"
 						>
 							<view class="switch-dot"></view>
@@ -250,7 +254,7 @@
 </template>
 
 <script>
-import { getPlotDetail, getEditableCrops, updatePlotBasicInfo, harvestPlot } from '@/api/plotList.js'
+import { getPlotDetail, getEditableCrops, updatePlotBasicInfo, harvestPlot, updatePlotDeviceControlStatus } from '@/api/plotList.js'
 import { nextTaskScrollTop } from '@/utils/taskScroll.js'
 import { getUserInfo } from '@/utils/auth.js'
 
@@ -560,9 +564,17 @@ export default {
 		toggleMatureNotice() {
 			this.matureNotice = !this.matureNotice
 		},
-		toggleDevice(device) {
-			if (this.plot.idle) return
-			device.enabled = !device.enabled
+		async toggleDevice(device) {
+			if (this.plot.idle || device.updating) return
+			const targetEnabled = !device.enabled
+			device.updating = true
+			try {
+				await updatePlotDeviceControlStatus(device.id, targetEnabled)
+				device.enabled = targetEnabled
+				uni.showToast({ title: targetEnabled ? '设备已开启' : '设备已关闭', icon: 'success' })
+			} finally {
+				device.updating = false
+			}
 		}
 	}
 }
@@ -999,6 +1011,10 @@ page {
 
 .switch-control.active {
 	background-color: #1BA291;
+}
+
+.switch-control.disabled {
+	opacity: 0.55;
 }
 
 .switch-dot {

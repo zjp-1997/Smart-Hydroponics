@@ -1,6 +1,7 @@
 package com.smart_plant.smart_plant.controller;
 
 import com.smart_plant.smart_plant.dto.ClientDeviceListResponse;
+import com.smart_plant.smart_plant.dto.ClientDeviceControlStatusRequest;
 import com.smart_plant.smart_plant.dto.ClientDeviceOnlineStatusRequest;
 import com.smart_plant.smart_plant.response.R;
 import com.smart_plant.smart_plant.service.IotDeviceService;
@@ -30,6 +31,15 @@ public class ClientDeviceController {
     public R<ClientDeviceListResponse> listCurrentUserDevices() {
         // 返回当前登录用户的补光灯、水泵、摄像头、水质检测仪和环境检测仪分组列表。
         return R.success(iotDeviceService.listCurrentClientDeviceGroups());
+    }
+
+    /** 农场主修改地块设备的业务启停状态。 */
+    @PutMapping("/devices/{id}/control-status")
+    public R<Void> updateControlStatus(
+            @PathVariable Long id,
+            @RequestBody ClientDeviceControlStatusRequest request) {
+        iotDeviceService.updateControlStatus(id, request == null ? null : request.getControlStatus());
+        return R.success();
     }
 
     /** 农场主切换普通设备或摄像头的在线状态。 */

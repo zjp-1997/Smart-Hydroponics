@@ -136,7 +136,8 @@ function normalizePlotDetail(detail) {
 			state: idle ? '离线' : item.state || '离线',
 			stateClass: idle ? 'offline' : resolveDeviceStateClass(item.state),
 			icon: resolveDeviceIcon(item),
-			enabled: !idle && !!item.enabled
+			enabled: !idle && !!item.enabled,
+			updating: false
 		}))
 	}
 }
@@ -160,6 +161,13 @@ export function getPlotListByFarmId(farmId) {
 // 查询地块详情。后端会校验地块是否属于当前登录用户，前端只传业务主键。
 export function getPlotDetail(plotId) {
 	return get(`/smart_plant/client/plots/${plotId}`).then((detail) => normalizePlotDetail(detail || {}))
+}
+
+// 保存地块详情设备的期望启停状态；在线状态仍由设备心跳和连接层维护。
+export function updatePlotDeviceControlStatus(deviceId, enabled) {
+	return put(`/smart_plant/client/devices/${encodeURIComponent(deviceId)}/control-status`, {
+		controlStatus: enabled ? 1 : 0
+	})
 }
 
 // 编辑弹框只展示当前农场主可用的作物；保存由后端再次校验角色和地块归属。
