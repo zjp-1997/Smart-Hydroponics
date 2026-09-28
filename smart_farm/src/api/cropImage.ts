@@ -7,6 +7,8 @@ export interface CropImage {
   userId: number
   username?: string
   nickname?: string
+  diseasePestId?: number
+  diseasePestName?: string
   imageUrl: string
   imageSize?: number
   remark?: string
@@ -34,6 +36,8 @@ export interface CropImageListParams {
   userId?: number
   startDate?: string
   endDate?: string
+  diseasePestId?: number
+  diseaseOnly?: boolean
   pageNum: number
   pageSize: number
 }

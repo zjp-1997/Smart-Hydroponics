@@ -34,6 +34,7 @@ public class PermissionAuthorizationServiceImpl implements PermissionAuthorizati
             "camera_image:manage",
             "sensor_data:manage",
             "crop_image:manage",
+            "disease_image:manage",
             "crop:manage",
             "warehouse:manage",
             "operation_log:view",

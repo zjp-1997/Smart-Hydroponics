@@ -194,6 +194,13 @@ public class CropImageServiceImpl implements CropImageService {
     @Override
     public PageInfo<CropImage> listCropImages(Long userId, LocalDate startDate, LocalDate endDate,
                                               Integer pageNum, Integer pageSize) {
+        return listCropImages(userId, startDate, endDate, null, null, pageNum, pageSize);
+    }
+
+    @Override
+    public PageInfo<CropImage> listCropImages(Long userId, LocalDate startDate, LocalDate endDate,
+                                              Long diseasePestId, Boolean diseaseOnly,
+                                              Integer pageNum, Integer pageSize) {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "开始日期不能晚于结束日期");
         }
@@ -206,7 +213,9 @@ public class CropImageServiceImpl implements CropImageService {
         return new PageInfo<>(cropImageMapper.selectList(
                 scopedUserId,
                 startTime,
-                endTime));
+                endTime,
+                diseasePestId,
+                diseaseOnly));
     }
 
     private void validateCreate(CropImage cropImage) {
@@ -239,6 +248,8 @@ public class CropImageServiceImpl implements CropImageService {
 
     private void normalizeUpdateFields(CropImage cropImage, CropImage oldImage) {
         cropImage.setUserId(cropImage.getUserId() == null ? oldImage.getUserId() : cropImage.getUserId());
+        cropImage.setDiseasePestId(cropImage.getDiseasePestId() == null
+                ? oldImage.getDiseasePestId() : cropImage.getDiseasePestId());
         cropImage.setImageUrl(cropImage.getImageUrl() == null ? oldImage.getImageUrl() : normalizeOptionalText(cropImage.getImageUrl()));
         cropImage.setImageSize(cropImage.getImageSize() == null ? oldImage.getImageSize() : cropImage.getImageSize());
         cropImage.setRemark(cropImage.getRemark() == null ? oldImage.getRemark() : normalizeOptionalText(cropImage.getRemark()));

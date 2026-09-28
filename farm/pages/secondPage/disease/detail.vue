@@ -1,6 +1,6 @@
 <template>
 	<view class="detail-page">
-		<!-- 顶部栏严格采用参考图的青绿色背景、居中标题和三枚等宽操作区。 -->
+		<!-- 顶部栏保留返回与上传两个等宽触控区，标题始终视觉居中。 -->
 		<view class="detail-header">
 			<view class="detail-nav">
 				<view class="nav-action nav-action-left" hover-class="nav-action-pressed" aria-label="返回病虫害列表" @tap="handleBack">
@@ -10,16 +10,12 @@
 				<view class="nav-actions">
 					<view
 						class="nav-action"
-						:class="{ 'nav-action-favorite': isFavorite }"
 						hover-class="nav-action-pressed"
-						:aria-label="isFavorite ? '取消收藏' : '收藏病虫害'"
-						@tap="toggleFavorite"
+						aria-label="上传病害图片"
+						@tap="openUploadDialog"
 					>
-						<image class="nav-svg" src="/static/disease-detail/heart.svg" mode="aspectFit" aria-hidden="true"></image>
+						<text class="iconfont icon-tianjia1 nav-add-icon" aria-hidden="true"></text>
 					</view>
-					<button class="nav-action nav-share" open-type="share" hover-class="nav-action-pressed" aria-label="分享病虫害详情">
-						<image class="nav-svg" src="/static/disease-detail/share.svg" mode="aspectFit" aria-hidden="true"></image>
-					</button>
 				</view>
 			</view>
 		</view>
@@ -161,11 +157,48 @@
 				</view>
 			</view>
 		</scroll-view>
+
+		<view v-if="uploadDialogVisible" class="upload-mask" @tap="closeUploadDialog">
+			<view class="upload-dialog" role="dialog" aria-label="上传病害图片" @tap.stop>
+				<view class="upload-dialog-header">
+					<view>
+						<text class="upload-dialog-title">上传病害图片</text>
+						<text class="upload-dialog-subtitle">补充有助于识别的清晰病害照片</text>
+					</view>
+					<view class="dialog-close" hover-class="dialog-close-pressed" aria-label="关闭弹框" @tap="closeUploadDialog">
+						<text class="dialog-close-symbol">×</text>
+					</view>
+				</view>
+				<view class="upload-field">
+					<text class="upload-label">病害名称</text>
+					<view class="readonly-field"><text>{{ detail?.name || '-' }}</text></view>
+				</view>
+				<view class="upload-field">
+					<text class="upload-label">图片标签</text>
+					<view class="source-tag"><text>手机图片</text></view>
+				</view>
+				<view class="upload-field">
+					<text class="upload-label">病害图片</text>
+					<view class="image-picker" hover-class="image-picker-pressed" @tap="chooseDiseaseImage">
+						<protected-image v-if="uploadImagePath" class="upload-preview" :src="uploadImagePath" alt="待上传病害图片" mode="aspectFill"></protected-image>
+						<view v-else class="picker-placeholder">
+							<text class="iconfont icon-tianjia1 picker-icon" aria-hidden="true"></text>
+							<text class="picker-title">选择图片</text>
+							<text class="picker-hint">支持 JPG、PNG、WEBP，最大 5MB</text>
+						</view>
+					</view>
+				</view>
+				<view class="upload-actions">
+					<button class="dialog-button cancel-button" :disabled="uploading" @tap="closeUploadDialog">取消</button>
+					<button class="dialog-button confirm-button" :disabled="!uploadImagePath || uploading" :loading="uploading" @tap="confirmUploadImage">确认上传</button>
+				</view>
+			</view>
+		</view>
 	</view>
 </template>
 
 <script>
-import { getDiseasePestDetail } from '@/api/diseasePestList.js'
+import { getDiseasePestDetail, uploadDiseasePestImage } from '@/api/diseasePestList.js'
 import SectionCard from './components/SectionCard.vue'
 
 export default {
@@ -176,7 +209,9 @@ export default {
 			loading: true,
 			errorMessage: '',
 			detail: null,
-			isFavorite: false,
+			uploadDialogVisible: false,
+			uploadImagePath: '',
+			uploading: false,
 			fallbackImage: '/static/lecttue.png'
 		}
 	},
@@ -244,10 +279,43 @@ export default {
 			}
 			uni.reLaunch({ url: '/pages/service/disease_control' })
 		},
-		/** 收藏属于当前页面的轻量交互，不额外引入未要求的持久化接口。 */
-		toggleFavorite() {
-			this.isFavorite = !this.isFavorite
-			uni.showToast({ title: this.isFavorite ? '已收藏' : '已取消收藏', icon: 'none' })
+		openUploadDialog() {
+			if (!this.detail || this.uploading) return
+			this.uploadImagePath = ''
+			this.uploadDialogVisible = true
+		},
+		closeUploadDialog() {
+			if (this.uploading) return
+			this.uploadDialogVisible = false
+			this.uploadImagePath = ''
+		},
+		chooseDiseaseImage() {
+			if (this.uploading) return
+			uni.chooseImage({
+				count: 1,
+				sizeType: ['compressed'],
+				sourceType: ['album', 'camera'],
+				success: (result) => {
+					this.uploadImagePath = result.tempFilePaths?.[0] || ''
+				}
+			})
+		},
+		async confirmUploadImage() {
+			if (!this.uploadImagePath || !this.diseaseId || this.uploading) return
+			this.uploading = true
+			try {
+				const uploaded = await uploadDiseasePestImage(this.diseaseId, this.uploadImagePath)
+				if (uploaded?.imageUrl && this.detail) {
+					this.detail.imageUrls = [...(this.detail.imageUrls || []), uploaded.imageUrl]
+				}
+				this.uploadDialogVisible = false
+				this.uploadImagePath = ''
+				uni.showToast({ title: '上传成功', icon: 'success' })
+			} catch (error) {
+				// 请求层已统一展示错误提示，此处保留弹框便于用户重试。
+			} finally {
+				this.uploading = false
+			}
 		},
 		/** 请求一次详情接口，后端同时返回主数据和启用的防治措施。 */
 		async loadDetail() {
@@ -320,8 +388,8 @@ page {
 
 .detail-nav-title {
 	position: absolute;
-	left: 210rpx;
-	right: 210rpx;
+	left: 120rpx;
+	right: 120rpx;
 	overflow: hidden;
 	text-align: center;
 	text-overflow: ellipsis;
@@ -366,19 +434,205 @@ page {
 	background-color: rgba(255, 255, 255, 0.16);
 }
 
-.nav-action-favorite {
-	background-color: rgba(255, 255, 255, 0.2);
-}
-
 .nav-back-icon {
 	font-size: 20px;
 	color: #ffffff;
 }
 
-.nav-svg {
+.nav-add-icon {
+	font-size: 25px;
+	color: #ffffff;
+}
+
+.upload-mask {
+	position: fixed;
+	z-index: 1000;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: calc(var(--status-bar-height) + 32rpx) 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+	background: rgba(20, 38, 42, 0.5);
+}
+
+.upload-dialog {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 640rpx;
+	max-height: 86vh;
+	overflow-y: auto;
+	padding: 32rpx;
+	border-radius: 28rpx;
+	background: #ffffff;
+	box-shadow: 0 28rpx 72rpx rgba(14, 46, 51, 0.2);
+}
+
+.upload-dialog-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 24rpx;
+	margin-bottom: 30rpx;
+}
+
+.upload-dialog-title,
+.upload-dialog-subtitle,
+.upload-label,
+.picker-title,
+.picker-hint {
 	display: block;
-	width: 38rpx;
-	height: 38rpx;
+}
+
+.upload-dialog-title {
+	font-size: 21px;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #25343a;
+}
+
+.upload-dialog-subtitle {
+	margin-top: 8rpx;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #718087;
+}
+
+.dialog-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 88rpx;
+	height: 88rpx;
+	margin: -18rpx -18rpx 0 0;
+	border-radius: 50%;
+}
+
+.dialog-close-pressed,
+.image-picker-pressed {
+	background-color: #eef8f6;
+}
+
+.dialog-close-symbol {
+	font-size: 28px;
+	font-weight: 300;
+	color: #64757a;
+}
+
+.upload-field + .upload-field {
+	margin-top: 24rpx;
+}
+
+.upload-label {
+	margin-bottom: 12rpx;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.4;
+	color: #34464c;
+}
+
+.readonly-field {
+	box-sizing: border-box;
+	min-height: 84rpx;
+	display: flex;
+	align-items: center;
+	padding: 18rpx 22rpx;
+	border: 1px solid #e1e9e7;
+	border-radius: 14rpx;
+	background: #f7faf9;
+	font-size: 15px;
+	color: #34464c;
+}
+
+.source-tag {
+	display: inline-flex;
+	align-items: center;
+	min-height: 52rpx;
+	padding: 0 20rpx;
+	border-radius: 26rpx;
+	background: #e8f7f4;
+	font-size: 13px;
+	font-weight: 600;
+	color: #149f91;
+}
+
+.image-picker {
+	box-sizing: border-box;
+	height: 320rpx;
+	overflow: hidden;
+	border: 2rpx dashed #8bd1c8;
+	border-radius: 18rpx;
+	background: #f5fbfa;
+}
+
+.upload-preview {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.picker-placeholder {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.picker-icon {
+	font-size: 34px;
+	color: #20a99b;
+}
+
+.picker-title {
+	margin-top: 12rpx;
+	font-size: 16px;
+	font-weight: 600;
+	color: #28726b;
+}
+
+.picker-hint {
+	margin-top: 8rpx;
+	font-size: 12px;
+	color: #80918e;
+}
+
+.upload-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20rpx;
+	margin-top: 32rpx;
+}
+
+.dialog-button {
+	height: 88rpx;
+	margin: 0;
+	border-radius: 16rpx;
+	font-size: 16px;
+	line-height: 88rpx;
+}
+
+.dialog-button::after {
+	border: 0;
+}
+
+.cancel-button {
+	border: 1px solid #a9bbb8;
+	background: #ffffff;
+	color: #506461;
+}
+
+.confirm-button {
+	background: #20aa9b;
+	color: #ffffff;
+}
+
+.confirm-button[disabled] {
+	background: #b9dcd7;
+	color: rgba(255, 255, 255, 0.9);
 }
 
 .detail-scroll {

@@ -2,6 +2,7 @@ package com.smart_plant.smart_plant.controller;
 
 import com.smart_plant.smart_plant.dto.CropImageUploadResult;
 import com.smart_plant.smart_plant.entity.DiseasePest;
+import com.smart_plant.smart_plant.entity.CropImage;
 import com.smart_plant.smart_plant.response.R;
 import com.smart_plant.smart_plant.service.CropImageService;
 import com.smart_plant.smart_plant.service.DiseasePestService;
@@ -38,6 +39,21 @@ public class ClientDiseasePestController {
     @GetMapping("/disease-pests/{id}")
     public R<DiseasePest> getDiseasePestDetail(@PathVariable Long id) {
         return R.success(diseasePestService.getEnabledDiseasePestById(id));
+    }
+
+    /** 将 farm 用户上传的手机图片关联到当前病虫害知识条目。 */
+    @PostMapping(value = "/disease-pests/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public R<CropImage> uploadDiseasePestImage(@PathVariable Long id,
+                                               @RequestParam("image") MultipartFile image) {
+        DiseasePest diseasePest = diseasePestService.getEnabledDiseasePestById(id);
+        CropImageUploadResult upload = cropImageService.uploadCropImage(image);
+        CropImage cropImage = new CropImage();
+        cropImage.setUserId(dataPermissionService.currentUser().getId());
+        cropImage.setDiseasePestId(diseasePest.getId());
+        cropImage.setImageUrl(upload.imageUrl());
+        cropImage.setImageSize(upload.imageSize());
+        cropImage.setRemark("手机图片");
+        return R.success(cropImageService.addCropImage(cropImage));
     }
 
     /**

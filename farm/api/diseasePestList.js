@@ -76,6 +76,18 @@ export function getDiseasePestDetail(id) {
 		.then(normalizeDiseasePestDetail)
 }
 
+/** 上传当前病虫害的补充图片；图片来源固定标记为“手机图片”。 */
+export function uploadDiseasePestImage(id, imagePath) {
+	return uploadFile({
+		url: `/smart_plant/client/disease-pests/${encodeURIComponent(id)}/images`,
+		filePath: imagePath,
+		name: 'image'
+	}).then((item = {}) => ({
+		...item,
+		imageUrl: resolveFileUrl(item.imageUrl)
+	}))
+}
+
 /** 查询启用的作物类型，供病虫害上报弹框选择。 */
 export function getDiseaseCropTypes() {
 	return get('/smart_plant/crop-type/list', {

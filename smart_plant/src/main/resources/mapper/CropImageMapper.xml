@@ -7,6 +7,8 @@
     <resultMap id="CropImageResultMap" type="com.smart_plant.smart_plant.entity.CropImage">
         <id column="id" property="id"/>
         <result column="user_id" property="userId"/>
+        <result column="disease_pest_id" property="diseasePestId"/>
+        <result column="disease_pest_name" property="diseasePestName"/>
         <result column="username" property="username"/>
         <result column="nickname" property="nickname"/>
         <result column="image_url" property="imageUrl"/>
@@ -17,7 +19,8 @@
     </resultMap>
 
     <sql id="BaseColumns">
-        ci.id, ci.user_id, u.username, u.nickname,
+        ci.id, ci.user_id, ci.disease_pest_id, dp.name AS disease_pest_name,
+        u.username, u.nickname,
         ci.image_url, ci.image_size,
         ci.remark,
         ci.create_time, ci.update_time
@@ -25,6 +28,7 @@
 
     <sql id="UserJoin">
         LEFT JOIN `user` u ON u.id = ci.user_id
+        LEFT JOIN `disease_pest` dp ON dp.id = ci.disease_pest_id
     </sql>
 
     <insert id="insert" parameterType="com.smart_plant.smart_plant.entity.CropImage"
@@ -32,12 +36,14 @@
         INSERT INTO `crop_image`
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test="userId != null">user_id,</if>
+            <if test="diseasePestId != null">disease_pest_id,</if>
             <if test="imageUrl != null and imageUrl != ''">image_url,</if>
             <if test="imageSize != null">image_size,</if>
             <if test="remark != null and remark != ''">remark,</if>
         </trim>
         <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
             <if test="userId != null">#{userId},</if>
+            <if test="diseasePestId != null">#{diseasePestId},</if>
             <if test="imageUrl != null and imageUrl != ''">#{imageUrl},</if>
             <if test="imageSize != null">#{imageSize},</if>
             <if test="remark != null and remark != ''">#{remark},</if>
@@ -60,6 +66,7 @@
         UPDATE `crop_image`
         <set>
             <if test="userId != null">user_id = #{userId},</if>
+            <if test="diseasePestId != null">disease_pest_id = #{diseasePestId},</if>
             <if test="imageUrl != null and imageUrl != ''">image_url = #{imageUrl},</if>
             <if test="imageSize != null">image_size = #{imageSize},</if>
             <if test="remark != null">remark = #{remark},</if>
@@ -88,7 +95,22 @@
             <if test="endTime != null">
                 AND ci.create_time &lt;= #{endTime}
             </if>
+            <if test="diseasePestId != null">
+                AND ci.disease_pest_id = #{diseasePestId}
+            </if>
+            <if test="diseaseOnly != null and diseaseOnly">
+                AND ci.disease_pest_id IS NOT NULL
+            </if>
         </where>
         ORDER BY ci.id DESC
+    </select>
+
+    <select id="selectImageUrlsByDiseasePestId" resultType="java.lang.String">
+        SELECT image_url
+        FROM `crop_image`
+        WHERE disease_pest_id = #{diseasePestId}
+          AND image_url IS NOT NULL
+          AND image_url != ''
+        ORDER BY id ASC
     </select>
 </mapper>

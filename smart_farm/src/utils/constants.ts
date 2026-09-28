@@ -3,6 +3,24 @@
  *
  * 这里集中维护跨页面复用的固定值，避免在业务组件中散落硬编码。
  */
+const resolveApiBaseUrl = () => {
+  const configuredUrl = import.meta.env.VITE_APP_API_URL as string
+
+  if (typeof window === 'undefined' || !configuredUrl) {
+    return configuredUrl
+  }
+
+  try {
+    const apiUrl = new URL(configuredUrl)
+    if (apiUrl.hostname === '127.0.0.1' || apiUrl.hostname === 'localhost') {
+      apiUrl.hostname = window.location.hostname
+    }
+    return apiUrl.toString().replace(/\/$/, '')
+  } catch {
+    return configuredUrl
+  }
+}
+
 const Constants = {
   /**
    * 管理员登录 token 在 localStorage 中使用的 key。
@@ -29,7 +47,7 @@ const Constants = {
    * 后端接口基础地址。
    * Vite 会根据当前运行模式读取 .env.development 或 .env.production 中的配置。
    */
-  BASE_URL: import.meta.env.VITE_APP_API_URL,
+  BASE_URL: resolveApiBaseUrl(),
 
   /**
    * 列表页默认分页大小。

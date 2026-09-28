@@ -92,7 +92,7 @@ public class ClientPictureServiceImpl implements ClientPictureService {
     public List<ClientPictureListResponse.PictureItem> listCurrentClientPhonePictures() {
         Long currentUserId = dataPermissionService.currentUser().getId();
         // 手机图片来自 crop_image 表，查询条件固定为当前登录用户，避免跨用户查看图片。
-        return cropImageMapper.selectList(currentUserId, null, null)
+        return cropImageMapper.selectList(currentUserId, null, null, null, null)
                 .stream()
                 .map(this::toPhonePictureItem)
                 .toList();

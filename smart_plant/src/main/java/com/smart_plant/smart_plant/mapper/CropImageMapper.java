@@ -22,5 +22,10 @@ public interface CropImageMapper {
 
     List<CropImage> selectList(@Param("userId") Long userId,
                                @Param("startTime") LocalDateTime startTime,
-                               @Param("endTime") LocalDateTime endTime);
+                               @Param("endTime") LocalDateTime endTime,
+                               @Param("diseasePestId") Long diseasePestId,
+                               @Param("diseaseOnly") Boolean diseaseOnly);
+
+    /** 查询病虫害详情页需要展示的用户上传图片。 */
+    List<String> selectImageUrlsByDiseasePestId(@Param("diseasePestId") Long diseasePestId);
 }

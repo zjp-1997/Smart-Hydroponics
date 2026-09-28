@@ -178,6 +178,7 @@ const menuItemsSource: MenuItem[] = [
     children: [
       { title: '病虫害信息管理', path: '/diseasePest/list', permission: 'disease_pest:manage' },
       { title: '防治措施管理', path: '/disease-control/list', permission: 'disease_control:manage' },
+      { title: '病害图片管理', path: '/disease-image/list', permission: 'disease_image:manage' },
     ],
   },
   {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import type { Component } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -34,6 +35,8 @@ interface PhonePictureRow {
   remark: string
   createTime: string
   updateTime: string
+  diseasePestName: string
+  imageTag: string
 }
 
 interface StatCard {
@@ -47,9 +50,16 @@ interface StatCard {
 }
 
 const sidebarVisible = ref(false)
+const route = useRoute()
+const isDiseaseImageMode = computed(() => route.name === 'diseaseImageList')
+const pageLabel = computed(() => isDiseaseImageMode.value ? '病害图片' : '手机图片')
+const breadcrumbs = computed(() => isDiseaseImageMode.value
+  ? ['首页', '病虫害知识库', '病害图片管理']
+  : ['首页', '图片管理', '手机图片管理'])
 const selectedRows = ref<PhonePictureRow[]>([])
 const phonePictures = ref<PhonePictureRow[]>([])
 const userOptions = ref<SmartPlantUser[]>([])
+const diseaseOptions = ref<Array<{ id: number; name: string }>>([])
 const tableLoading = ref(false)
 const addDialogVisible = ref(false)
 const editCropImageId = ref<number | null>(null)
@@ -73,6 +83,7 @@ const imageStats = ref({
 
 const searchForm = reactive({
   userId: undefined as number | undefined,
+  diseasePestId: undefined as number | undefined,
 })
 
 const statCards = computed<StatCard[]>(() => [
@@ -205,6 +216,8 @@ const mapCropImageToRow = (item: CropImage): PhonePictureRow => {
     remark: item.remark || '-',
     createTime: item.createTime || '-',
     updateTime: item.updateTime || '-',
+    diseasePestName: item.diseasePestName || '-',
+    imageTag: '手机图片',
   }
 }
 
@@ -213,13 +226,31 @@ const loadUsers = async () => {
   userOptions.value = result.data.list
 }
 
+const getDiseaseScopeParams = () => isDiseaseImageMode.value
+  ? { diseaseOnly: true, diseasePestId: searchForm.diseasePestId }
+  : {}
+
 const formatUserLabel = (user: SmartPlantUser) => {
   return `${user.nickname || user.username || '用户'}${user.username ? ` (${user.username})` : ''}`
 }
 
 const fetchImageStats = async () => {
-  const result = await listCropImages({ pageNum: 1, pageSize: 10000 })
+  const result = await listCropImages({
+    pageNum: 1,
+    pageSize: 10000,
+    ...getDiseaseScopeParams(),
+  })
   const allImages = result.data.list
+  if (isDiseaseImageMode.value) {
+    diseaseOptions.value = Array.from(new Map(
+      allImages
+        .filter((item) => item.diseasePestId && item.diseasePestName)
+        .map((item) => [item.diseasePestId as number, {
+          id: item.diseasePestId as number,
+          name: item.diseasePestName as string,
+        }]),
+    ).values())
+  }
   const today = new Date()
   const yesterday = new Date()
   yesterday.setDate(today.getDate() - 1)
@@ -253,6 +284,7 @@ const fetchCropImages = async (pageNum = currentPage.value, size = pageSize.valu
       userId: searchForm.userId,
       startDate: dateRange.value[0],
       endDate: dateRange.value[1],
+      ...getDiseaseScopeParams(),
       pageNum,
       pageSize: size,
     })
@@ -269,6 +301,7 @@ const fetchCropImages = async (pageNum = currentPage.value, size = pageSize.valu
 
 const resetSearch = () => {
   searchForm.userId = undefined
+  searchForm.diseasePestId = undefined
   dateRange.value = []
   void fetchCropImages(1)
 }
@@ -383,7 +416,7 @@ const handleDeleteCropImage = async (row: PhonePictureRow) => {
     })
 
     await deleteCropImage(row.id)
-    ElMessage.success('删除手机图片成功')
+    ElMessage.success(`删除${pageLabel.value}成功`)
     void fetchCropImages(getNextPageAfterDelete(1))
     void fetchImageStats()
   } catch (error) {
@@ -395,7 +428,7 @@ const handleDeleteCropImage = async (row: PhonePictureRow) => {
 
 const handleBatchDelete = async () => {
   if (!selectedRows.value.length) {
-    ElMessage.warning('请先选择需要删除的手机图片')
+    ElMessage.warning(`请先选择需要删除的${pageLabel.value}`)
     return
   }
 
@@ -411,7 +444,7 @@ const handleBatchDelete = async () => {
     )
 
     await batchDeleteCropImages(selectedRows.value.map((row) => row.id))
-    ElMessage.success('批量删除手机图片成功')
+    ElMessage.success(`批量删除${pageLabel.value}成功`)
     void fetchCropImages(getNextPageAfterDelete(selectedRows.value.length))
     void fetchImageStats()
   } catch (error) {
@@ -426,6 +459,14 @@ onMounted(() => {
   void fetchCropImages()
   void fetchImageStats()
 })
+
+watch(isDiseaseImageMode, () => {
+  searchForm.userId = undefined
+  searchForm.diseasePestId = undefined
+  dateRange.value = []
+  void fetchCropImages(1)
+  void fetchImageStats()
+})
 </script>
 
 <template>
@@ -433,7 +474,7 @@ onMounted(() => {
     <LeftMenu :visible="sidebarVisible" @close="closeSidebar" />
 
     <div class="phone-picture-shell admin-shell">
-      <Header :breadcrumbs="['首页', '图片管理', '手机图片管理']" @toggle-sidebar="sidebarVisible = true" />
+      <Header :breadcrumbs="breadcrumbs" @toggle-sidebar="sidebarVisible = true" />
 
       <main class="phone-picture-content admin-content">
         <section class="stats-grid">
@@ -464,6 +505,16 @@ onMounted(() => {
                 />
               </el-select>
             </el-form-item>
+            <el-form-item v-if="isDiseaseImageMode" label="病害名称">
+              <el-select v-model="searchForm.diseasePestId" placeholder="全部病害" filterable clearable>
+                <el-option
+                  v-for="item in diseaseOptions"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </el-select>
+            </el-form-item>
             <el-form-item class="date-filter-item" label="上传日期">
               <el-date-picker
                 v-model="dateRange"
@@ -482,7 +533,7 @@ onMounted(() => {
               <el-button type="danger" plain :icon="Delete" @click="handleBatchDelete">
                 批量删除
               </el-button>
-              <el-button type="primary" :icon="CirclePlus" @click="openAddDialog">新增图片</el-button>
+              <el-button v-if="!isDiseaseImageMode" type="primary" :icon="CirclePlus" @click="openAddDialog">新增图片</el-button>
             </div>
           </el-form>
         </section>
@@ -513,13 +564,17 @@ onMounted(() => {
               </el-table-column>
               <el-table-column prop="imageSize" label="图片大小" min-width="120" align="center" header-align="center" />
               <el-table-column prop="userLabel" label="上传用户" min-width="150" align="center" header-align="center" />
+              <el-table-column v-if="isDiseaseImageMode" prop="diseasePestName" label="病害名称" min-width="160" align="center" header-align="center" />
+              <el-table-column v-if="isDiseaseImageMode" prop="imageTag" label="图片标签" width="120" align="center" header-align="center">
+                <template #default="{ row }"><el-tag type="success" effect="light">{{ row.imageTag }}</el-tag></template>
+              </el-table-column>
               <el-table-column prop="createTime" label="上传时间" min-width="170" align="center" header-align="center" />
               <el-table-column prop="remark" label="备注" min-width="190" align="center" header-align="center" show-overflow-tooltip />
               
-              <el-table-column label="操作" width="240" fixed="right" align="center" header-align="center">
+              <el-table-column label="操作" :width="isDiseaseImageMode ? 180 : 240" fixed="right" align="center" header-align="center">
                 <template #default="{ row }">
                   <div class="table-actions">
-                    <el-button link type="primary" :icon="EditPen" @click="handleEditCropImage(row)">
+                    <el-button v-if="!isDiseaseImageMode" link type="primary" :icon="EditPen" @click="handleEditCropImage(row)">
                       编辑
                     </el-button>
                     <el-button link type="success" :icon="Download" @click="handleDownloadCropImage(row)">

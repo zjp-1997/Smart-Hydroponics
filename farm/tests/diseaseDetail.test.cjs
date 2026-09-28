@@ -35,9 +35,15 @@ assert.match(detailPage, /v-if="loading"/)
 assert.match(detailPage, /v-else-if="errorMessage"/)
 assert.match(detailPage, /class="retry-button"/)
 
-// 参考图的核心层级必须存在：顶部双操作、重叠摘要、独立防治卡和药剂安全提示。
-assert.match(detailPage, /static\/disease-detail\/heart\.svg/)
-assert.match(detailPage, /open-type="share"/)
+// 顶部使用 iconfont 添加入口，并提供带病害名称和“手机图片”标签的上传弹框。
+assert.match(detailPage, /icon-tianjia1 nav-add-icon/)
+assert.match(detailPage, /@tap="openUploadDialog"/)
+assert.match(detailPage, /上传病害图片/)
+assert.match(detailPage, /手机图片/)
+assert.match(detailPage, /uploadDiseasePestImage\(this\.diseaseId, this\.uploadImagePath\)/)
+assert.doesNotMatch(detailPage, /static\/disease-detail\/heart\.svg/)
+assert.doesNotMatch(detailPage, /open-type="share"/)
+assert.match(api, /disease-pests\/\$\{encodeURIComponent\(id\)\}\/images/)
 assert.match(detailPage, /class="summary-card"/)
 assert.match(detailPage, /class="control-card"/)
 assert.match(detailPage, /class="medicine-notice"/)

@@ -35,4 +35,8 @@ public interface CropImageService {
 
     PageInfo<CropImage> listCropImages(Long userId, LocalDate startDate, LocalDate endDate,
                                        Integer pageNum, Integer pageSize);
+
+    PageInfo<CropImage> listCropImages(Long userId, LocalDate startDate, LocalDate endDate,
+                                       Long diseasePestId, Boolean diseaseOnly,
+                                       Integer pageNum, Integer pageSize);
 }

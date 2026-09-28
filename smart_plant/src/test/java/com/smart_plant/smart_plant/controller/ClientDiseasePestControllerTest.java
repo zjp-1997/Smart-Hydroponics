@@ -2,6 +2,7 @@ package com.smart_plant.smart_plant.controller;
 
 import com.smart_plant.smart_plant.dto.CropImageUploadResult;
 import com.smart_plant.smart_plant.entity.DiseasePest;
+import com.smart_plant.smart_plant.entity.CropImage;
 import com.smart_plant.smart_plant.response.R;
 import com.smart_plant.smart_plant.service.CropImageService;
 import com.smart_plant.smart_plant.service.DiseasePestService;
@@ -79,5 +80,27 @@ class ClientDiseasePestControllerTest {
         assertEquals(9L, response.getData().getId());
         assertEquals("黄瓜霉病", response.getData().getName());
         verify(diseasePestService).getEnabledDiseasePestById(9L);
+    }
+
+    @Test
+    void uploadsPhoneImageForCurrentDiseasePest() {
+        User user = new User();
+        user.setId(22L);
+        DiseasePest diseasePest = new DiseasePest();
+        diseasePest.setId(9L);
+        MultipartFile image = mock(MultipartFile.class);
+        when(dataPermissionService.currentUser()).thenReturn(user);
+        when(diseasePestService.getEnabledDiseasePestById(9L)).thenReturn(diseasePest);
+        when(cropImageService.uploadCropImage(image))
+                .thenReturn(new CropImageUploadResult("/uploads/crop-images/disease.jpg", 256L));
+        when(cropImageService.addCropImage(any(CropImage.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CropImage saved = controller.uploadDiseasePestImage(9L, image).getData();
+
+        assertEquals(22L, saved.getUserId());
+        assertEquals(9L, saved.getDiseasePestId());
+        assertEquals("手机图片", saved.getRemark());
+        assertEquals("/uploads/crop-images/disease.jpg", saved.getImageUrl());
     }
 }

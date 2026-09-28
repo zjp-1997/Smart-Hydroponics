@@ -15,6 +15,12 @@ public class CropImage {
 
     private Long userId;
 
+    /** 关联病虫害知识库记录；为空时表示普通手机图片。 */
+    private Long diseasePestId;
+
+    /** 列表查询时由关联表补充，不直接写入 crop_image。 */
+    private String diseasePestName;
+
     private String username;
 
     private String nickname;

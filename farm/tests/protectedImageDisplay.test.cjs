@@ -15,7 +15,8 @@ function vueFiles(directory) {
 }
 
 assert.match(component, /downloadProtectedFile\(src\)/)
-assert.match(component, /#ifdef APP-PLUS/)
+assert.doesNotMatch(component, /#ifdef APP-PLUS/)
+assert.ok(component.includes("if (/^https?:\\/\\//i.test(expectedSrc))"))
 assert.match(component, /:fade-show="false"/)
 assert.match(pagesConfig, /"\^protected-image\$":\s*"@\/componment\/ProtectedImage\.vue"/)
 

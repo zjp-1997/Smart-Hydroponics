@@ -30,7 +30,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/crop-image")
 @RequiredArgsConstructor
-@RequirePermission("crop_image:manage")
+@RequirePermission({"crop_image:manage", "disease_image:manage"})
 public class CropImageController {
 
     private final CropImageService cropImageService;
@@ -89,9 +89,11 @@ public class CropImageController {
                                                  @RequestParam(required = false)
                                                  @DateTimeFormat(pattern = "yyyy-MM-dd")
                                                  LocalDate endDate,
+                                                 @RequestParam(required = false) Long diseasePestId,
+                                                 @RequestParam(required = false) Boolean diseaseOnly,
                                                  @RequestParam(defaultValue = "1") Integer pageNum,
                                                  @RequestParam(defaultValue = "10") Integer pageSize) {
         return R.success(cropImageService.listCropImages(
-                userId, startDate, endDate, pageNum, pageSize));
+                userId, startDate, endDate, diseasePestId, diseaseOnly, pageNum, pageSize));
     }
 }

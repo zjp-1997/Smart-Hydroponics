@@ -43,7 +43,6 @@ export default {
 			handler(src) {
 				const expectedSrc = src || ''
 				this.displaySrc = expectedSrc
-				// #ifdef APP-PLUS
 				if (/^https?:\/\//i.test(expectedSrc)) {
 					this.displaySrc = ''
 					loadDisplayImage(expectedSrc)
@@ -54,7 +53,6 @@ export default {
 							if (this.src === expectedSrc) this.$emit('error', error)
 						})
 				}
-				// #endif
 			}
 		}
 	},

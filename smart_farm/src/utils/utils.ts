@@ -60,7 +60,20 @@ export const getFileUrl = (url: string) => {
     return ''
   }
 
-  if (/^(https?:\/\/|blob:|data:)/i.test(url)) {
+  if (/^(https?:\/\/)/i.test(url)) {
+    try {
+      const absoluteUrl = new URL(url)
+      if (typeof window !== 'undefined'
+        && (absoluteUrl.hostname === '127.0.0.1' || absoluteUrl.hostname === 'localhost')) {
+        absoluteUrl.hostname = window.location.hostname
+      }
+      return absoluteUrl.toString()
+    } catch {
+      return url
+    }
+  }
+
+  if (/^(blob:|data:)/i.test(url)) {
     return url
   }
 

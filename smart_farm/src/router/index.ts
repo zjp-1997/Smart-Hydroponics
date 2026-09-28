@@ -61,6 +61,7 @@ const ROUTE_PERMISSION_MAP: Record<string, string> = {
   growthStageList: 'growth_stage:manage',
   diseasePestList: 'disease_pest:manage',
   diseaseControlList: 'disease_control:manage',
+  diseaseImageList: 'disease_image:manage',
   deviceList: 'iot_device:manage',
   deviceFaultList: 'iot_device_fault:manage',
   deviceTypeList: 'device_type:manage',
@@ -230,6 +231,12 @@ const router = createRouter({
       name: 'deviceTypeList',
       component: DeviceTypeListView,
       meta: { pageTitle: '设备类型管理' },
+    },
+    {
+      path: '/disease-image/list',
+      name: 'diseaseImageList',
+      component: PhonePictureListView,
+      meta: { pageTitle: '病害图片管理' },
     },
     {
       // 独立路由便于深链接、权限控制和保留筛选状态。

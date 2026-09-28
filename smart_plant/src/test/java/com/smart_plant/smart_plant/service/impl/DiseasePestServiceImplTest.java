@@ -4,6 +4,7 @@ import com.smart_plant.smart_plant.entity.DiseaseControl;
 import com.smart_plant.smart_plant.entity.DiseasePest;
 import com.smart_plant.smart_plant.exception.BusinessException;
 import com.smart_plant.smart_plant.mapper.CropTypeMapper;
+import com.smart_plant.smart_plant.mapper.CropImageMapper;
 import com.smart_plant.smart_plant.mapper.DiseaseControlMapper;
 import com.smart_plant.smart_plant.mapper.DiseasePestMapper;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,9 @@ class DiseasePestServiceImplTest {
     private final DiseasePestMapper diseasePestMapper = mock(DiseasePestMapper.class);
     private final DiseaseControlMapper diseaseControlMapper = mock(DiseaseControlMapper.class);
     private final CropTypeMapper cropTypeMapper = mock(CropTypeMapper.class);
+    private final CropImageMapper cropImageMapper = mock(CropImageMapper.class);
     private final DiseasePestServiceImpl service = new DiseasePestServiceImpl(
-            diseasePestMapper, diseaseControlMapper, cropTypeMapper);
+            diseasePestMapper, diseaseControlMapper, cropTypeMapper, cropImageMapper);
 
     /** 启用的病虫害详情中只应保留启用的防治措施。 */
     @Test
@@ -33,11 +35,14 @@ class DiseasePestServiceImplTest {
         when(diseasePestMapper.selectById(7L)).thenReturn(diseasePest);
         when(diseaseControlMapper.selectList(7L, null, null, null, null))
                 .thenReturn(List.of(enabled, disabled));
+        when(cropImageMapper.selectImageUrlsByDiseasePestId(7L))
+                .thenReturn(List.of("/uploads/crop-images/user-added.jpg"));
 
         DiseasePest result = service.getEnabledDiseasePestById(7L);
 
         assertEquals(1, result.getControls().size());
         assertEquals(1L, result.getControls().getFirst().getId());
+        assertEquals(List.of("/uploads/crop-images/user-added.jpg"), result.getImageUrls());
     }
 
     /** 后台已停用的病虫害不能继续被 farm 用户端访问。 */

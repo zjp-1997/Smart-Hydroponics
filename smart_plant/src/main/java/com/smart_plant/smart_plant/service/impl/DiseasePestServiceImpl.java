@@ -5,6 +5,7 @@ import com.github.pagehelper.PageInfo;
 import com.smart_plant.smart_plant.entity.DiseasePest;
 import com.smart_plant.smart_plant.exception.BusinessException;
 import com.smart_plant.smart_plant.mapper.CropTypeMapper;
+import com.smart_plant.smart_plant.mapper.CropImageMapper;
 import com.smart_plant.smart_plant.mapper.DiseaseControlMapper;
 import com.smart_plant.smart_plant.mapper.DiseasePestMapper;
 import com.smart_plant.smart_plant.response.ResponseCode;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.LinkedHashSet;
 
 /**
  * 病虫害基础信息业务实现类。
@@ -33,6 +35,9 @@ public class DiseasePestServiceImpl implements DiseasePestService {
 
     /** 作物类型 Mapper，用于校验 crop_type_id 是否存在。 */
     private final CropTypeMapper cropTypeMapper;
+
+    /** 用户从病害详情页上传的补充图片。 */
+    private final CropImageMapper cropImageMapper;
 
     /** 新增病虫害基础信息，并返回数据库中的完整记录。 */
     @Override
@@ -135,6 +140,12 @@ public class DiseasePestServiceImpl implements DiseasePestService {
         diseasePest.setControls(diseasePest.getControls().stream()
                 .filter(control -> Integer.valueOf(1).equals(control.getStatus()))
                 .toList());
+        LinkedHashSet<String> imageUrls = new LinkedHashSet<>();
+        if (diseasePest.getImageUrls() != null) {
+            imageUrls.addAll(diseasePest.getImageUrls());
+        }
+        imageUrls.addAll(cropImageMapper.selectImageUrlsByDiseasePestId(id));
+        diseasePest.setImageUrls(imageUrls.stream().filter(StringUtils::hasText).toList());
         return diseasePest;
     }
 
