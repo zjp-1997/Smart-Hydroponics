@@ -50,7 +50,8 @@ const toMapLngLat = (entity: Pick<MapEntity, 'longitude' | 'latitude'>): [number
 
 const DEFAULT_CENTER = toMapLngLat({ longitude: 121.4737, latitude: 31.2304 })
 const DEFAULT_ZOOM = 9
-/** 地图允许的最大缩放层级，进入页面和手动定位时都使用该层级。 */
+/** 单点聚焦使用街区级视野；18 级仅作为用户手动放大的上限。 */
+const FOCUS_ZOOM = 15
 const MAX_ZOOM = 18
 
 const sidebarVisible = ref(false)
@@ -161,8 +162,8 @@ const selectEntity = (entity: MapEntity, pan = true) => {
   selectedEntity.value = entity
   // 有边界时展示完整地块范围；历史数据没有边界时继续定位到原中心点。
   const polygon = polygonByKey.get(entity.key)
-  if (pan && polygon) map?.setFitView([polygon], false, [90, 90, 90, 390], 18)
-  else if (pan) map?.setZoomAndCenter(Math.max(map.getZoom(), 14), toMapLngLat(entity))
+  if (pan && polygon) map?.setFitView([polygon], false, [90, 90, 90, 390], MAX_ZOOM)
+  else if (pan) map?.setZoomAndCenter(FOCUS_ZOOM, toMapLngLat(entity))
   markerByKey.forEach((marker) => marker.setTop(false))
   markerByKey.get(entity.key)?.setTop(true)
   // 重置所有地块样式，再用蓝色强调当前选中边界。
@@ -246,6 +247,14 @@ const fitToResults = () => {
   map.setFitView([...entityPolygons, ...entityMarkers], false, [60, 80, 60, 370], 16)
 }
 
+const focusFirstResult = () => {
+  const entity = filteredEntities.value.find((item) => item.kind === 'plot') || filteredEntities.value[0]
+  if (!entity || !map) return
+  const polygon = polygonByKey.get(entity.key)
+  if (polygon) map.setFitView([polygon], false, [90, 90, 90, 390], MAX_ZOOM)
+  else map.setZoomAndCenter(FOCUS_ZOOM, toMapLngLat(entity))
+}
+
 const refreshMapSize = () => {
   // 高德地图已开启 resizeEnable；重新设置中心可立即同步外层布局尺寸变化。
   if (map) map.setZoomAndCenter(map.getZoom(), map.getCenter())
@@ -284,7 +293,7 @@ const fetchMapData = async () => {
 const locateMe = async () => {
   if (!map) return false
   try {
-    // 地图工具栏与页面首次进入共用定位逻辑，并在定位成功后放大至允许的最大层级。
+    // 地图工具栏与页面首次进入共用定位逻辑，使用街区级比例尺兼顾位置与周边环境。
     const location = await locateWithAmap()
     const currentLocation = toMapLngLat(location)
     locationMarker?.setMap(null)
@@ -299,7 +308,7 @@ const locateMe = async () => {
       title: '我的位置',
       zIndex: 200,
     })
-    map.setZoomAndCenter(MAX_ZOOM, currentLocation)
+    map.setZoomAndCenter(FOCUS_ZOOM, currentLocation)
     return true
   } catch {
     ElMessage.warning('无法获取当前位置，请检查浏览器定位权限或高德地图配置')
@@ -341,7 +350,7 @@ const retryMap = async () => {
   await initializeMap()
   renderMarkers()
   fitToResults()
-  await locateMe()
+  if (!await locateMe()) focusFirstResult()
 }
 
 watch([keyword, entityFilter, statusFilter], renderMarkers)
@@ -349,8 +358,8 @@ watch([keyword, entityFilter, statusFilter], renderMarkers)
 onMounted(async () => {
   await initializeMap()
   await fetchMapData()
-  // 用户从菜单进入地图总览后，最终视野应停留在本人位置，而不是地块自动适配视野。
-  await locateMe()
+  // 优先展示本人位置；定位不可用时聚焦有效地块，避免停留在跨城市的过小比例尺。
+  if (!await locateMe()) focusFirstResult()
 })
 
 onBeforeUnmount(() => {
