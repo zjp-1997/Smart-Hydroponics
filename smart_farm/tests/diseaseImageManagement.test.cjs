@@ -15,6 +15,8 @@ assert.match(page, /diseaseOnly: true/)
 assert.match(page, /label="病害名称"/)
 assert.match(page, /图片标签/)
 assert.match(page, /手机图片/)
+assert.match(page, /class="filter-actions"[\s\S]*?v-if="isDiseaseImageMode"[\s\S]*?批量删除/)
+assert.match(page, /v-if="!isDiseaseImageMode" class="manage-actions"/)
 assert.match(cropImageApi, /diseasePestId\?: number/)
 assert.match(cropImageApi, /diseaseOnly\?: boolean/)
 

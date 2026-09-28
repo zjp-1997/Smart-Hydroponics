@@ -528,12 +528,15 @@ watch(isDiseaseImageMode, () => {
             <div class="filter-actions">
               <el-button type="primary" :icon="Search" @click="fetchCropImages(1)">查询</el-button>
               <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
+              <el-button v-if="isDiseaseImageMode" type="danger" plain :icon="Delete" @click="handleBatchDelete">
+                批量删除
+              </el-button>
             </div>
-            <div class="manage-actions">
+            <div v-if="!isDiseaseImageMode" class="manage-actions">
               <el-button type="danger" plain :icon="Delete" @click="handleBatchDelete">
                 批量删除
               </el-button>
-              <el-button v-if="!isDiseaseImageMode" type="primary" :icon="CirclePlus" @click="openAddDialog">新增图片</el-button>
+              <el-button type="primary" :icon="CirclePlus" @click="openAddDialog">新增图片</el-button>
             </div>
           </el-form>
         </section>
