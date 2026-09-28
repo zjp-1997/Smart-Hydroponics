@@ -11,3 +11,11 @@ for (const tone of ['teal', 'blue', 'amber', 'green', 'red', 'purple', 'cyan', '
 assert.match(page, /service-icon-wrap" :class="`service-tone-\$\{service\.tone\}`"/)
 assert.match(page, /background-color: var\(--service-icon-bg\)/)
 assert.match(page, /color: var\(--service-icon-color\)/)
+
+assert.match(page, /class="section-title-wrap">\s*<view class="section-accent"><\/view>/)
+assert.match(page, /class="task-title-wrap">\s*<view class="section-accent"><\/view>/)
+assert.match(page, /class="service-title">\s*<view class="section-accent"><\/view>/)
+assert.doesNotMatch(page, /icon-renwu task-icon/)
+assert.match(page, /background-color: #14B8A6/)
+assert.match(page, /color: #0D9488/)
+assert.match(page, /color: #111827/)

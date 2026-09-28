@@ -32,7 +32,10 @@
 			:show-scrollbar="false"
 		>
 			<view class="section-head">
-				<text class="section-title">{{ isOrdinaryUser ? '所属农场地块' : '我的地块' }}</text>
+				<view class="section-title-wrap">
+					<view class="section-accent"></view>
+					<text class="section-title">{{ isOrdinaryUser ? '所属农场地块' : '我的地块' }}</text>
+				</view>
 				<view class="section-more" @tap="handleMorePlots">
 					<text>全部地块</text>
 					<text class="iconfont icon-youjiantou arrow-icon"></text>
@@ -56,7 +59,7 @@
 			<view class="task-card" @tap="handleTask">
 				<view class="task-head">
 					<view class="task-title-wrap">
-						<text class="iconfont icon-renwu task-icon"></text>
+						<view class="section-accent"></view>
 						<text class="task-title">农事提醒</text>
 					</view>
 					<view class="task-more">
@@ -72,7 +75,10 @@
 				</view>
 			</view>
 
-			<view class="service-title">常用服务</view>
+			<view class="service-title">
+				<view class="section-accent"></view>
+				<text>常用服务</text>
+			</view>
 			<view class="service-grid">
 				<view class="service-card" v-for="service in visibleServices" :key="service.title" @tap="handleService(service)">
 					<view class="service-icon-wrap" :class="`service-tone-${service.tone}`">
@@ -510,11 +516,25 @@ page {
 	justify-content: space-between;
 }
 
+.section-title-wrap {
+	display: flex;
+	align-items: center;
+}
+
+.section-accent {
+	flex-shrink: 0;
+	width: 8rpx;
+	height: 36rpx;
+	margin-right: 16rpx;
+	border-radius: 4rpx;
+	background-color: #14B8A6;
+}
+
 .section-title {
 	font-size: 18px;
-	font-weight: normal;
+	font-weight: 700;
 	line-height: 1.3;
-	color: #000000;
+	color: #111827;
 }
 
 .section-more,
@@ -524,13 +544,13 @@ page {
 	font-size: 14px;
 	font-weight: normal;
 	line-height: 1.3;
-	color: #C8C8C8;
+	color: #0D9488;
 }
 
 .arrow-icon {
 	margin-left: 6rpx;
 	font-size: 22rpx;
-	color: #C8C8C8;
+	color: #0D9488;
 }
 
 .plot-list {
@@ -633,18 +653,11 @@ page {
 	justify-content: space-between;
 }
 
-.task-icon {
-	margin-right: 16rpx;
-	font-size: 34rpx;
-	line-height: 34rpx;
-	color: #6FC4BA;
-}
-
 .task-title {
 	font-size: 18px;
-	font-weight: normal;
+	font-weight: 700;
 	line-height: 1.3;
-	color: #000000;
+	color: #111827;
 }
 
 .task-stats {
@@ -687,11 +700,13 @@ page {
 }
 
 .service-title {
+	display: flex;
+	align-items: center;
 	margin-top: 28rpx;
 	font-size: 18px;
-	font-weight: normal;
+	font-weight: 700;
 	line-height: 1.4;
-	color: #000000;
+	color: #111827;
 }
 
 .service-grid {
