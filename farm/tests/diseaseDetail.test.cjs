@@ -3,6 +3,7 @@ const { readFileSync } = require('node:fs')
 
 const listPage = readFileSync('pages/service/disease_control.vue', 'utf8')
 const detailPage = readFileSync('pages/secondPage/disease/detail.vue', 'utf8')
+const sectionCard = readFileSync('pages/secondPage/disease/components/SectionCard.vue', 'utf8')
 const api = readFileSync('api/diseasePestList.js', 'utf8')
 const pagesConfig = readFileSync('pages.json', 'utf8')
 const diseaseListPage = readFileSync('pages/service/disease_control.vue', 'utf8')
@@ -50,6 +51,11 @@ const navGradient = /linear-gradient\(180deg, rgba\(27, 162, 145, 0\.7\) 0%, rgb
 assert.match(diseaseListPage, navGradient)
 assert.match(detailPage, navGradient)
 assert.match(detailPage, /background-size:\s*100% 300rpx/)
+
+// 子组件必须自带结构样式，避免 H5 样式隔离后标题装饰和白色卡片丢失。
+assert.match(sectionCard, /<style scoped>/)
+assert.match(sectionCard, /\.section-mark\s*\{[\s\S]*?background-color:\s*#1eb8ab/)
+assert.match(sectionCard, /\.info-card\s*\{[\s\S]*?border-radius:\s*24rpx;[\s\S]*?background-color:\s*#ffffff/)
 
 // 主内容底部必须预留系统手势安全区，避免末尾防治方案被遮挡。
 assert.match(detailPage, /safe-area-inset-bottom/)
