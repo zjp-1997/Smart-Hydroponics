@@ -2,7 +2,7 @@
 	<view class="home-page">
 		<view class="hero">
 			<view class="greeting">
-				<view class="hello">早上好</view>
+				<view class="hello">{{ greeting }}</view>
 				<view class="welcome">欢迎登录智能化农业</view>
 			</view>
 			<view class="weather-art">
@@ -104,10 +104,19 @@ import { getCurrentWeather } from '@/api/homeWeather.js'
 import { getAllPlotList } from '@/api/plotList.js'
 import { getFarmTaskStatistics } from '@/api/taskList.js'
 
+function getTimeGreeting(hour = new Date().getHours()) {
+	if (hour < 6) return '凌晨好'
+	if (hour < 12) return '早上好'
+	if (hour < 14) return '中午好'
+	if (hour < 18) return '下午好'
+	return '晚上好'
+}
+
 export default {
 	data() {
 		return {
 			fallbackPlotImage: '/static/lecttue.png',
+			greeting: getTimeGreeting(),
 			roleCode: '',
 			currentWeatherName: '',
 			weatherItems: [
@@ -161,6 +170,7 @@ export default {
 		if (getUserInfo()?.roleCode !== 'expert') this.fetchHomePlots()
 	},
 	async onShow() {
+		this.greeting = getTimeGreeting()
 		if (!await ensureNonExpertAccess()) return
 		this.roleCode = String(getUserInfo()?.roleCode || '').toLowerCase()
 		// 原生 tabBar 页面会被缓存，每次回到首页都按当前位置刷新天气和任务统计。
