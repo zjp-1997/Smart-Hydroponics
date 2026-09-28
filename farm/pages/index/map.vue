@@ -12,7 +12,7 @@
 			<!-- #ifdef H5 -->
 			<view
 				class="h5-map-preview"
-				@touchstart="startMapDrag"
+				@touchstart.passive="startMapDrag"
 				@touchmove.stop.prevent="moveMapDrag"
 				@touchend="endMapDrag"
 				@mousedown="startMapDrag"

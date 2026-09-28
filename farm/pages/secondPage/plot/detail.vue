@@ -114,7 +114,7 @@
 					:scroll-top="taskScrollTop"
 					:show-scrollbar="false"
 					@scroll="handleTaskScroll"
-					@touchstart="pauseTaskAutoScroll"
+					@touchstart.passive="pauseTaskAutoScroll"
 					@touchend="resumeTaskAutoScroll"
 					@touchcancel="resumeTaskAutoScroll"
 				>
