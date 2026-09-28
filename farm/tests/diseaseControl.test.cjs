@@ -56,7 +56,8 @@ assert.doesNotMatch(page, /activeDropdown|toggleDropdown|upload-dropdown-menu/)
 // 小屏手机上表单区独立滚动，内容末尾与底部操作栏保持间距，避免症状描述被按钮遮挡。
 assert.match(page, /class="disease-upload-form"/)
 assert.match(page, /\.disease-upload-body\s*\{[^}]*flex:\s*1 1 0;[^}]*height:\s*0;/s)
-assert.match(page, /\.disease-upload-dialog\s*\{[^}]*height:\s*100%;[^}]*max-height:\s*100%;[^}]*overflow:\s*hidden;/s)
+assert.match(page, /\.disease-upload-dialog\s*\{[^}]*height:\s*82%;[^}]*max-height:\s*100%;[^}]*overflow:\s*hidden;/s)
+assert.match(page, /padding-top:\s*calc\(36rpx \+ var\(--status-bar-height, env\(safe-area-inset-top\)\)\)/)
 assert.match(page, /safe-area-inset-bottom/)
 
 // npm 版本的 uni-ui 必须通过 easycom 自动注册，否则 H5 运行时无法解析 uni-data-select。

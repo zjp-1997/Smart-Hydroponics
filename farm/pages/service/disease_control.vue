@@ -628,7 +628,7 @@ page {
 	align-items: center;
 	justify-content: center;
 	padding: 36rpx;
-	padding-top: calc(36rpx + env(safe-area-inset-top));
+	padding-top: calc(36rpx + var(--status-bar-height, env(safe-area-inset-top)));
 	padding-bottom: calc(36rpx + env(safe-area-inset-bottom));
 	background-color: rgba(20, 34, 31, 0.48);
 }
@@ -639,7 +639,7 @@ page {
 	flex-direction: column;
 	width: 100%;
 	max-width: 640rpx;
-	height: 100%;
+	height: 82%;
 	max-height: 100%;
 	padding: 36rpx;
 	overflow: hidden;

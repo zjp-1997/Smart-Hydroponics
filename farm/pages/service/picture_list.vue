@@ -427,13 +427,13 @@ export default {
 @import url("@/static/iconfont/iconfont.css");
 
 page {
-	background-color: #f7f7f7;
+	background-color: #ffffff;
 }
 
 .picture-page {
 	position: relative;
 	min-height: 100vh;
-	background-color: #f7f7f7;
+	background-color: #ffffff;
 	color: #000000;
 	font-size: 14px;
 	font-weight: normal;
@@ -527,6 +527,7 @@ page {
 	bottom: 0;
 	box-sizing: border-box;
 	padding: 0 0 160rpx;
+	background-color: #ffffff;
 }
 
 .photo-view {
