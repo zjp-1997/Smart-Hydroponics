@@ -526,7 +526,7 @@ page {
 	top: calc(var(--status-bar-height) + 108rpx);
 	bottom: 0;
 	box-sizing: border-box;
-	padding: 0 0 160rpx;
+	padding: 0;
 	background-color: #ffffff;
 }
 
