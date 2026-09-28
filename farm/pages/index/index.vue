@@ -75,7 +75,7 @@
 			<view class="service-title">常用服务</view>
 			<view class="service-grid">
 				<view class="service-card" v-for="service in visibleServices" :key="service.title" @tap="handleService(service)">
-					<view class="service-icon-wrap">
+					<view class="service-icon-wrap" :class="`service-tone-${service.tone}`">
 						<text class="iconfont service-icon" :class="[service.icon, service.iconClass]"></text>
 					</view>
 					<view class="service-copy">
@@ -118,17 +118,17 @@ export default {
 				{ count: 0, label: '已逾期', overdue: true }
 			],
 			services: [
-				{ title: '农场管理', desc: '农场信息管理', icon: 'icon-ziyuan', path: '/pages/service/farm_list' },
-				{ title: '设备管理', desc: '远程操控设备', icon: 'icon-shebeiguanli', path: '/pages/service/device_list' },
-				{ title: '实时监控', desc: '实时查看状态', icon: 'icon-shishijiankong', path: '/pages/service/monitor_list' },
-				{ title: '环境监测', desc: '监测环境数据', icon: 'icon-huanjingjiance', path: '/pages/service/environment' },
-				{ title: '病害防治', desc: '病害防治知识', icon: 'icon-bingchonghai', path: '/pages/service/disease_control' },
-				{ title: '智能方案', desc: '农作物未来预期', icon: 'icon-icon_haituntiaodu', path: '/pages/service/strategy' },
-				{ title: '专家咨询', desc: '作物相关知识', icon: 'icon-zhuanjia', path: '/pages/service/expert_list' },
-				{ title: '农事管理', desc: '执行农事任务', icon: 'icon-renwu-', path: '/pages/service/task_list' },
-				{ title: '图片管理', desc: '管理采集图片', icon: 'icon-morentupian-80pt', path: '/pages/service/picture_list' },
+				{ title: '农场管理', desc: '农场信息管理', icon: 'icon-ziyuan', tone: 'teal', path: '/pages/service/farm_list' },
+				{ title: '设备管理', desc: '远程操控设备', icon: 'icon-shebeiguanli', tone: 'blue', path: '/pages/service/device_list' },
+				{ title: '实时监控', desc: '实时查看状态', icon: 'icon-shishijiankong', tone: 'amber', path: '/pages/service/monitor_list' },
+				{ title: '环境监测', desc: '监测环境数据', icon: 'icon-huanjingjiance', tone: 'green', path: '/pages/service/environment' },
+				{ title: '病害防治', desc: '病害防治知识', icon: 'icon-bingchonghai', tone: 'red', path: '/pages/service/disease_control' },
+				{ title: '智能方案', desc: '农作物未来预期', icon: 'icon-icon_haituntiaodu', tone: 'purple', path: '/pages/service/strategy' },
+				{ title: '专家咨询', desc: '作物相关知识', icon: 'icon-zhuanjia', tone: 'cyan', path: '/pages/service/expert_list' },
+				{ title: '农事管理', desc: '执行农事任务', icon: 'icon-renwu-', tone: 'orange', path: '/pages/service/task_list' },
+				{ title: '图片管理', desc: '管理采集图片', icon: 'icon-morentupian-80pt', tone: 'indigo', path: '/pages/service/picture_list' },
 				// 仓库卡片进入独立仓库管理页；仅补充路由，不改变首页卡片 UI。
-				{ title: '仓库管理', desc: '仓库物资管理', icon: 'icon-cangkuguanli', iconClass: 'warehouse-icon', path: '/pages/service/wareHouse' }
+				{ title: '仓库管理', desc: '仓库物资管理', icon: 'icon-cangkuguanli', iconClass: 'warehouse-icon', tone: 'brown', path: '/pages/service/wareHouse' }
 			]
 		}
 	},
@@ -724,6 +724,8 @@ page {
 	width: 72rpx;
 	height: 72rpx;
 	overflow: hidden;
+	border-radius: 18rpx;
+	background-color: var(--service-icon-bg);
 }
 
 .service-icon {
@@ -732,14 +734,24 @@ page {
 	width: 72rpx;
 	height: 72rpx;
 	text-align: center;
-	font-size: 58rpx;
+	font-size: 40rpx;
 	line-height: 72rpx;
-	color: #6FC4BA;
+	color: var(--service-icon-color);
 }
 
+.service-tone-teal { --service-icon-color: #008f84; --service-icon-bg: #e9faf8; }
+.service-tone-blue { --service-icon-color: #3b82f6; --service-icon-bg: #edf4ff; }
+.service-tone-amber { --service-icon-color: #c77900; --service-icon-bg: #fff8e7; }
+.service-tone-green { --service-icon-color: #078f4a; --service-icon-bg: #ebfaf2; }
+.service-tone-red { --service-icon-color: #e83b4e; --service-icon-bg: #fff0f1; }
+.service-tone-purple { --service-icon-color: #a855f7; --service-icon-bg: #f8efff; }
+.service-tone-cyan { --service-icon-color: #009bb8; --service-icon-bg: #e9fafc; }
+.service-tone-orange { --service-icon-color: #e96300; --service-icon-bg: #fff4ea; }
+.service-tone-indigo { --service-icon-color: #6366f1; --service-icon-bg: #f0f0ff; }
+.service-tone-brown { --service-icon-color: #a16207; --service-icon-bg: #fff7e6; }
+
 .warehouse-icon {
-	font-size: 50rpx;
-	transform: translateX(-6rpx);
+	font-size: 36rpx;
 }
 
 .service-copy {
