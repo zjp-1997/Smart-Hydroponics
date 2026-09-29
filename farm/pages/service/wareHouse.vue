@@ -11,7 +11,12 @@
 
 		<scroll-view class="warehouse-content" scroll-y :show-scrollbar="false" lower-threshold="120"
 			@scrolltolower="loadMore" refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+			refresher-default-style="none" refresher-background="#F3F8F6" :refresher-threshold="56"
+			@refresherrefresh="$handlePullDownRefresh">
+			<view slot="refresher" class="warehouse-refresher" role="status"
+				:aria-label="pullRefreshing ? '正在刷新仓库数据' : '下拉刷新仓库数据'">
+				<view class="warehouse-refresher-spinner" aria-hidden="true"></view>
+			</view>
 			<!-- 三项统计由用户端聚合接口返回，保持与参考图一致的横向卡片布局。 -->
 			<view class="stats-grid">
 				<view class="stat-card" v-for="stat in stats" :key="stat.label">
@@ -125,6 +130,10 @@ export default {
 	onShow() {
 		this.fetchWarehouse(true)
 	},
+	// 下拉刷新复用同一个聚合接口，一次更新统计、分类筛选结果和库存列表。
+	onPageRefresh() {
+		return this.fetchWarehouse(true)
+	},
 	onUnload() { clearTimeout(this.searchTimer) },
 	methods: {
 		handleBack() {
@@ -136,7 +145,7 @@ export default {
 			this.loading = reset
 			this.loadingMore = !reset
 			// API 层负责字段清洗，页面只保存可直接渲染的数据。
-			getWarehouseOverview({
+			return getWarehouseOverview({
 				keyword: this.keyword.trim(), category: this.activeCategory,
 				pageNum: requestedPage, pageSize: this.pageSize
 			})
@@ -238,6 +247,28 @@ page {
 	bottom: 0;
 	box-sizing: border-box;
 	padding: 34rpx 30rpx 42rpx;
+}
+
+.warehouse-refresher {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 112rpx;
+	background-color: #f3f8f6;
+}
+
+.warehouse-refresher-spinner {
+	box-sizing: border-box;
+	width: 46rpx;
+	height: 46rpx;
+	border: 5rpx solid rgba(27, 162, 145, 0.2);
+	border-top-color: #1ba291;
+	border-radius: 50%;
+	animation: warehouse-refresh-spin 0.8s linear infinite;
+}
+
+@keyframes warehouse-refresh-spin {
+	to { transform: rotate(360deg); }
 }
 
 .stats-grid {
@@ -481,5 +512,9 @@ page {
 		width: 750rpx;
 		margin: 0 auto;
 	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.warehouse-refresher-spinner { animation-duration: 1.6s; }
 }
 </style>

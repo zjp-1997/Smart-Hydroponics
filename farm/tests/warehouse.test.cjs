@@ -9,7 +9,16 @@ const homePage = readFileSync('pages/index/index.vue', 'utf8')
 // 仓库页应接入真实接口、保留卡片搜索和分类，并移除参考图顶部的两个操作图标。
 assert.match(page, /getWarehouseOverview/)
 // 仓库页重新显示时必须刷新接口数据，禁止只在首次加载时保留旧统计。
-assert.match(page, /onShow\(\)\s*\{\s*this\.fetchWarehouse\(\)/)
+assert.match(page, /onShow\(\)\s*\{\s*this\.fetchWarehouse\(true\)/)
+// 仓库页只保留 scroll-view 刷新，并通过同一个聚合请求刷新统计和物资列表。
+assert.match(page, /onPageRefresh\(\)\s*\{\s*return this\.fetchWarehouse\(true\)/)
+assert.match(page, /return getWarehouseOverview\(/)
+assert.match(page, /refresher-default-style="none"/)
+assert.match(page, /refresher-background="#F3F8F6"/)
+assert.match(page, /:refresher-threshold="56"/)
+assert.doesNotMatch(page, /(?<!:)refresher-threshold="56"/)
+assert.match(page, /class="warehouse-refresher-spinner"/)
+assert.match(page, /border-top-color:\s*#1ba291/)
 assert.match(page, /class="search-box"/)
 assert.match(page, /class="category-scroll"/)
 assert.match(page, /:src="item\.image"/)
@@ -30,4 +39,9 @@ assert.doesNotMatch(api, /imageUrl\.indexOf\('\/warehouse-images\/'\)/)
 assert.match(api, /return resolveFileUrl\(imageUrl\)/)
 assert.doesNotMatch(api, /uni\.downloadFile\(/)
 assert.match(pagesConfig, /pages\/service\/wareHouse/)
+const warehouseConfig = pagesConfig.slice(
+	pagesConfig.indexOf('"path": "pages/service/wareHouse"'),
+	pagesConfig.indexOf('"path":', pagesConfig.indexOf('"path": "pages/service/wareHouse"') + 1)
+)
+assert.match(warehouseConfig, /"enablePullDownRefresh"\s*:\s*false/)
 assert.match(homePage, /path: '\/pages\/service\/wareHouse'/)

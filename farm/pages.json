@@ -12,7 +12,8 @@
 			"path": "pages/login/code_index",
 			"style": {
 				"navigationBarTitleText": "验证码登录",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -66,14 +67,16 @@
 			"path": "pages/login/pwd_index",
 			"style": {
 				"navigationBarTitleText": "账号密码登录",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
 			"path": "pages/register/index",
 			"style": {
 				"navigationBarTitleText": "注册",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 
@@ -98,7 +101,8 @@
 			"path": "pages/index/map",
 			"style": {
 				"navigationBarTitleText": "地图",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -136,7 +140,8 @@
 			"path": "pages/secondPage/about/about_me",
 			"style": {
 				"navigationBarTitleText": "关于我们",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -152,7 +157,8 @@
 			"path": "pages/secondPage/about/technical",
 			"style": {
 				"navigationBarTitleText": "技术支持",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -237,7 +243,8 @@
 			"path": "pages/secondPage/monitor/detail",
 			"style": {
 				"navigationBarTitleText": "实时监控",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -259,7 +266,8 @@
 			"path": "pages/service/wareHouse",
 			"style": {
 				"navigationBarTitleText": "仓库管理",
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": false
 			}
 		},
 		{
@@ -371,7 +379,7 @@
 		"backgroundColorTop": "#F3F8F6",
 		"backgroundColorContent": "#F7F7F7",
 		"backgroundTextStyle": "dark",
-		"enablePullDownRefresh": true
+		"enablePullDownRefresh": false
 	},
 	"tabBar": {
 		"color": "#C8C8C8",

@@ -12,8 +12,8 @@
 			<!-- #ifdef H5 -->
 			<view
 				class="h5-map-preview"
-				@touchstart.passive="startMapDrag"
-				@touchmove.stop.prevent="moveMapDrag"
+				@touchstart="startMapDrag"
+				@touchmove.stop="moveMapDrag"
 				@touchend="endMapDrag"
 				@mousedown="startMapDrag"
 				@mousemove="moveMapDrag"
@@ -369,6 +369,10 @@ export default {
 		moveMapDrag(event) {
 			if (!this.mapDrag.active) {
 				return
+			}
+			// 浏览器开始原生滚动后 touchmove 可能不可取消，先检查再阻止默认行为，避免 H5 控制台警告。
+			if (event && event.cancelable && typeof event.preventDefault === 'function') {
+				event.preventDefault()
 			}
 			const point = this.getMapPointerPoint(event)
 			if (!point) {

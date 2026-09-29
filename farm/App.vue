@@ -89,5 +89,15 @@
 	.uni-tabbar {
 		border-radius: 0 !important;
 	}
+
+	/* H5 scroll-view 的默认刷新图标使用 currentColor，统一覆盖为 farm 品牌薄荷绿。 */
+	uni-scroll-view .uni-scroll-view-refresh__spinner {
+		color: #1ba291;
+	}
+
+	uni-scroll-view .uni-scroll-view-refresh-inner {
+		background-color: #f8fffd;
+		box-shadow: 0 2px 10px rgba(27, 162, 145, 0.16);
+	}
 	/* #endif */
 </style>
