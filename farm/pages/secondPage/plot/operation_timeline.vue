@@ -10,7 +10,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="page-content" scroll-y :show-scrollbar="false">
+		<scroll-view class="page-content" scroll-y :show-scrollbar="false" refresher-enabled
+			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<view class="section-head">
 				<view class="section-title-wrap">
 					<text class="section-title">操作记录</text>

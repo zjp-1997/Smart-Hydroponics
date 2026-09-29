@@ -11,7 +11,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="record-content" scroll-y :show-scrollbar="false">
+		<scroll-view class="record-content" scroll-y :show-scrollbar="false" refresher-enabled
+			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading" class="state-card">正在加载维护记录...</view>
 			<template v-else-if="fault">
 				<!-- 故障快照与下方生命周期记录分开呈现，便于先确认设备和故障。 -->

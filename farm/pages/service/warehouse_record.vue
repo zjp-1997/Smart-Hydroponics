@@ -20,7 +20,8 @@
 			</view>
 
 			<scroll-view class="record-scroll" scroll-y :show-scrollbar="false" lower-threshold="80"
-				@scrolltolower="loadMore">
+				@scrolltolower="loadMore" refresher-enabled :refresher-triggered="pullRefreshing"
+				refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 				<view v-if="loading && !records.length" class="state-card">正在加载仓库记录...</view>
 				<view v-else-if="error && !records.length" class="state-card">
 					<text>记录加载失败，请检查网络后重试</text>

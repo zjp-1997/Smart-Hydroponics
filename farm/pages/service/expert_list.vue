@@ -19,7 +19,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="expert-content" scroll-y>
+		<scroll-view class="expert-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="expert-card" v-for="expert in filteredExperts" :key="expert.id">
 				<view class="expert-main">
 					<protected-image class="expert-avatar" :src="expert.avatar" mode="aspectFill"></protected-image>

@@ -59,7 +59,7 @@ public class FarmTask {
     /** 实际完成时间，由状态流转到已完成时自动记录。 */
     private LocalDateTime actualEndTime;
 
-    /** 农事状态：1未开始 2进行中 3已完成 4已逾期 5已取消。 */
+    /** 农事生命周期状态：1未开始 2进行中 3已完成 5已取消；逾期由 overdue 派生。 */
     private Integer status;
 
     /** 执行人用户ID。 */

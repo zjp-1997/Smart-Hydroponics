@@ -7,6 +7,30 @@ const SUCCESS_CODE = 200
 // 简化版拦截器队列：保持 axios 风格的前置/后置扩展点，同时兼容 uni-app 全端。
 const requestInterceptors = []
 const responseInterceptors = []
+let activeRequestCount = 0
+const requestIdleWaiters = new Set()
+
+function finishRequest() {
+	activeRequestCount = Math.max(0, activeRequestCount - 1)
+	if (activeRequestCount !== 0) return
+	requestIdleWaiters.forEach((resolve) => resolve())
+	requestIdleWaiters.clear()
+}
+
+// 下拉刷新复用页面原有加载入口，并等待由该入口触发的请求完成后再收起动画。
+export function waitForRequestsToSettle(timeout = 15000) {
+	if (activeRequestCount === 0) return Promise.resolve()
+	return new Promise((resolve) => {
+		let timer
+		const done = () => {
+			clearTimeout(timer)
+			requestIdleWaiters.delete(done)
+			resolve()
+		}
+		requestIdleWaiters.add(done)
+		timer = setTimeout(done, timeout)
+	})
+}
 
 export function getBaseUrl() {
 	const storedBaseUrl = uni.getStorageSync('farm_api_base_url')
@@ -127,6 +151,7 @@ export function addResponseInterceptor(interceptor) {
 // 统一请求入口。所有 uni.request 细节都收敛在这里，页面只处理业务成功/失败。
 export function request(options) {
 	const config = runInterceptors(requestInterceptors, options || {})
+	activeRequestCount += 1
 
 	return new Promise((resolve, reject) => {
 		uni.request({
@@ -159,7 +184,7 @@ export function request(options) {
 				reject(requestError)
 			}
 		})
-	})
+	}).finally(finishRequest)
 }
 
 // 常用 GET 快捷方法，列表和详情查询统一从这里进入请求封装。

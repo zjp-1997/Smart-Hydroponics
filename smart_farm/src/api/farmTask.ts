@@ -37,7 +37,7 @@ export interface FarmTask {
   actualStartTime?: string
   /** 实际完成时间。 */
   actualEndTime?: string
-  /** 任务状态：1未开始 2进行中 3已完成 4已逾期 5已取消。 */
+  /** 任务生命周期状态：1未开始 2进行中 3已完成 5已取消。 */
   status?: number
   /** 执行人ID。 */
   executorId?: number
@@ -59,7 +59,7 @@ export interface FarmTask {
   publishTime?: string
   /** 更新时间。 */
   updateTime?: string
-  /** 是否已超过截至时间，该值由后端动态计算。 */
+  /** 是否逾期，由后端按未完成且超过截止时间动态计算。 */
   overdue?: boolean
 }
 
@@ -118,12 +118,12 @@ export const updateFarmTask = (data: UpdateFarmTaskPayload) => {
   return http<ApiResult<FarmTask>>({ url: '/farm-task', method: 'put', data })
 }
 
-/** 删除单条农事任务。 */
+/** 取消单条农事任务，后端保留任务及审计时间线。 */
 export const deleteFarmTask = (id: number) => {
   return http<ApiResult<void>>({ url: `/farm-task/${id}`, method: 'delete' })
 }
 
-/** 批量删除农事任务。 */
+/** 批量取消农事任务。 */
 export const batchDeleteFarmTasks = (ids: number[]) => {
   return http<ApiResult<number>>({ url: '/farm-task/batch', method: 'delete', data: ids })
 }

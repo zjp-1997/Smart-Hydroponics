@@ -32,7 +32,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="detail-content" scroll-y>
+		<scroll-view class="detail-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="env-card">
 				<view class="card-head">
 					<text class="env-title">环境监测</text>

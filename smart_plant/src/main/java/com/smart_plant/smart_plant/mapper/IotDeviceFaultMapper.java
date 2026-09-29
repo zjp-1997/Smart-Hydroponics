@@ -18,11 +18,17 @@ public interface IotDeviceFaultMapper {
 
     int softDeleteBatchByIds(@Param("ids") List<Long> ids);
 
-    int updateById(IotDeviceFault fault);
+    int updateById(@Param("fault") IotDeviceFault fault,
+                   @Param("expectedStatus") Integer expectedStatus,
+                   @Param("expectedAssignStatus") Integer expectedAssignStatus,
+                   @Param("expectedHandleUserId") Long expectedHandleUserId);
 
     int updateStatus(@Param("id") Long id,
                      @Param("status") Integer status,
-                     @Param("handleResult") String handleResult);
+                     @Param("handleResult") String handleResult,
+                     @Param("expectedStatus") Integer expectedStatus,
+                     @Param("expectedAssignStatus") Integer expectedAssignStatus,
+                     @Param("expectedHandleUserId") Long expectedHandleUserId);
 
     /** 将已上传的现场凭证绑定到刚完成的故障单。 */
     int updateCompletionImage(@Param("id") Long id, @Param("imageUrl") String imageUrl);
@@ -30,12 +36,19 @@ public interface IotDeviceFaultMapper {
     /** 农场主处理自己设备的待处理故障时，原子认领并切换为处理中。 */
     int startOwnedFault(@Param("id") Long id, @Param("ownerId") Long ownerId);
 
-    int updateAssignee(@Param("id") Long id, @Param("handleUserId") Long handleUserId);
+    int updateAssignee(@Param("id") Long id,
+                       @Param("handleUserId") Long handleUserId,
+                       @Param("expectedStatus") Integer expectedStatus,
+                       @Param("expectedAssignStatus") Integer expectedAssignStatus,
+                       @Param("expectedHandleUserId") Long expectedHandleUserId);
 
     int updateAssignmentStatus(@Param("id") Long id,
                                @Param("assignStatus") Integer assignStatus,
                                @Param("status") Integer status,
-                               @Param("handleResult") String handleResult);
+                               @Param("handleResult") String handleResult,
+                               @Param("expectedStatus") Integer expectedStatus,
+                               @Param("expectedAssignStatus") Integer expectedAssignStatus,
+                               @Param("expectedHandleUserId") Long expectedHandleUserId);
 
     IotDeviceFault selectById(Long id);
 

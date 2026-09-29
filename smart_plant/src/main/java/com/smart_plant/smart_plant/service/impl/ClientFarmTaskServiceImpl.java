@@ -27,7 +27,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,12 +46,11 @@ public class ClientFarmTaskServiceImpl implements ClientFarmTaskService {
     private static final int STATUS_PENDING = 1;
     private static final int STATUS_RUNNING = 2;
     private static final int STATUS_COMPLETED = 3;
-    private static final int STATUS_OVERDUE_LEGACY = 4;
+    private static final int OVERDUE_QUERY_FILTER = 4;
     private static final int ACTION_START = 1;
     private static final int ACTION_COMPLETE = 2;
     private static final int ACTION_PROGRESS = 3;
     private static final String SOURCE_FARM_APP = "FARM_APP";
-    private static final String SOURCE_SYSTEM = "SYSTEM";
     private static final String COMPLETION_IMAGE_PREFIX = "[\"/uploads/task-completion-images/";
 
     private final FarmTaskMapper farmTaskMapper;
@@ -153,8 +151,7 @@ public class ClientFarmTaskServiceImpl implements ClientFarmTaskService {
         if (Integer.valueOf(STATUS_RUNNING).equals(task.getStatus())) {
             return getClientTask(id, currentUserId);
         }
-        if (!Integer.valueOf(STATUS_PENDING).equals(task.getStatus())
-                && !Integer.valueOf(STATUS_OVERDUE_LEGACY).equals(task.getStatus())) {
+        if (!Integer.valueOf(STATUS_PENDING).equals(task.getStatus())) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "当前任务状态不可开始执行");
         }
 
@@ -228,52 +225,20 @@ public class ClientFarmTaskServiceImpl implements ClientFarmTaskService {
         return farmTaskRecordMapper.selectTimeline(task.getId(), task.getUserId());
     }
 
-    /** 地块时间线把任务创建状态与后续不可变事件合并，避免前端逐个任务发起请求。 */
+    /** 地块时间线直接读取持久化审计事件，不再临时伪造创建节点。 */
     @Override
     public List<FarmTaskRecord> listPlotTimeline(Long plotId) {
         Plot plot = requireClientPlot(plotId);
-        List<FarmTaskRecord> timeline = new ArrayList<>();
         Long viewerId = requireCurrentUserId();
         List<FarmTask> visibleTasks = farmTaskMapper.selectClientTasksByPlotId(plot.getUserId(), plot.getId())
                 .stream()
                 .filter(task -> viewerId.equals(plot.getUserId()) || viewerId.equals(task.getExecutorId()))
                 .toList();
         Set<Long> visibleTaskIds = visibleTasks.stream().map(FarmTask::getId).collect(Collectors.toSet());
-        visibleTasks
-                .forEach(task -> timeline.add(toCreatedRecord(task)));
         // 工作人员只能读取自己受派任务的操作记录，不能通过地块时间线浏览其他人的任务。
-        farmTaskRecordMapper.selectListByPlotId(plot.getUserId(), plot.getId()).stream()
+        return farmTaskRecordMapper.selectListByPlotId(plot.getUserId(), plot.getId()).stream()
                 .filter(record -> visibleTaskIds.contains(record.getTaskId()))
-                .forEach(timeline::add);
-        timeline.sort(Comparator
-                .comparing(ClientFarmTaskServiceImpl::recordTime,
-                        Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(FarmTaskRecord::getId,
-                        Comparator.nullsLast(Comparator.naturalOrder())));
-        return timeline;
-    }
-
-    private FarmTaskRecord toCreatedRecord(FarmTask task) {
-        FarmTaskRecord record = new FarmTaskRecord();
-        record.setId(-task.getId());
-        record.setTaskId(task.getId());
-        record.setTaskTitle(task.getTaskTitle());
-        record.setUserId(task.getUserId());
-        record.setPlotId(task.getPlotId());
-        record.setPlotName(task.getPlotName());
-        record.setOperatorNameSnapshot("系统记录");
-        record.setOperatorName("系统记录");
-        record.setActionType(0);
-        record.setActionContent("农事任务已创建，等待开始执行");
-        record.setSourceClient(SOURCE_SYSTEM);
-        record.setAfterStatus(STATUS_PENDING);
-        record.setExecuteTime(task.getCreateTime());
-        record.setCreateTime(task.getCreateTime());
-        return record;
-    }
-
-    private static LocalDateTime recordTime(FarmTaskRecord record) {
-        return record.getExecuteTime() == null ? record.getCreateTime() : record.getExecuteTime();
+                .toList();
     }
 
     /** 读取任务并统一执行移动端资源权限校验。 */
@@ -459,7 +424,8 @@ public class ClientFarmTaskServiceImpl implements ClientFarmTaskService {
     }
 
     private void validateClientTaskStatus(Integer status) {
-        if (status != null && (status < STATUS_PENDING || status > STATUS_OVERDUE_LEGACY)) {
+        // 4 是按截止时间计算的“逾期”虚拟筛选值，不是持久化任务状态。
+        if (status != null && (status < STATUS_PENDING || status > OVERDUE_QUERY_FILTER)) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "农事任务状态不正确");
         }
     }

@@ -30,6 +30,7 @@ public class FarmTaskRecord {
 
     private String operatorName;
 
+    /** 动作：1开始 2完成 3反馈 4优化 5创建 6编辑 7取消。 */
     private Integer actionType;
 
     private String actionContent;

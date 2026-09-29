@@ -27,6 +27,9 @@ public interface ClientDeviceFaultService {
     /** 由被指派的维修人员接受故障。 */
     ClientDeviceFaultResponse acceptFault(Long id);
 
+    /** 由被指派的维修人员拒绝故障，等待农场主或管理员重新分配。 */
+    ClientDeviceFaultResponse rejectFault(Long id);
+
     /** 校验当前处理人和故障状态后上传现场图片。 */
     CropImageUploadResult uploadCompletionImage(Long id, MultipartFile image);
 

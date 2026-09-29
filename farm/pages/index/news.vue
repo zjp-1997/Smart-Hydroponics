@@ -12,55 +12,67 @@
 			</view>
 		</view>
 
-		<scroll-view class="news-content" scroll-y>
-            <!-- 系统公告与维护消息使用同一入口行样式，以公告图标和未读数区分。 -->
-            <view class="message-item" role="button" aria-label="查看系统消息" @tap="openAnnouncement">
-                <view class="message-avatar maintenance-avatar" aria-hidden="true">
-                    <text class="iconfont icon-xitonggonggao maintenance-icon"></text>
-                </view>
-                <view class="message-main"><text class="message-title">系统消息</text><text class="message-desc">查看系统公告</text></view>
-                <view class="message-extra">
-                    <text class="message-time">系统</text>
-                    <text v-if="announcementUnread > 0" class="unread-badge">{{ announcementUnread }}</text>
-                </view>
-            </view>
-            <!-- 维护消息复用专家会话的列表结构，仅用维护图标区分消息类型。 -->
-            <view v-if="roleCode !== 'user'" class="message-item" @tap="openMaintenance">
-                <view class="message-avatar maintenance-avatar" aria-hidden="true">
-                    <text class="iconfont icon-weihu maintenance-icon"></text>
-                </view>
-                <view class="message-main"><text class="message-title">维护消息</text><text class="message-desc">设备故障自动通知，点击查看</text></view>
-                <view class="message-extra">
-                    <text class="message-time">系统</text>
-                    <text v-if="maintenanceUnread > 0" class="unread-badge">{{ maintenanceUnread }}</text>
-                </view>
-            </view>
+		<scroll-view class="news-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+			<!-- 系统入口聚合为一张卡片，减少同级白色块对页面层级的干扰。 -->
+			<view class="message-card system-card">
+				<view class="message-item" hover-class="message-item-pressed" :hover-stay-time="80"
+					role="button" aria-label="查看系统消息" @tap="openAnnouncement">
+					<view class="message-avatar maintenance-avatar" aria-hidden="true">
+						<text class="iconfont icon-xitonggonggao maintenance-icon"></text>
+					</view>
+					<view class="message-main"><text class="message-title">系统消息</text><text class="message-desc">查看系统公告</text></view>
+					<view class="message-extra">
+						<text class="message-time">系统</text>
+						<text v-if="announcementUnread > 0" class="unread-badge">{{ announcementUnread }}</text>
+					</view>
+				</view>
+				<view v-if="roleCode !== 'user'" class="message-item" hover-class="message-item-pressed"
+					:hover-stay-time="80" role="button" aria-label="查看维护消息" @tap="openMaintenance">
+					<view class="message-avatar maintenance-avatar" aria-hidden="true">
+						<text class="iconfont icon-weihu maintenance-icon"></text>
+					</view>
+					<view class="message-main"><text class="message-title">维护消息</text><text class="message-desc">设备故障自动通知，点击查看</text></view>
+					<view class="message-extra">
+						<text class="message-time">系统</text>
+						<text v-if="maintenanceUnread > 0" class="unread-badge">{{ maintenanceUnread }}</text>
+					</view>
+				</view>
+			</view>
 			<!-- 绑定成员即使尚无历史消息也会显示，点击后可直接发起沟通。 -->
 			<text v-if="memberMessages.length" class="section-title">成员沟通</text>
-			<view class="message-item" v-for="item in memberMessages" :key="`member-${item.peerUserId}`" @tap="openMemberChat(item)">
-				<protected-image class="message-avatar" :src="item.avatar" mode="aspectFill"></protected-image>
-				<view class="message-main">
-					<view class="message-name-line">
-						<text class="message-title member-title">{{ item.name }}</text>
-						<text class="role-tag">{{ roleLabel(item.roleCode) }}</text>
+			<view v-if="memberMessages.length" class="message-card conversation-card">
+				<view class="message-item" v-for="item in memberMessages" :key="`member-${item.peerUserId}`"
+					hover-class="message-item-pressed" :hover-stay-time="80" role="button"
+					:aria-label="`与${item.name}沟通`" @tap="openMemberChat(item)">
+					<protected-image class="message-avatar" :src="item.avatar" mode="aspectFill"></protected-image>
+					<view class="message-main">
+						<view class="message-name-line">
+							<text class="message-title member-title">{{ item.name }}</text>
+							<text class="role-tag">{{ roleLabel(item.roleCode) }}</text>
+						</view>
+						<text class="message-desc">{{ item.content }}</text>
 					</view>
-					<text class="message-desc">{{ item.content }}</text>
-				</view>
-				<view class="message-extra">
-					<text class="message-time">{{ item.time }}</text>
-					<text v-if="item.unread > 0" class="unread-badge">{{ item.unread }}</text>
+					<view class="message-extra">
+						<text class="message-time">{{ item.time }}</text>
+						<text v-if="item.unread > 0" class="unread-badge">{{ item.unread }}</text>
+					</view>
 				</view>
 			</view>
 			<text v-if="messages.length" class="section-title">专家咨询</text>
-			<view class="message-item" v-for="item in messages" :key="item.id" @tap="handleMessage(item)">
-				<protected-image class="message-avatar" :src="item.avatar" mode="aspectFill"></protected-image>
-				<view class="message-main">
-					<text class="message-title">{{ item.title }}</text>
-					<text class="message-desc">{{ item.content }}</text>
-				</view>
-				<view class="message-extra">
-					<text class="message-time">{{ item.time }}</text>
-					<text v-if="item.unread > 0" class="unread-badge">{{ item.unread }}</text>
+			<view v-if="messages.length" class="message-card conversation-card">
+				<view class="message-item" v-for="item in messages" :key="item.id"
+					hover-class="message-item-pressed" :hover-stay-time="80" role="button"
+					:aria-label="`查看与${item.title}的咨询`" @tap="handleMessage(item)">
+					<protected-image class="message-avatar" :src="item.avatar" mode="aspectFill"></protected-image>
+					<view class="message-main">
+						<text class="message-title">{{ item.title }}</text>
+						<text class="message-desc">{{ item.content }}</text>
+					</view>
+					<view class="message-extra">
+						<text class="message-time">{{ item.time }}</text>
+						<text v-if="item.unread > 0" class="unread-badge">{{ item.unread }}</text>
+					</view>
 				</view>
 			</view>
 		</scroll-view>
@@ -265,7 +277,17 @@ page {
 	top: calc(var(--status-bar-height) + 88rpx);
 	bottom: 0;
 	box-sizing: border-box;
-	padding: 0;
+	padding: 20rpx 16rpx 36rpx;
+	background-color: #f3f8f6;
+}
+
+.message-card {
+	box-sizing: border-box;
+	overflow: hidden;
+	width: 100%;
+	border-radius: 24rpx;
+	background-color: #ffffff;
+	box-shadow: 0 8rpx 28rpx rgba(35, 93, 84, 0.06);
 }
 
 .message-item {
@@ -274,21 +296,24 @@ page {
 	display: flex;
 	align-items: center;
 	width: 100%;
-	min-height: 126rpx;
-	padding: 24rpx 44rpx;
+	min-height: 140rpx;
+	padding: 24rpx 28rpx;
 	margin-bottom: 0;
-	border-radius: 0;
+	border-radius: inherit;
 	background-color: #ffffff;
+}
+
+.message-item-pressed {
+	background-color: #f4fbf9;
 }
 
 .message-item:not(:last-child)::after {
 	position: absolute;
-	/* 分割线从头像右侧内容区开始，避免线条穿过头像区域。 */
-	left: 170rpx;
-	right: 0;
+	left: 28rpx;
+	right: 28rpx;
 	bottom: 0;
 	height: 1rpx;
-	background-color: #f7f7f7;
+	background-color: #edf2f1;
 	content: "";
 	transform: scaleY(0.5);
 	transform-origin: bottom;
@@ -297,8 +322,8 @@ page {
 .message-avatar {
 	display: block;
 	flex-shrink: 0;
-	width: 92rpx;
-	height: 92rpx;
+	width: 96rpx;
+	height: 96rpx;
 	border-radius: 50%;
 	background-color: #ffffff;
 }
@@ -322,37 +347,42 @@ page {
 	flex: 1;
 	flex-direction: column;
 	min-width: 0;
-	margin-left: 34rpx;
+	margin-left: 28rpx;
 }
 
 .message-title {
-	font-size: 14px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 16px;
+	font-weight: 600;
 	line-height: 1.3;
-	color: #C8C8C8;
+	color: #25332f;
 }
 
 /* 分组标题和角色标签沿用 farm 的薄荷绿色，帮助农场主区分专家咨询与成员沟通。 */
 .section-title {
 	display: block;
 	box-sizing: border-box;
-	padding: 20rpx 44rpx 12rpx;
-	color: #75827f;
-	background: #f7f7f7;
-	font-size: 12px;
+	padding: 30rpx 20rpx 16rpx;
+	color: #687975;
+	background: transparent;
+	font-size: 14px;
+	font-weight: 500;
 }
 
 .message-name-line { display: flex; align-items: center; min-width: 0; }
-.member-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #404b49; }
-.role-tag { flex-shrink: 0; padding: 3rpx 10rpx; margin-left: 12rpx; border-radius: 16rpx; color: #1b8f82; background: #e7f7f3; font-size: 10px; }
+.member-title { min-width: 0; color: #25332f; }
+.role-tag { flex-shrink: 0; padding: 4rpx 12rpx; margin-left: 14rpx; border-radius: 18rpx; color: #168c7e; background: #e1f5f1; font-size: 11px; line-height: 1.4; }
 
 .message-desc {
-	margin-top: 18rpx;
+	margin-top: 12rpx;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-size: 12px;
 	line-height: 1.3;
-	color: #C8C8C8;
+	color: #96a39f;
 }
 
 .message-extra {
@@ -361,14 +391,14 @@ page {
 	flex-direction: column;
 	align-items: flex-end;
 	justify-content: center;
-	width: 86rpx;
-	margin-left: 16rpx;
+	width: 96rpx;
+	margin-left: 12rpx;
 }
 
 .message-time {
 	font-size: 12px;
 	line-height: 1.2;
-	color: #C8C8C8;
+	color: #9aa6a3;
 }
 
 .unread-badge {
@@ -376,7 +406,7 @@ page {
 	min-width: 34rpx;
 	height: 34rpx;
 	padding: 0 8rpx;
-	margin-top: 22rpx;
+	margin-top: 16rpx;
 	border-radius: 34rpx;
 	text-align: center;
 	font-size: 12px;

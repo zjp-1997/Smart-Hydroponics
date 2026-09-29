@@ -10,7 +10,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="farm-content" scroll-y>
+		<scroll-view class="farm-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading && !farms.length" class="state-panel" role="status">正在加载农场信息...</view>
 			<view v-else-if="errorMessage && !farms.length" class="state-panel error-state" role="alert">
 				<text class="state-title">{{ offline ? '当前处于离线状态' : '农场信息加载失败' }}</text>

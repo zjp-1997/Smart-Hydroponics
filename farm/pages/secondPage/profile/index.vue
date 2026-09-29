@@ -8,7 +8,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="profile-content" scroll-y>
+		<scroll-view class="profile-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="avatar-card">
 				<view class="avatar-wrap" hover-class="control-pressed" aria-label="修改头像" @tap="chooseAvatar">
 					<protected-image class="avatar" :src="avatarPreview" mode="aspectFill" @error="useDefaultAvatar"></protected-image>

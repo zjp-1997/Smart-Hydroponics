@@ -49,7 +49,9 @@
 
 			<!-- AI 消息由内部列表滚动，顶部导航与专家聊天同款输入区保持固定。 -->
 			<scroll-view v-else class="consult-area" :class="{ expanded: showAiTools }" scroll-y
-				:scroll-top="scrollTop" :scroll-into-view="scrollIntoView" @scrolltoupper="loadOlderAiHistory">
+				:scroll-top="scrollTop" :scroll-into-view="scrollIntoView" @scrolltoupper="loadOlderAiHistory"
+				refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+				@refresherrefresh="$handlePullDownRefresh">
 				<view v-if="historyLoading && !historyLoaded" class="consult-empty">正在加载历史对话...</view>
 				<view v-else-if="!aiMessages.length" class="consult-empty">向 DeepSeek 咨询种植、病虫害或设备问题</view>
 				<view v-if="historyLoaded && hasMoreHistory" class="history-more" @tap="loadOlderAiHistory">

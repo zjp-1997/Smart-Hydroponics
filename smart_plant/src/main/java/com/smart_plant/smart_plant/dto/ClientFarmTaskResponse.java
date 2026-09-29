@@ -44,7 +44,7 @@ public class ClientFarmTaskResponse {
     /** 任务类型中文名，供前端兜底展示。 */
     private String taskTypeName;
 
-    /** 任务状态：1未开始、2进行中、3已完成、4已逾期、5已取消。 */
+    /** 任务生命周期状态：1未开始、2进行中、3已完成、5已取消。 */
     private Integer status;
 
     /** 任务状态中文名。 */
@@ -71,7 +71,7 @@ public class ClientFarmTaskResponse {
     /** 完成任务时填写的结果说明。 */
     private String completeRemark;
 
-    /** 是否超过截至时间；该字段与任务业务状态相互独立。 */
+    /** 是否逾期：任务未完成且当前时间超过截止时间。 */
     private Boolean overdue;
 
     /** 是否允许用户点击“执行任务”。 */

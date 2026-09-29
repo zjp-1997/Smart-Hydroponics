@@ -143,6 +143,12 @@ public class ClientDeviceFaultServiceImpl implements ClientDeviceFaultService {
     }
 
     @Override
+    public ClientDeviceFaultResponse rejectFault(Long id) {
+        iotDeviceFaultService.rejectAssignment(id, null);
+        return toResponse(iotDeviceFaultService.getFaultById(id));
+    }
+
+    @Override
     public CropImageUploadResult uploadCompletionImage(Long id, MultipartFile image) {
         // 复用故障服务的权限检查，并只允许已接单的处理人上传。
         requireCompletableFault(id);
@@ -200,10 +206,12 @@ public class ClientDeviceFaultServiceImpl implements ClientDeviceFaultService {
                 && currentUser != null
                 && Objects.equals(currentUser.getId(), fault.getHandleUserId());
         boolean isOwner = isCurrentOwner(fault);
-        boolean canAccept = (isOwner && Objects.equals(fault.getStatus(), FAULT_STATUS_PENDING))
-                || (isAssignedTechnician && Objects.equals(fault.getAssignStatus(), ASSIGN_STATUS_PENDING)
+        boolean canRespondAssignment = isAssignedTechnician
+                && Objects.equals(fault.getAssignStatus(), ASSIGN_STATUS_PENDING)
                 && (Objects.equals(fault.getStatus(), FAULT_STATUS_PENDING)
-                || Objects.equals(fault.getStatus(), FAULT_STATUS_PROCESSING)));
+                || Objects.equals(fault.getStatus(), FAULT_STATUS_PROCESSING));
+        boolean canAccept = (isOwner && Objects.equals(fault.getStatus(), FAULT_STATUS_PENDING))
+                || canRespondAssignment;
         boolean canComplete = (isAssignedTechnician || isOwner
                 && currentUser != null && Objects.equals(currentUser.getId(), fault.getHandleUserId()))
                 && Objects.equals(fault.getAssignStatus(), ASSIGN_STATUS_ACCEPTED)
@@ -218,6 +226,6 @@ public class ClientDeviceFaultServiceImpl implements ClientDeviceFaultService {
                 fault.getSeverity(), fault.getFaultDesc(), fault.getStatus(), fault.getAssignStatus(),
                 fault.getHandleUserId(), handleUserName, fault.getStartTime(), fault.getHandleTime(),
                 fault.getEndTime(), fault.getDuration(), fault.getHandleResult(),
-                fault.getCompletionImageUrl(), canAccept, canComplete);
+                fault.getCompletionImageUrl(), canAccept, canRespondAssignment, canComplete);
     }
 }

@@ -10,7 +10,8 @@
 		</view>
 
 		<scroll-view class="warehouse-content" scroll-y :show-scrollbar="false" lower-threshold="120"
-			@scrolltolower="loadMore">
+			@scrolltolower="loadMore" refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<!-- 三项统计由用户端聚合接口返回，保持与参考图一致的横向卡片布局。 -->
 			<view class="stats-grid">
 				<view class="stat-card" v-for="stat in stats" :key="stat.label">

@@ -61,6 +61,11 @@ public class ClientDeviceFaultController {
         return R.success(clientDeviceFaultService.acceptFault(id));
     }
 
+    @PostMapping("/{id}/actions/reject")
+    public R<ClientDeviceFaultResponse> rejectFault(@PathVariable Long id) {
+        return R.success(clientDeviceFaultService.rejectFault(id));
+    }
+
     @PostMapping("/{id}/actions/complete")
     public R<ClientDeviceFaultResponse> completeFault(
             @PathVariable Long id,

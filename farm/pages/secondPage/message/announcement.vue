@@ -11,7 +11,8 @@
       </view>
     </view>
 
-    <scroll-view class="maintenance-content" scroll-y>
+    <scroll-view class="maintenance-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
       <!-- 首次请求保留固定高度，避免异步数据加载造成页面跳动。 -->
       <view v-if="loading && !messages.length" class="state-card loading-state">
         <view class="loading-line wide"></view>

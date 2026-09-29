@@ -789,13 +789,17 @@ public class PlotServiceImpl implements PlotService {
         summary.setId(task.getId());
         summary.setTaskTitle(defaultText(task.getTaskTitle(), "农事任务"));
         summary.setStatus(task.getStatus());
-        summary.setStatusName(resolveFarmTaskStatus(task.getStatus()));
+        summary.setStatusName(resolveFarmTaskStatus(task.getStatus(), Boolean.TRUE.equals(task.getOverdue())));
         summary.setDeadlineTime(task.getDeadlineTime());
+        summary.setOverdue(task.getOverdue());
         return summary;
     }
 
     /** 统一任务状态文案，确保地块详情与任务管理页面语义一致。 */
-    private String resolveFarmTaskStatus(Integer status) {
+    private String resolveFarmTaskStatus(Integer status, boolean overdue) {
+        if (overdue) {
+            return "已逾期";
+        }
         if (status == null) {
             return "未知";
         }
@@ -803,7 +807,6 @@ public class PlotServiceImpl implements PlotService {
             case 1 -> "未开始";
             case 2 -> "进行中";
             case 3 -> "已完成";
-            case 4 -> "已逾期";
             case 5 -> "已取消";
             default -> "未知";
         };

@@ -10,7 +10,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="picture-content" :class="{ 'picture-content-select': selectionMode }" scroll-y>
+		<scroll-view class="picture-content" :class="{ 'picture-content-select': selectionMode }" scroll-y
+			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading" class="state-text">正在加载图片...</view>
 			<view v-else-if="!groupedPictures.length" class="state-text">暂无手机图片</view>
 			<block v-else>

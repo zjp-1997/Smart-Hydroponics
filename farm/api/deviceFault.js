@@ -19,13 +19,14 @@ function formatDateTime(value) {
 
 // 将接口字段补充为页面可直接渲染的展示模型。
 function normalizeFault(fault) {
+	const assignmentRejected = Number(fault.assignStatus) === 3
 	return {
 		...fault,
 		faultName: fault.faultName || '设备故障',
 		deviceName: fault.deviceName || '未知设备',
 		plotName: fault.plotName || '未关联地块',
 		handleUserName: fault.handleUserName || '待指派',
-		statusName: STATUS_NAME_MAP[fault.status] || '未知状态',
+		statusName: assignmentRejected ? '已拒绝' : (STATUS_NAME_MAP[fault.status] || '未知状态'),
 		severityName: SEVERITY_NAME_MAP[fault.severity] || '一般',
 		startTimeText: formatDateTime(fault.startTime),
 		handleTimeText: formatDateTime(fault.handleTime),
@@ -67,6 +68,11 @@ export function getDeviceFaultRecord(id) {
 // 点击“处理故障”后接单，后端将状态从待处理更新为处理中。
 export function acceptDeviceFault(id) {
 	return post(`/smart_plant/client/device-faults/${id}/actions/accept`)
+}
+
+// 拒绝当前指派后，故障回到待分配状态，由农场主或管理员重新指派。
+export function rejectDeviceFault(id) {
+	return post(`/smart_plant/client/device-faults/${id}/actions/reject`)
 }
 
 // 上传必填的现场图片，服务端负责校验故障归属、类型和大小。

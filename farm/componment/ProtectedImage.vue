@@ -1,5 +1,6 @@
 <template>
 	<image
+		class="protected-image__image"
 		:src="displaySrc"
 		:mode="mode"
 		:alt="alt"
@@ -63,3 +64,14 @@ export default {
 	}
 }
 </script>
+
+<style>
+/* #ifdef MP-WEIXIN */
+.protected-image__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: inherit;
+}
+/* #endif */
+</style>

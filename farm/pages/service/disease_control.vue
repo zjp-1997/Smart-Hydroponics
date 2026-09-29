@@ -11,7 +11,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="disease-content" scroll-y>
+		<scroll-view class="disease-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="search-wrap">
 				<view class="search-box">
 					<text class="iconfont icon-icon_33 search-icon"></text>

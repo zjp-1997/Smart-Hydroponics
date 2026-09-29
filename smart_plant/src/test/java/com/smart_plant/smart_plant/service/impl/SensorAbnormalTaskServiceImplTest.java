@@ -32,8 +32,10 @@ class SensorAbnormalTaskServiceImplTest {
     private final GrowthStageMapper growthStageMapper = mock(GrowthStageMapper.class);
     private final FarmTaskMapper farmTaskMapper = mock(FarmTaskMapper.class);
     private final NotificationService notificationService = mock(NotificationService.class);
+    private final FarmTaskAuditService farmTaskAuditService = mock(FarmTaskAuditService.class);
     private final SensorAbnormalTaskServiceImpl service = new SensorAbnormalTaskServiceImpl(
-            iotDeviceMapper, plotMapper, growthStageMapper, farmTaskMapper, notificationService);
+            iotDeviceMapper, plotMapper, growthStageMapper, farmTaskMapper, notificationService,
+            farmTaskAuditService);
 
     @BeforeEach
     void setUp() {

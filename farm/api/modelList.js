@@ -47,7 +47,9 @@ export function sendModelMessage({ modelId, content, imageUrl, fileUrl, fileName
 
 /** 按会话记录主键向前翻页，只读取后端按当前登录用户过滤的成功 AI 咨询。 */
 export function getModelHistory({ beforeId, pageSize = 50 } = {}) {
-	return get('/smart_plant/client/ai-chat/history', { beforeId, pageSize }).then((data) => {
+	const params = { pageSize }
+	if (beforeId != null && beforeId !== '') params.beforeId = beforeId
+	return get('/smart_plant/client/ai-chat/history', params).then((data) => {
 		const history = Array.isArray(data) ? data : []
 		return history.map(normalizeChatResponse).filter((item) => item.id)
 	})

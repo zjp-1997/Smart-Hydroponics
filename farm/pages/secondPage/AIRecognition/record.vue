@@ -8,7 +8,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="record-content" scroll-y>
+		<scroll-view class="record-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="record-card" v-for="record in records" :key="record.id" @tap="handleRecordDetail(record)">
 				<protected-image class="record-image" :src="record.image" mode="aspectFill"></protected-image>
 				<view class="record-info">

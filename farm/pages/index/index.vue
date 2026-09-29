@@ -27,8 +27,12 @@
 		<scroll-view
 			class="content"
 			scroll-y
+			refresher-enabled
+			:refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh"
 			:enhanced="true"
-			:bounces="false"
+			:bounces="true"
 			:show-scrollbar="false"
 		>
 			<view class="section-head">

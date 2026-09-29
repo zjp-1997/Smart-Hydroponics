@@ -11,7 +11,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="account-content" scroll-y>
+		<scroll-view class="account-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="setting-section">
 				<text class="section-title">账号关联</text>
 				<view class="setting-card">

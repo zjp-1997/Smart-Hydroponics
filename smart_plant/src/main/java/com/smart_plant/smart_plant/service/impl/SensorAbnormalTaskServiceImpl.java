@@ -61,6 +61,7 @@ public class SensorAbnormalTaskServiceImpl implements SensorAbnormalTaskService 
     private final GrowthStageMapper growthStageMapper;
     private final FarmTaskMapper farmTaskMapper;
     private final NotificationService notificationService;
+    private final FarmTaskAuditService farmTaskAuditService;
 
     @Override
     public void prepareEnvironmentData(EnvironmentData data) {
@@ -189,6 +190,8 @@ public class SensorAbnormalTaskServiceImpl implements SensorAbnormalTaskService 
         task.setSourceType(sourceType);
         task.setSourceId(sourceId);
         farmTaskMapper.insert(task);
+        farmTaskAuditService.record(task, null, FarmTaskAuditService.ACTION_CREATE,
+                "传感器异常自动生成农事任务：" + task.getTaskTitle(), null, task.getStatus(), "SYSTEM");
         ensureFarmTaskMessage(task, device, plot, abnormalDetail);
     }
 

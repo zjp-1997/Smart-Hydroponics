@@ -59,7 +59,21 @@ class ClientDeviceFaultServiceImplTest {
         ClientDeviceFaultResponse response = service.listFaults(0).getFirst();
 
         assertTrue(response.getCanAccept());
+        assertTrue(response.getCanReject());
         assertFalse(response.getCanComplete());
+    }
+
+    @Test
+    void rejectsAssignedFaultAndRemovesResponseActions() {
+        IotDeviceFault rejected = assignedFault(0, 3);
+        when(faultService.getFaultById(7L)).thenReturn(rejected);
+
+        ClientDeviceFaultResponse response = service.rejectFault(7L);
+
+        verify(faultService).rejectAssignment(7L, null);
+        assertEquals(3, response.getAssignStatus());
+        assertFalse(response.getCanAccept());
+        assertFalse(response.getCanReject());
     }
 
     @Test
@@ -103,6 +117,7 @@ class ClientDeviceFaultServiceImplTest {
         // 页面只给真正处于处理中且已经接单的处理人展示完成按钮。
         assertTrue(response.getCanComplete());
         assertFalse(response.getCanAccept());
+        assertFalse(response.getCanReject());
     }
 
     @Test

@@ -11,10 +11,6 @@ public interface FarmTaskRecordMapper {
 
     int insert(FarmTaskRecord record);
 
-    int deleteByTaskId(Long taskId);
-
-    int deleteByTaskIds(@Param("ids") List<Long> ids);
-
     FarmTaskRecord selectById(Long id);
 
     /** 按幂等请求号查询已落库事件，重复请求可直接返回已有结果。 */

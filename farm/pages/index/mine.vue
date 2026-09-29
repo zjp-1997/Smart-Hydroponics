@@ -2,7 +2,8 @@
 	<view class="mine-page">
 		<view class="page-hero">
 			<!-- 农场主与普通用户点击头像或名称区域进入共用个人信息编辑页。 -->
-			<view class="profile" hover-class="profile-pressed" :hover-stay-time="80" aria-label="编辑个人信息" @tap="openProfile">
+			<view class="profile" hover-class="profile-pressed" :hover-stay-time="80"
+				role="button" aria-label="编辑个人信息" @tap="openProfile">
 				<protected-image class="profile-avatar" :src="profile.avatar" mode="aspectFill" @error="useDefaultAvatar"></protected-image>
 				<view class="profile-info">
 					<text class="profile-name">{{ profile.name }}</text>
@@ -11,7 +12,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="mine-content" scroll-y>
+		<scroll-view class="mine-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="quick-grid">
 				<button
 					v-for="item in quickActions"
@@ -19,13 +21,14 @@
 					class="quick-card"
 					hover-class="entry-pressed"
 					:hover-stay-time="80"
+					:aria-label="`${item.title}，${item.desc}`"
 					@tap="handleEntry(item)"
 				>
 					<view class="quick-copy">
 						<text class="quick-title">{{ item.title }}</text>
 						<text class="quick-desc">{{ item.desc }}</text>
 					</view>
-					<text class="iconfont quick-icon" :class="[item.icon, item.iconClass]"></text>
+					<text class="iconfont quick-icon" :class="[item.icon, item.iconClass]" aria-hidden="true"></text>
 				</button>
 			</view>
 
@@ -36,11 +39,12 @@
 					class="menu-row"
 					hover-class="entry-pressed"
 					:hover-stay-time="80"
+					:aria-label="item.title"
 					@tap="handleEntry(item)"
 				>
-					<text class="iconfont menu-icon" :class="[item.icon, item.iconClass]"></text>
+					<text class="iconfont menu-icon" :class="[item.icon, item.iconClass]" aria-hidden="true"></text>
 					<text class="menu-title">{{ item.title }}</text>
-					<text class="iconfont icon-youjiantou menu-arrow"></text>
+					<text class="iconfont icon-youjiantou menu-arrow" aria-hidden="true"></text>
 				</button>
 			</view>
 			<view class="safe-bottom"></view>
@@ -144,27 +148,62 @@ export default {
 
 page {
 	height: 100%;
-	background-color: #f7f7f7;
+	background-color: #f3f8f6;
 }
 
 .mine-page {
 	position: relative;
 	height: 100vh;
+	height: 100dvh;
 	overflow: hidden;
-	background-color: #f7f7f7;
+	background:
+		radial-gradient(ellipse at 84% 15%, rgba(78, 198, 181, 0.23) 0%, rgba(78, 198, 181, 0) 42%),
+		radial-gradient(ellipse at 14% 12%, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0) 38%),
+		linear-gradient(180deg, #9edfd6 0%, #dff6f1 27%, #f0faf7 58%, #f5fdf9 100%);
 	font-size: 16px;
 	font-weight: normal;
-	color: #333333;
+	color: #233a40;
+}
+
+.mine-page::before,
+.mine-page::after {
+	position: absolute;
+	z-index: 0;
+	border-radius: 50%;
+	pointer-events: none;
+	content: "";
+}
+
+.mine-page::before {
+	left: -220rpx;
+	top: 74rpx;
+	width: 980rpx;
+	height: 240rpx;
+	background-color: rgba(255, 255, 255, 0.38);
+	transform: rotate(-7deg);
+}
+
+.mine-page::after {
+	right: -260rpx;
+	top: 96rpx;
+	width: 760rpx;
+	height: 250rpx;
+	background-color: rgba(45, 181, 163, 0.12);
+	transform: rotate(8deg);
 }
 
 .page-hero {
+	position: relative;
+	z-index: 1;
 	box-sizing: border-box;
-	min-height: 300rpx;
-	padding: calc(var(--status-bar-height) + 64rpx) 44rpx 0;
-	background: linear-gradient(180deg, rgba(27, 162, 145, 0.7) 0%, rgba(90, 184, 173, 0) 100%);
+	min-height: 360rpx;
+	padding: calc(var(--status-bar-height) + 108rpx) 44rpx 0;
+	background: transparent;
 }
 
 .profile {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	align-items: center;
 }
@@ -172,18 +211,19 @@ page {
 .profile-avatar {
 	display: block;
 	flex-shrink: 0;
-	width: 112rpx;
-	height: 112rpx;
+	width: 118rpx;
+	height: 118rpx;
 	border: 6rpx solid rgba(255, 255, 255, 0.82);
 	border-radius: 50%;
 	background-color: #ffffff;
+	box-shadow: 0 8rpx 24rpx rgba(33, 104, 94, 0.12);
 }
 
 .profile-info {
 	display: flex;
 	flex-direction: column;
 	min-width: 0;
-	margin-left: 34rpx;
+	margin-left: 31rpx;
 }
 
 .profile-name,
@@ -196,33 +236,34 @@ page {
 .profile-pressed { opacity: 0.72; }
 
 .profile-name {
-	font-size: 18px;
-	font-weight: 500;
+	font-size: 24px;
+	font-weight: 600;
 	line-height: 1.35;
-	color: #26302f;
+	color: #17373d;
 }
 
 .profile-account {
-	margin-top: 8rpx;
-	font-size: 15px;
+	margin-top: 10rpx;
+	font-size: 17px;
 	line-height: 1.3;
-	color: #52615f;
+	color: #4c666b;
 }
 
 .mine-content {
 	position: absolute;
+	z-index: 1;
 	left: 0;
 	right: 0;
-	top: calc(var(--status-bar-height) + 238rpx);
+	top: calc(var(--status-bar-height) + 286rpx);
 	bottom: 0;
 	box-sizing: border-box;
-	padding: 0 42rpx;
+	padding: 0 32rpx;
 }
 
 .quick-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 28rpx;
+	gap: 30rpx;
 }
 
 .quick-card {
@@ -230,14 +271,22 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	height: 140rpx;
+	height: 154rpx;
 	margin: 0;
-	padding: 24rpx 28rpx;
-	border-radius: 20rpx;
+	padding: 28rpx 34rpx;
+	border-radius: 26rpx;
 	background-color: #ffffff;
-	box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+	box-shadow: 0 10rpx 30rpx rgba(35, 93, 84, 0.065);
 	line-height: normal;
 	text-align: left;
+}
+
+.quick-card:first-child {
+	background: linear-gradient(135deg, #ffffff 0%, #f1fbf8 100%);
+}
+
+.quick-card:last-child {
+	background: linear-gradient(135deg, #ffffff 0%, #fff8f2 100%);
 }
 
 .quick-card::after,
@@ -259,16 +308,17 @@ page {
 }
 
 .quick-title {
-	font-size: 16px;
+	font-size: 20px;
+	font-weight: 600;
 	line-height: 1.3;
-	color: #343b3a;
+	color: #1f3740;
 }
 
 .quick-desc {
 	margin-top: 12rpx;
-	font-size: 14px;
+	font-size: 16px;
 	line-height: 1.2;
-	color: #c3c7c7;
+	color: #879692;
 }
 
 .quick-icon {
@@ -288,60 +338,74 @@ page {
 
 .menu-group {
 	overflow: hidden;
-	margin-top: 34rpx;
-	padding: 10rpx 0;
-	border-radius: 20rpx;
+	margin-top: 36rpx;
+	padding: 0;
+	border-radius: 22rpx;
 	background-color: #ffffff;
-	box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.035);
+	box-shadow: 0 10rpx 30rpx rgba(35, 93, 84, 0.055);
 }
 
 .menu-row {
+	position: relative;
 	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	width: 100%;
-	height: 88rpx;
+	height: 115rpx;
 	margin: 0;
-	padding: 0 34rpx;
+	padding: 0 36rpx;
 	border-radius: 0;
 	background-color: transparent;
 	line-height: normal;
 	text-align: left;
 }
 
+.menu-row:not(:last-child)::before {
+	position: absolute;
+	left: 26rpx;
+	right: 26rpx;
+	bottom: 0;
+	height: 1rpx;
+	background-color: #edf1f0;
+	content: "";
+	transform: scaleY(0.5);
+	transform-origin: bottom;
+}
+
 .menu-icon {
 	flex-shrink: 0;
-	width: 42rpx;
-	font-size: 30rpx;
-	line-height: 42rpx;
+	width: 44rpx;
+	font-size: 44rpx;
+	line-height: 52rpx;
 	text-align: center;
-	color: #737b7a;
+	color: #456f78;
 }
 
 .menu-title {
 	flex: 1;
-	margin-left: 20rpx;
-	font-size: 16px;
+	margin-left: 30rpx;
+	font-size: 18px;
+	font-weight: 500;
 	line-height: 1.3;
-	color: #434948;
+	color: #243b42;
 }
 
 .menu-arrow {
-	font-size: 28rpx;
-	line-height: 32rpx;
-	color: #c6cccc;
+	font-size: 34rpx;
+	line-height: 38rpx;
+	color: #b6c1bf;
 }
 
 .support-icon {
-	color: #91b3cf;
+	color: #456f78;
 }
 
 .entry-pressed {
-	background-color: #eef8f6;
+	background-color: #eaf6f3;
 }
 
 .safe-bottom {
-	height: calc(40rpx + env(safe-area-inset-bottom));
+	height: calc(52rpx + env(safe-area-inset-bottom));
 }
 
 @media screen and (min-width: 768px) {

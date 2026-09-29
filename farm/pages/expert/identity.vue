@@ -7,7 +7,8 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="content">
+    <scroll-view scroll-y class="content" refresher-enabled :refresher-triggered="pullRefreshing"
+      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
       <view class="status-card" :class="`status-${auditStatus}`">
         <text class="iconfont icon-a-typeyonghustyledunpai status-icon" />
         <view class="status-copy">

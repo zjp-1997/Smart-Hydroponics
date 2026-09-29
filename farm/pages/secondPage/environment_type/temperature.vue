@@ -8,7 +8,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="analysis-content" scroll-y>
+		<scroll-view class="analysis-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="analysis-overview">
 				<view class="section-title">
 					<view class="section-title-bar"></view>

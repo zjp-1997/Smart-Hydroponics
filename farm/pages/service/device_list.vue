@@ -13,7 +13,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="device-content" scroll-y>
+		<scroll-view class="device-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="filter-card">
 				<view class="filter-head">
 					<view class="card-title-wrap">

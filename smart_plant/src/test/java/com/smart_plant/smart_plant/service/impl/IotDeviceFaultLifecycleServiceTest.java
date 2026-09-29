@@ -49,25 +49,25 @@ class IotDeviceFaultLifecycleServiceTest {
 
         assertThrows(BusinessException.class, () -> service.updateStatus(7L, 2, " "));
 
-        verify(faultMapper, never()).updateStatus(7L, 2, null);
+        verify(faultMapper, never()).updateStatus(7L, 2, null, 1, 2, 10L);
     }
 
     @Test
     void completesAcceptedFaultWithResult() {
         when(faultMapper.selectById(7L)).thenReturn(fault(1, 2, 10L, null));
-        when(faultMapper.updateStatus(7L, 2, "更换传感器后恢复正常")).thenReturn(1);
+        when(faultMapper.updateStatus(7L, 2, "更换传感器后恢复正常", 1, 2, 10L)).thenReturn(1);
         when(deviceMapper.restoreOnlineAfterFaultResolved(9L)).thenReturn(1);
 
         service.updateStatus(7L, 2, "  更换传感器后恢复正常  ");
 
-        verify(faultMapper).updateStatus(7L, 2, "更换传感器后恢复正常");
+        verify(faultMapper).updateStatus(7L, 2, "更换传感器后恢复正常", 1, 2, 10L);
         verify(deviceMapper).restoreOnlineAfterFaultResolved(9L);
     }
 
     @Test
     void keepsDeviceOfflineWhenAnotherFaultIsStillOpen() {
         when(faultMapper.selectById(7L)).thenReturn(fault(1, 2, 10L, null));
-        when(faultMapper.updateStatus(7L, 2, "已修复")).thenReturn(1);
+        when(faultMapper.updateStatus(7L, 2, "已修复", 1, 2, 10L)).thenReturn(1);
         when(deviceMapper.restoreOnlineAfterFaultResolved(9L)).thenReturn(0);
         when(faultMapper.selectOpenByDeviceId(9L)).thenReturn(fault(0, 0, null, null));
 
@@ -79,7 +79,7 @@ class IotDeviceFaultLifecycleServiceTest {
     @Test
     void rejectsCompletionWhenResolvedDeviceCannotBeRestored() {
         when(faultMapper.selectById(7L)).thenReturn(fault(1, 2, 10L, null));
-        when(faultMapper.updateStatus(7L, 2, "已修复")).thenReturn(1);
+        when(faultMapper.updateStatus(7L, 2, "已修复", 1, 2, 10L)).thenReturn(1);
         when(deviceMapper.restoreOnlineAfterFaultResolved(9L)).thenReturn(0);
         when(faultMapper.selectOpenByDeviceId(9L)).thenReturn(null);
 
@@ -91,7 +91,7 @@ class IotDeviceFaultLifecycleServiceTest {
         IotDeviceFault oldFault = fault(1, 2, 10L, null);
         IotDeviceFault request = fault(2, 2, null, "已修复");
         when(faultMapper.selectById(7L)).thenReturn(oldFault);
-        when(faultMapper.updateById(request)).thenReturn(1);
+        when(faultMapper.updateById(request, 1, 2, 10L)).thenReturn(1);
         when(deviceMapper.restoreOnlineAfterFaultResolved(9L)).thenReturn(1);
 
         service.updateFault(request);
@@ -105,19 +105,32 @@ class IotDeviceFaultLifecycleServiceTest {
 
         assertThrows(BusinessException.class, () -> service.updateStatus(7L, 3, null));
 
-        verify(faultMapper, never()).updateStatus(7L, 3, null);
+        verify(faultMapper, never()).updateStatus(7L, 3, null, 1, 2, 10L);
     }
 
     @Test
     void closesHandledFaultAndPreventsReopening() {
         when(faultMapper.selectById(7L)).thenReturn(fault(2, 2, 10L, "已修复"));
-        when(faultMapper.updateStatus(7L, 3, null)).thenReturn(1);
+        when(faultMapper.updateStatus(7L, 3, null, 2, 2, 10L)).thenReturn(1);
 
         service.updateStatus(7L, 3, null);
 
-        verify(faultMapper).updateStatus(7L, 3, null);
+        verify(faultMapper).updateStatus(7L, 3, null, 2, 2, 10L);
         verify(deviceMapper, never()).restoreOnlineAfterFaultResolved(9L);
         assertThrows(BusinessException.class, () -> service.updateStatus(7L, 0, null));
+    }
+
+    @Test
+    void rejectsCompletionWhenLifecycleChangedAfterRead() {
+        when(faultMapper.selectById(7L)).thenReturn(fault(1, 2, 10L, null));
+        when(faultMapper.updateStatus(7L, 2, "已修复", 1, 2, 10L)).thenReturn(0);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> service.updateStatus(7L, 2, "已修复"));
+
+        org.junit.jupiter.api.Assertions.assertEquals("故障状态已发生变化，请刷新后重试", exception.getMessage());
+        verify(deviceMapper, never()).restoreOnlineAfterFaultResolved(9L);
     }
 
     @Test

@@ -12,7 +12,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="chat-content" :class="{ 'chat-content-expanded': showChatTools }" scroll-y :scroll-top="scrollTop">
+		<scroll-view class="chat-content" :class="{ 'chat-content-expanded': showChatTools }" scroll-y :scroll-top="scrollTop"
+			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<button v-if="hasMoreBefore" class="load-earlier" :loading="loadingOlder" @tap="loadEarlier">
 				{{ loadingOlder ? '正在加载...' : '加载更早消息' }}
 			</button>

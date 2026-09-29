@@ -24,7 +24,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="fault-content" :class="{ 'technician-content': isTechnicianHome }" scroll-y>
+		<scroll-view class="fault-content" :class="{ 'technician-content': isTechnicianHome }" scroll-y
+			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading" class="fault-state">正在加载设备故障...</view>
 			<view v-else-if="!faults.length" class="fault-state">{{ emptyStateText }}</view>
 			<view v-else class="fault-list">
@@ -61,14 +63,33 @@
 						</view>
 						<view v-if="fault.faultDesc" class="fault-description">{{ fault.faultDesc }}</view>
 						<view v-if="fault.handleResult" class="fault-result">
-							<text class="fault-result-label">处理结果</text>
+							<text class="fault-result-label">{{ fault.assignStatus === 3 ? '拒绝原因' : '处理结果' }}</text>
 							<text class="fault-result-text">{{ fault.handleResult }}</text>
 						</view>
 					</view>
 
 					<view class="fault-bottom-row">
 						<text class="fault-code">{{ fault.faultCode || '系统检测故障' }}</text>
+						<view v-if="fault.canReject" class="fault-assignment-actions">
+							<button
+								class="fault-action fault-reject-action"
+								:disabled="submittingFaultId !== null"
+								hover-class="fault-action-pressed"
+								@tap.stop="rejectFault(fault)"
+							>
+								{{ isFaultSubmitting(fault, 'reject') ? '拒绝中' : '拒绝' }}
+							</button>
+							<button
+								class="fault-action"
+								:disabled="submittingFaultId !== null"
+								hover-class="fault-action-pressed"
+								@tap.stop="acceptFault(fault)"
+							>
+								{{ isFaultSubmitting(fault, 'accept') ? '领取中' : '领取' }}
+							</button>
+						</view>
 						<button
+							v-else
 							class="fault-action"
 							:class="{ completed: !fault.canAccept && !fault.canComplete }"
 							:disabled="isActionDisabled(fault)"
@@ -122,6 +143,7 @@ import {
 	DEVICE_FAULT_STATUS_OPTIONS,
 	getDeviceFaults,
 	getTechnicianFaults,
+	rejectDeviceFault,
 	uploadDeviceFaultCompletionImage
 } from '@/api/deviceFault.js'
 import { getCurrentClientUser } from '@/api/clientAuth.js'
@@ -139,6 +161,7 @@ export default {
 			loading: false,
 			submitting: false,
 			submittingFaultId: null,
+			submittingFaultAction: '',
 			completionFault: null,
 			handleResult: '',
 			completionImagePath: '',
@@ -221,14 +244,42 @@ export default {
 		acceptFault(fault) {
 			if (this.submittingFaultId) return
 			this.submittingFaultId = fault.id
+			this.submittingFaultAction = 'accept'
 			acceptDeviceFault(fault.id)
 				.then(() => {
-					uni.showToast({ title: '故障处理中', icon: 'success' })
+					uni.showToast({ title: this.isTechnicianHome ? '任务已领取' : '故障处理中', icon: 'success' })
 					return this.fetchFaults()
 				})
 				.finally(() => {
 					this.submittingFaultId = null
+					this.submittingFaultAction = ''
 				})
+		},
+		rejectFault(fault) {
+			if (this.submittingFaultId) return
+			uni.showModal({
+				title: '拒绝任务',
+				content: '拒绝后，该故障将等待农场主或管理员重新分配。',
+				confirmText: '确认拒绝',
+				confirmColor: '#c04b3b',
+				success: (result) => {
+					if (!result.confirm) return
+					this.submittingFaultId = fault.id
+					this.submittingFaultAction = 'reject'
+					rejectDeviceFault(fault.id)
+						.then(() => {
+							uni.showToast({ title: '任务已拒绝', icon: 'success' })
+							return this.fetchFaults()
+						})
+						.finally(() => {
+							this.submittingFaultId = null
+							this.submittingFaultAction = ''
+						})
+				}
+			})
+		},
+		isFaultSubmitting(fault, action) {
+			return this.submittingFaultId === fault.id && this.submittingFaultAction === action
 		},
 		closeCompletion() {
 			if (this.submitting) return
@@ -372,8 +423,10 @@ page { height: 100%; background-color: #f7f7f7; }
 .fault-result-label { flex-shrink: 0; margin-right: 16rpx; color: #168577; }
 .fault-result-text { flex: 1; }
 .fault-bottom-row { margin-top: 22rpx; }
-.fault-code { max-width: 350rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #89938f; }
-.fault-action { box-sizing: border-box; min-width: 132rpx; height: 72rpx; margin: 0; padding: 0 18rpx; border: 0; border-radius: 8rpx; font-size: 12px; font-weight: 600; line-height: 72rpx; color: #ffffff; background-color: #5ab8ad; }
+.fault-code { flex: 1; min-width: 0; margin-right: 16rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #89938f; }
+.fault-assignment-actions { display: flex; flex-shrink: 0; gap: 16rpx; }
+.fault-action { box-sizing: border-box; min-width: 120rpx; height: 96rpx; margin: 0; padding: 0 18rpx; border: 0; border-radius: 8rpx; font-size: 12px; font-weight: 600; line-height: 96rpx; color: #ffffff; background-color: #5ab8ad; }
+.fault-reject-action { color: #b34335; background-color: #fff2ef; border: 1rpx solid #efb6ad; }
 .fault-action::after, .fault-cancel::after, .fault-confirm::after { border: 0; }
 .fault-action.completed { background-color: #aab8b5; }
 .fault-safe-bottom { height: calc(40rpx + env(safe-area-inset-bottom)); }

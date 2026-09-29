@@ -22,7 +22,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="mytask-content" scroll-y>
+		<scroll-view class="mytask-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading" class="mytask-state">正在加载农事任务...</view>
 			<view v-else-if="!tasks.length" class="mytask-state">暂无{{ activeStatusLabel }}任务</view>
 			<view v-else class="mytask-list">
@@ -163,7 +164,7 @@ export default {
 				this.startTask(task)
 				return
 			}
-			if (task.status === 2 && task.canComplete) {
+			if (task.canComplete) {
 				this.completionTask = task
 				this.completionImagePath = ''
 				this.completionImageUrl = ''
@@ -200,7 +201,7 @@ export default {
 			return task.status === 3 ? '已完成' : task.statusName
 		},
 		statusClass(task) {
-			if (task.overdue || task.status === 4) {
+			if (task.overdue) {
 				return 'overdue'
 			}
 			return { 2: 'running', 3: 'completed' }[task.status] || ''

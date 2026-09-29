@@ -7,7 +7,8 @@
 			<text class="nav-title">{{ document.title }}</text>
 			<view class="nav-placeholder"></view>
 		</view>
-		<scroll-view class="document" scroll-y>
+		<scroll-view class="document" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<text class="updated">更新日期：2026年9月23日</text>
 			<view v-for="section in document.sections" :key="section.title" class="section">
 				<text class="section-title">{{ section.title }}</text>

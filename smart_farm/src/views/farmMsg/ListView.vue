@@ -78,7 +78,6 @@ const taskStatusMap: Record<number, string> = {
   1: '未开始',
   2: '进行中',
   3: '已完成',
-  4: '已逾期',
   5: '已取消',
 }
 

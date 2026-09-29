@@ -5,7 +5,9 @@
       <button class="back" aria-label="返回消息" @tap="goBack"><text class="iconfont icon-fanhui"></text></button>
       <text class="nav-title">{{ userName }}</text><view class="placeholder"></view>
     </view></view>
-    <scroll-view class="chat-content" :class="{ expanded: showChatTools }" scroll-y :scroll-top="scrollTop">
+    <scroll-view class="chat-content" :class="{ expanded: showChatTools }" scroll-y :scroll-top="scrollTop"
+      refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+      @refresherrefresh="$handlePullDownRefresh">
       <button v-if="hasMoreBefore" class="load-earlier" :loading="loadingOlder" @tap="loadEarlier">
         {{ loadingOlder ? '正在加载...' : '加载更早消息' }}
       </button>

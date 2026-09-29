@@ -9,7 +9,8 @@
 			<view class="header-placeholder"></view>
 		</view>
 
-		<scroll-view class="page-content" scroll-y>
+		<scroll-view class="page-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<!-- 搜索区仅复现静态界面，不发起查询请求。 -->
 			<view class="search-row">
 				<view class="search-field">

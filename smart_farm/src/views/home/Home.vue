@@ -252,7 +252,6 @@ const taskStatusMap: Record<number, { text: string; type: TaskStatus }> = {
   1: { text: '未开始', type: 'pending' },
   2: { text: '进行中', type: 'running' },
   3: { text: '已完成', type: 'done' },
-  4: { text: '已逾期', type: 'overdue' },
   5: { text: '已取消', type: 'cancelled' },
 }
 
@@ -261,7 +260,9 @@ const defaultTaskStatus: { text: string; type: TaskStatus } = {
   type: 'pending',
 }
 
-const getTaskStatusMeta = (status?: number) => taskStatusMap[status || 1] ?? defaultTaskStatus
+const getTaskStatusMeta = (task: FarmTask) => task.overdue
+  ? { text: '已逾期', type: 'overdue' as const }
+  : taskStatusMap[task.status || 1] ?? defaultTaskStatus
 
 const formatTaskTime = (task: FarmTask) => {
   // 首页统一展示任务截至时间，缺失时才退回发布时间。
@@ -271,7 +272,7 @@ const formatTaskTime = (task: FarmTask) => {
 // 将后端 FarmTask 转成首页表格需要的轻量展示模型。
 const taskRows = computed<TaskRow[]>(() =>
   farmTasks.value.map((task) => {
-    const statusMeta = getTaskStatusMeta(task.status)
+    const statusMeta = getTaskStatusMeta(task)
     return {
       id: `TASK${String(task.id).padStart(6, '0')}`,
       name: task.taskTitle || '-',

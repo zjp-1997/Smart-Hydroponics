@@ -1,7 +1,8 @@
 <template>
   <view class="news-page">
     <view class="hero"><text class="title">消息</text></view>
-    <scroll-view class="content" scroll-y>
+    <scroll-view class="content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
       <!-- 消息入口沿用农场主消息页的头像、摘要和未读角标布局。 -->
       <view class="message-row" @tap="open('/pages/secondPage/message/announcement')">
         <view class="avatar"><text class="iconfont icon-xitonggonggao"></text></view>

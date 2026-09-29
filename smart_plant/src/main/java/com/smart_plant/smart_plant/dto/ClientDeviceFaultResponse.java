@@ -41,7 +41,8 @@ public class ClientDeviceFaultResponse {
     /** 完成故障处理时保存的现场凭证图片。 */
     private String completionImageUrl;
 
-    /** 当前登录用户是否可以接受或完成该故障。 */
+    /** 当前登录用户是否可以接受、拒绝或完成该故障。 */
     private Boolean canAccept;
+    private Boolean canReject;
     private Boolean canComplete;
 }

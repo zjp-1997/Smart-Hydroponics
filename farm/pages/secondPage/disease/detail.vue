@@ -20,7 +20,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="detail-scroll" scroll-y>
+		<scroll-view class="detail-scroll" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<!-- 骨架屏与最终内容使用相同高度，避免数据返回时发生明显跳动。 -->
 			<view v-if="loading" class="detail-loading" aria-label="正在加载病虫害详情">
 				<view class="skeleton skeleton-cover"></view>

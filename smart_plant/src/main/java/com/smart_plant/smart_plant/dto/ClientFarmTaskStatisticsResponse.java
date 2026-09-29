@@ -15,15 +15,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ClientFarmTaskStatisticsResponse {
 
-    /** 状态为 1 的未开始任务数。 */
+    /** 状态为 1 且未逾期的任务数。 */
     private Long pendingCount;
 
-    /** 状态为 2 的进行中任务数。 */
+    /** 状态为 2 且未逾期的任务数。 */
     private Long runningCount;
 
     /** 状态为 3 的已完成任务数。 */
     private Long completedCount;
 
-    /** 状态为 4 的已逾期任务数。 */
+    /** 未完成且已超过截止时间的任务数。 */
     private Long overdueCount;
 }

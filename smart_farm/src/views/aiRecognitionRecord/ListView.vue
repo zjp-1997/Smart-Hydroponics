@@ -130,7 +130,6 @@ const taskStatusMap: Record<number, string> = {
   1: '未开始',
   2: '进行中',
   3: '已完成',
-  4: '已逾期',
   5: '已取消',
 }
 
@@ -707,7 +706,7 @@ onMounted(() => {
                 <div class="task-head">
                   <strong>农事任务</strong>
                   <el-tag v-if="currentFarmTask" type="success" effect="light" round>
-                    {{ taskStatusMap[currentFarmTask.status || 1] || '-' }}
+                    {{ currentFarmTask.overdue ? '已逾期' : taskStatusMap[currentFarmTask.status || 1] || '-' }}
                   </el-tag>
                 </div>
                 <el-empty v-if="!currentFarmTask" description="尚未生成农事任务" :image-size="80" />

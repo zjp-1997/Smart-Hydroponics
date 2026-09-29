@@ -214,6 +214,11 @@ class ClientFarmTaskServiceImplTest {
         task.setPlotId(9L);
         task.setTaskTitle("浇水");
         task.setCreateTime(LocalDateTime.of(2026, 9, 9, 8, 36));
+        FarmTaskRecord created = new FarmTaskRecord();
+        created.setId(4L);
+        created.setTaskId(88L);
+        created.setActionType(5);
+        created.setExecuteTime(LocalDateTime.of(2026, 9, 9, 8, 36));
         FarmTaskRecord action = new FarmTaskRecord();
         action.setId(5L);
         action.setTaskId(88L);
@@ -221,12 +226,11 @@ class ClientFarmTaskServiceImplTest {
         action.setExecuteTime(LocalDateTime.of(2026, 9, 9, 8, 39));
         when(plotMapper.selectById(9L)).thenReturn(plot);
         when(farmTaskMapper.selectClientTasksByPlotId(12L, 9L)).thenReturn(List.of(task));
-        when(farmTaskRecordMapper.selectListByPlotId(12L, 9L)).thenReturn(List.of(action));
+        when(farmTaskRecordMapper.selectListByPlotId(12L, 9L)).thenReturn(List.of(created, action));
 
         List<FarmTaskRecord> timeline = service.listPlotTimeline(9L);
 
-        assertEquals(List.of(-88L, 5L), timeline.stream().map(FarmTaskRecord::getId).toList());
-        assertEquals("系统记录", timeline.get(0).getOperatorName());
+        assertEquals(List.of(4L, 5L), timeline.stream().map(FarmTaskRecord::getId).toList());
         assertEquals("张三", timeline.get(1).getOperatorName());
         verify(dataPermissionService).requireClientFarmReader(12L);
     }
@@ -290,5 +294,21 @@ class ClientFarmTaskServiceImplTest {
 
         assertSame(runningTask, actual);
         verify(farmTaskMapper).startTask(eq(88L), eq(22L), any(LocalDateTime.class));
+    }
+
+    @Test
+    void persistedLegacyOverdueStatusCannotBeStartedAsASecondLifecycleState() {
+        User owner = new User();
+        owner.setId(12L);
+        FarmTask legacyTask = new FarmTask();
+        legacyTask.setId(88L);
+        legacyTask.setUserId(12L);
+        legacyTask.setStatus(4);
+        when(dataPermissionService.currentUser()).thenReturn(owner);
+        when(farmTaskMapper.selectById(88L)).thenReturn(legacyTask);
+
+        assertThrows(BusinessException.class,
+                () -> service.executeTask(88L, new ClientFarmTaskActionRequest()));
+        verifyNoInteractions(farmTaskRecordMapper);
     }
 }

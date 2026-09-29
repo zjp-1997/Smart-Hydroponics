@@ -7,7 +7,6 @@ import com.smart_plant.smart_plant.entity.FarmTaskRecord;
 import com.smart_plant.smart_plant.entity.Plot;
 import com.smart_plant.smart_plant.entity.User;
 import com.smart_plant.smart_plant.exception.BusinessException;
-import com.smart_plant.smart_plant.mapper.AiSolutionMapper;
 import com.smart_plant.smart_plant.mapper.FarmTaskMapper;
 import com.smart_plant.smart_plant.mapper.FarmTaskRecordMapper;
 import com.smart_plant.smart_plant.mapper.PlotMapper;
@@ -26,6 +25,8 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +34,10 @@ public class FarmTaskServiceImpl implements FarmTaskService {
 
     private final FarmTaskMapper farmTaskMapper;
     private final FarmTaskRecordMapper farmTaskRecordMapper;
-    private final AiSolutionMapper aiSolutionMapper;
     private final PlotMapper plotMapper;
     private final UserMapper userMapper;
     private final DataPermissionService dataPermissionService;
+    private final FarmTaskAuditService farmTaskAuditService;
 
     /** 新增农事：校验必填字段后，根据地块归属自动绑定发布人和当前种植批次。 */
     @Override
@@ -45,6 +46,9 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         validateCreate(farmTask);
         normalizeCreate(farmTask);
         farmTaskMapper.insert(farmTask);
+        farmTaskAuditService.record(farmTask, dataPermissionService.currentUser(),
+                FarmTaskAuditService.ACTION_CREATE, "创建农事任务：" + farmTask.getTaskTitle(),
+                null, farmTask.getStatus(), "SMART_FARM");
         return farmTaskMapper.selectById(farmTask.getId());
     }
 
@@ -61,35 +65,44 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         if (rows == 0) {
             throw new BusinessException(ResponseCode.FAIL, "Failed to update farm task");
         }
+        farmTaskAuditService.record(farmTask, dataPermissionService.currentUser(),
+                FarmTaskAuditService.ACTION_EDIT, describeChanges(oldTask, farmTask),
+                oldTask.getStatus(), farmTask.getStatus(), "SMART_FARM");
         return farmTaskMapper.selectById(farmTask.getId());
     }
 
-    /** 删除农事：先清理反馈记录和 AI 方案反向关联，避免留下孤立业务数据。 */
+    /** “删除”收敛为取消，保留任务、来源关联和完整审计时间线。 */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteFarmTask(Long id) {
         FarmTask task = getFarmTaskById(id);
-        farmTaskRecordMapper.deleteByTaskId(task.getId());
-        aiSolutionMapper.clearTaskLinkByFarmTaskId(task.getId());
-        int rows = farmTaskMapper.deleteById(task.getId());
+        User operator = dataPermissionService.currentUser();
+        int rows = farmTaskMapper.cancelTask(task.getId());
         if (rows == 0) {
-            throw new BusinessException(ResponseCode.NOT_FOUND, "Farm task does not exist");
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "Only pending or running tasks can be cancelled");
         }
+        farmTaskAuditService.record(task, operator, FarmTaskAuditService.ACTION_CANCEL,
+                "取消农事任务：" + task.getTaskTitle(), task.getStatus(), 5, "SMART_FARM");
     }
 
-    /** 批量删除农事：逐条校验数据权限后再批量删除，防止越权删除其他用户数据。 */
+    /** 批量取消前逐条校验数据权限，任一失败则整个事务回滚。 */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteFarmTasks(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "Please select farm tasks to delete");
         }
-        for (Long id : ids) {
-            getFarmTaskById(id);
+        List<FarmTask> tasks = ids.stream().distinct().map(this::getFarmTaskById).toList();
+        User operator = dataPermissionService.currentUser();
+        for (FarmTask task : tasks) {
+            if (farmTaskMapper.cancelTask(task.getId()) == 0) {
+                throw new BusinessException(ResponseCode.PARAM_ERROR,
+                        "Only pending or running tasks can be cancelled");
+            }
+            farmTaskAuditService.record(task, operator, FarmTaskAuditService.ACTION_CANCEL,
+                    "批量取消农事任务：" + task.getTaskTitle(), task.getStatus(), 5, "SMART_FARM");
         }
-        farmTaskRecordMapper.deleteByTaskIds(ids);
-        aiSolutionMapper.clearTaskLinkByFarmTaskIds(ids);
-        return farmTaskMapper.deleteBatchByIds(ids);
+        return tasks.size();
     }
 
     /** 查询详情：所有详情入口都统一做数据权限校验。 */
@@ -135,7 +148,9 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         record.setAfterStatus(status);
         record.setSourceClient("SMART_FARM");
         record.setExecuteTime(now);
-        farmTaskRecordMapper.insert(record);
+        if (farmTaskRecordMapper.insert(record) == 0) {
+            throw new BusinessException(ResponseCode.FAIL, "Failed to save farm task audit record");
+        }
         return farmTaskMapper.selectById(task.getId());
     }
 
@@ -194,6 +209,8 @@ public class FarmTaskServiceImpl implements FarmTaskService {
     }
 
     private void normalizeCreate(FarmTask farmTask) {
+        // 新任务只能从“未开始”进入状态机，逾期仅由截止时间派生。
+        farmTask.setStatus(1);
         normalizeCommon(farmTask);
         Plot plot = requirePlot(farmTask.getPlotId());
         dataPermissionService.requireFarmManager(plot.getUserId());
@@ -201,9 +218,6 @@ public class FarmTaskServiceImpl implements FarmTaskService {
         validateExecutor(farmTask.getExecutorId(), plot.getUserId());
         if (farmTask.getBatchId() == null) {
             farmTask.setBatchId(farmTaskMapper.selectActiveBatchIdByPlotId(plot.getId()));
-        }
-        if (farmTask.getStatus() == null) {
-            farmTask.setStatus(1);
         }
         if (farmTask.getPriority() == null) {
             farmTask.setPriority(2);
@@ -290,13 +304,37 @@ public class FarmTaskServiceImpl implements FarmTaskService {
     }
 
     private void validateStatus(Integer status) {
-        if (status != null && (status < 1 || status > 5)) {
-            throw new BusinessException(ResponseCode.PARAM_ERROR, "Farm task status must be between 1 and 5");
+        if (status != null && status != 1 && status != 2 && status != 3 && status != 4 && status != 5) {
+            throw new BusinessException(ResponseCode.PARAM_ERROR, "Farm task status is invalid");
         }
     }
 
     private String normalizeOptionalText(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String describeChanges(FarmTask before, FarmTask after) {
+        StringJoiner changes = new StringJoiner("；", "修改农事任务：", "");
+        appendChange(changes, "地块", before.getPlotId(), after.getPlotId());
+        appendChange(changes, "标题", before.getTaskTitle(), after.getTaskTitle());
+        appendChange(changes, "类型", before.getTaskType(), after.getTaskType());
+        appendChange(changes, "内容", before.getTaskContent(), after.getTaskContent());
+        appendChange(changes, "优先级", before.getPriority(), after.getPriority());
+        appendChange(changes, "截止时间", before.getDeadlineTime(), after.getDeadlineTime());
+        appendChange(changes, "执行人", before.getExecutorId(), after.getExecutorId());
+        appendChange(changes, "备注", before.getRemark(), after.getRemark());
+        return changes.length() == 7 ? "提交编辑，任务信息未变化" : changes.toString();
+    }
+
+    private void appendChange(StringJoiner changes, String label, Object before, Object after) {
+        if (!Objects.equals(before, after)) {
+            changes.add(label + "[" + auditValue(before) + " → " + auditValue(after) + "]");
+        }
+    }
+
+    private String auditValue(Object value) {
+        String text = value == null ? "空" : value.toString();
+        return text.length() <= 60 ? text : text.substring(0, 60) + "...";
     }
 
     /** 返回第一个非空文本，用于为执行记录提供稳定的展示兜底。 */

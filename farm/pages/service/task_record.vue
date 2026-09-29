@@ -11,7 +11,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="record-content" scroll-y :show-scrollbar="false">
+		<scroll-view class="record-content" scroll-y :show-scrollbar="false" refresher-enabled
+			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading" class="state-card">
 				<view class="loading-dot"></view>
 				<text class="state-text">正在加载任务记录...</text>
@@ -29,7 +31,7 @@
 							<view class="task-tags">
 								<text class="plot-tag">{{ task.plotName }}</text>
 								<text class="crop-name">{{ task.cropName }}</text>
-								<text class="status-badge" :class="statusClass(task.status)">{{ task.statusName }}</text>
+								<text class="status-badge" :class="statusClass(task.status, task.overdue)">{{ task.statusName }}</text>
 							</view>
 						</view>
 					</view>
@@ -184,7 +186,7 @@ export default {
 					getFarmTaskTimeline(this.taskId)
 				])
 				this.task = task
-				this.records = [this.pendingRecord(task), ...records]
+				this.records = records
 			} catch (error) {
 				this.task = null
 				this.records = []
@@ -307,31 +309,16 @@ export default {
 		},
 		async applyTaskUpdate(task) {
 			this.task = task
-			this.records = [this.pendingRecord(task), ...await getFarmTaskTimeline(task.id)]
+			this.records = await getFarmTaskTimeline(task.id)
 		},
 		createRequestId(action, taskId) {
 			return `${action}-${taskId}-${Date.now()}-${Math.random().toString(16).slice(2)}`
 		},
-		statusClass(status) {
-			return `status-${Number(status || 0)}`
+		statusClass(status, overdue = false) {
+			return overdue ? 'status-overdue' : `status-${Number(status || 0)}`
 		},
 		actionClass(actionType) {
 			return `action-${Number(actionType || 0)}`
-		},
-		pendingRecord(task) {
-			return {
-				id: `task-${task.id}-pending`,
-				actionType: 0,
-				actionName: '创建任务',
-				actionContent: '农事任务已创建，等待开始执行',
-				feedbackDetail: '',
-				progressPercent: null,
-				afterStatus: 1,
-				statusName: '未开始',
-				operatorName: '系统记录',
-				attachmentUrls: [],
-				executeTimeText: task.createTimeText
-			}
 		},
 		recordDescription(record) {
 			// 优先展示用户填写的过程反馈，没有反馈时再展示动作说明。
@@ -490,7 +477,7 @@ page {
 .status-1 { color: #7c6514; background-color: #fff7d6; }
 .status-2 { color: #147a6d; background-color: #dcf6f1; }
 .status-3 { color: #256d3b; background-color: #e1f5e7; }
-.status-4 { color: #b04432; background-color: #fff0ed; }
+.status-overdue { color: #b04432; background-color: #fff0ed; }
 .status-5 { color: #64748b; background-color: #eef2f4; }
 
 .task-tags {

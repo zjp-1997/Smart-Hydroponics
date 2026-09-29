@@ -38,7 +38,7 @@ public interface ClientFarmTaskService {
     /**
      * 按状态查询当前用户的全部农事任务。
      *
-     * @param status 1未开始、2进行中、3已完成、4已逾期，为空表示全部
+     * @param status 1未开始、2进行中、3已完成、4按截止时间筛选已逾期，为空表示全部
      * @return 当前用户未取消的任务列表
      */
     List<ClientFarmTaskResponse> listMyTasks(Integer status);

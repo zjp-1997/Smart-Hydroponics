@@ -99,28 +99,32 @@
           AND is_deleted = 0
     </update>
 
-    <update id="updateById" parameterType="com.smart_plant.smart_plant.entity.IotDeviceFault">
+    <update id="updateById">
         UPDATE `iot_device_fault`
         <set>
-            <if test="deviceId != null">device_id = #{deviceId},</if>
-            <if test="faultCode != null and faultCode != ''">fault_code = #{faultCode},</if>
-            <if test="faultName != null and faultName != ''">fault_name = #{faultName},</if>
-            <if test="faultType != null">fault_type = #{faultType},</if>
-            <if test="severity != null">severity = #{severity},</if>
-            <if test="faultDesc != null">fault_desc = #{faultDesc},</if>
-            <if test="startTime != null">start_time = #{startTime},</if>
-            <if test="endTime != null and status != 2">end_time = #{endTime},</if>
-            <if test="duration != null and status != 2">duration = #{duration},</if>
-            <if test="status != null">status = #{status},</if>
-            <if test="assignStatus != null">assign_status = #{assignStatus},</if>
-            <if test="handleUserId != null">handle_user_id = #{handleUserId},</if>
-            <if test="status == 2">handle_time = COALESCE(handle_time, NOW()),</if>
-            <if test="status == 2">end_time = COALESCE(end_time, NOW()),</if>
-            <if test="status == 2">duration = TIMESTAMPDIFF(MINUTE, start_time, COALESCE(end_time, NOW())),</if>
-            <if test="handleTime != null and status != 2">handle_time = #{handleTime},</if>
-            <if test="handleResult != null">handle_result = #{handleResult},</if>
+            <if test="fault.deviceId != null">device_id = #{fault.deviceId},</if>
+            <if test="fault.faultCode != null and fault.faultCode != ''">fault_code = #{fault.faultCode},</if>
+            <if test="fault.faultName != null and fault.faultName != ''">fault_name = #{fault.faultName},</if>
+            <if test="fault.faultType != null">fault_type = #{fault.faultType},</if>
+            <if test="fault.severity != null">severity = #{fault.severity},</if>
+            <if test="fault.faultDesc != null">fault_desc = #{fault.faultDesc},</if>
+            <if test="fault.startTime != null">start_time = #{fault.startTime},</if>
+            <if test="fault.endTime != null and fault.status != 2">end_time = #{fault.endTime},</if>
+            <if test="fault.duration != null and fault.status != 2">duration = #{fault.duration},</if>
+            <if test="fault.status != null">status = #{fault.status},</if>
+            <if test="fault.assignStatus != null">assign_status = #{fault.assignStatus},</if>
+            <if test="fault.handleUserId != null">handle_user_id = #{fault.handleUserId},</if>
+            <if test="fault.status == 2">handle_time = COALESCE(handle_time, NOW()),</if>
+            <if test="fault.status == 2">end_time = COALESCE(end_time, NOW()),</if>
+            <if test="fault.status == 2">duration = TIMESTAMPDIFF(MINUTE, start_time, COALESCE(end_time, NOW())),</if>
+            <if test="fault.handleTime != null and fault.status != 2">handle_time = #{fault.handleTime},</if>
+            <if test="fault.handleResult != null">handle_result = #{fault.handleResult},</if>
         </set>
-        WHERE id = #{id} AND is_deleted = 0
+        WHERE id = #{fault.id}
+          AND is_deleted = 0
+          AND status &lt;=> #{expectedStatus}
+          AND assign_status &lt;=> #{expectedAssignStatus}
+          AND handle_user_id &lt;=> #{expectedHandleUserId}
     </update>
 
     <update id="updateStatus">
@@ -134,7 +138,11 @@
         <if test="handleResult != null and handleResult != ''">
             , handle_result = #{handleResult}
         </if>
-        WHERE id = #{id} AND is_deleted = 0
+        WHERE id = #{id}
+          AND is_deleted = 0
+          AND status &lt;=> #{expectedStatus}
+          AND assign_status &lt;=> #{expectedAssignStatus}
+          AND handle_user_id &lt;=> #{expectedHandleUserId}
     </update>
 
     <!-- 图片地址与故障单绑定；调用方在同一事务中完成状态更新。 -->
@@ -157,7 +165,11 @@
         SET handle_user_id = #{handleUserId},
             assign_status = 1,
             status = CASE WHEN status IN (0, 1) THEN 0 ELSE status END
-        WHERE id = #{id} AND is_deleted = 0
+        WHERE id = #{id}
+          AND is_deleted = 0
+          AND status &lt;=> #{expectedStatus}
+          AND assign_status &lt;=> #{expectedAssignStatus}
+          AND handle_user_id &lt;=> #{expectedHandleUserId}
     </update>
 
     <update id="updateAssignmentStatus">
@@ -171,7 +183,11 @@
         <if test="handleResult != null and handleResult != ''">
             , handle_result = #{handleResult}
         </if>
-        WHERE id = #{id} AND is_deleted = 0
+        WHERE id = #{id}
+          AND is_deleted = 0
+          AND status &lt;=> #{expectedStatus}
+          AND assign_status &lt;=> #{expectedAssignStatus}
+          AND handle_user_id &lt;=> #{expectedHandleUserId}
     </update>
 
     <select id="selectById" resultMap="IotDeviceFaultResultMap">

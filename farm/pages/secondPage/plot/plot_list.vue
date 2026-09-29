@@ -8,7 +8,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="plot-content" scroll-y>
+		<scroll-view class="plot-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<!-- 搜索和状态筛选只作用于接口返回的当前地块集合，不改变顶部渐变区域。 -->
 			<view class="search-box">
 				<text class="iconfont icon-icon_33 search-icon" aria-hidden="true"></text>

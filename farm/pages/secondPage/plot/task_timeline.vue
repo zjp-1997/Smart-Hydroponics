@@ -11,7 +11,9 @@
 			</view>
 		</view>
 
-		<scroll-view class="page-content" scroll-y :show-scrollbar="false">
+		<scroll-view class="page-content" scroll-y :show-scrollbar="false" refresher-enabled
+			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			@refresherrefresh="$handlePullDownRefresh">
 			<view v-if="loading" class="state-card">
 				<view class="loading-dot"></view>
 				<text class="state-text">正在加载地块农事任务...</text>
@@ -67,7 +69,7 @@
 						@tap="openTaskRecord(task)"
 					>
 						<view class="timeline-axis">
-							<view class="timeline-dot" :class="statusClass(task.status)"></view>
+							<view class="timeline-dot" :class="statusClass(task.status, task.overdue)"></view>
 							<view v-if="index < sortedTasks.length - 1" class="timeline-line"></view>
 						</view>
 						<view class="task-card">
@@ -80,7 +82,7 @@
 							<view class="task-main">
 								<view class="task-title-row">
 									<text class="task-title">{{ task.taskTitle }}</text>
-									<text class="status-badge" :class="statusClass(task.status)">{{ task.statusName }}</text>
+									<text class="status-badge" :class="statusClass(task.status, task.overdue)">{{ task.statusName }}</text>
 								</view>
 								<view class="task-info-row">
 									<text class="info-label">执行人</text>
@@ -201,8 +203,8 @@ export default {
 				url: `/pages/secondPage/plot/operation_timeline?plotId=${encodeURIComponent(this.plotId)}`
 			})
 		},
-		statusClass(status) {
-			return `status-${Number(status || 0)}`
+		statusClass(status, overdue = false) {
+			return overdue ? 'status-overdue' : `status-${Number(status || 0)}`
 		},
 		timeLabel(task) {
 			if (task.status === 3 && task.actualEndText) return '完成时间'
@@ -386,7 +388,7 @@ page {
 
 .timeline-dot.status-2 { background-color: #1ba291; box-shadow: 0 0 0 4rpx #1ba291; }
 .timeline-dot.status-3 { background-color: #36a269; box-shadow: 0 0 0 4rpx #36a269; }
-.timeline-dot.status-4 { background-color: #d97706; box-shadow: 0 0 0 4rpx #d97706; }
+.timeline-dot.status-overdue { background-color: #d97706; box-shadow: 0 0 0 4rpx #d97706; }
 .timeline-dot.status-5 { background-color: #9ca3af; box-shadow: 0 0 0 4rpx #9ca3af; }
 
 .timeline-line {
@@ -433,7 +435,7 @@ page {
 
 .status-badge.status-2 { background-color: #ddf4f0; color: #08796d; }
 .status-badge.status-3 { background-color: #e4f5eb; color: #217a4a; }
-.status-badge.status-4 { background-color: #fff0d7; color: #9a5200; }
+.status-badge.status-overdue { background-color: #fff0d7; color: #9a5200; }
 .status-badge.status-5 { background-color: #ecefee; color: #59645f; }
 
 .task-info-row { display: flex; align-items: center; margin-top: 16rpx; font-size: 12px; line-height: 1.35; }

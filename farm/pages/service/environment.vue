@@ -27,7 +27,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="environment-content" scroll-y>
+		<scroll-view class="environment-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="monitor-section">
 				<view class="monitor-grid">
 					<view class="monitor-card" v-for="item in weatherItems" :key="item.label" @tap="handleMonitorTap(item)">

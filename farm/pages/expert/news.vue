@@ -2,7 +2,8 @@
   <view class="news-page">
     <!-- 顶部未读数汇总本人咨询消息和系统公告。 -->
     <view class="page-hero"><view class="navbar"><text class="nav-title">消息{{ unreadCount ? `(${unreadCount})` : '' }}</text></view></view>
-    <scroll-view class="news-content" scroll-y>
+    <scroll-view class="news-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
       <!-- 公告入口复用农场主消息页的图标、摘要和未读角标样式。 -->
       <view class="message-item" role="button" aria-label="查看系统消息" @tap="openAnnouncement">
         <view class="message-avatar announcement-avatar" aria-hidden="true">

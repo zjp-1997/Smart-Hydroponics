@@ -79,7 +79,7 @@
         ft.create_time, ft.create_time AS publish_time,
         COALESCE(u.nickname, u.username) AS publisher_name,
         ft.update_time,
-        CASE WHEN ft.status IN (1, 2, 4) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END AS overdue
+        CASE WHEN ft.status IN (1, 2) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END AS overdue
     </sql>
 
     <sql id="BaseJoins">
@@ -106,15 +106,14 @@
             WHEN 1 THEN CASE WHEN ft.deadline_time &lt; NOW() THEN '未开始（已逾期）' ELSE '未开始' END
             WHEN 2 THEN CASE WHEN ft.deadline_time &lt; NOW() THEN '进行中（已逾期）' ELSE '进行中' END
             WHEN 3 THEN '已完成'
-            WHEN 4 THEN '已逾期'
             WHEN 5 THEN '已取消'
             ELSE '未知'
         END AS status_name,
         ft.deadline_time, ft.create_time, ft.actual_start_time, ft.actual_end_time,
         ft.executor_id, COALESCE(eu.nickname, eu.username) AS executor_name,
         ft.complete_remark,
-        CASE WHEN ft.status IN (1, 2, 4) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END AS overdue,
-        CASE WHEN ft.status IN (1, 4) THEN 1 ELSE 0 END AS can_execute,
+        CASE WHEN ft.status IN (1, 2) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END AS overdue,
+        CASE WHEN ft.status = 1 THEN 1 ELSE 0 END AS can_execute,
         CASE WHEN ft.status = 2 THEN 1 ELSE 0 END AS can_submit_progress,
         CASE WHEN ft.status = 2 THEN 1 ELSE 0 END AS can_complete
     </sql>
@@ -202,36 +201,14 @@
         WHERE id = #{id}
     </update>
 
-    <delete id="deleteById">
-        DELETE FROM `farm_task`
-        WHERE id = #{id}
-    </delete>
-
-    <delete id="deleteBatchByIds">
-        DELETE FROM `farm_task`
-        WHERE id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </delete>
-
-    <update id="updateStatus">
-        UPDATE `farm_task`
-        SET status = #{status},
-            actual_start_time = COALESCE(#{actualStartTime}, actual_start_time),
-            actual_end_time = COALESCE(#{actualEndTime}, actual_end_time),
-            complete_remark = COALESCE(#{completeRemark}, complete_remark)
-        WHERE id = #{id}
-    </update>
-
-    <!-- 通过状态条件实现原子开始，旧的“已逾期”状态也允许被实际执行。 -->
+    <!-- 通过状态条件实现原子开始，逾期仅是派生属性，不影响未开始任务执行。 -->
     <update id="startTask">
         UPDATE `farm_task`
         SET status = 2,
             executor_id = #{executorId},
             actual_start_time = COALESCE(actual_start_time, #{actualStartTime})
         WHERE id = #{id}
-          AND status IN (1, 4)
+          AND status = 1
           AND (executor_id IS NULL OR executor_id = #{executorId})
     </update>
 
@@ -243,6 +220,13 @@
             complete_remark = #{completeRemark}
         WHERE id = #{id}
           AND status = 2
+    </update>
+
+    <update id="cancelTask">
+        UPDATE `farm_task`
+        SET status = 5
+        WHERE id = #{id}
+          AND status IN (1, 2)
     </update>
 
     <select id="selectById" resultMap="FarmTaskResultMap">
@@ -282,8 +266,26 @@
             <if test="taskType != null">
                 AND ft.task_type = #{taskType}
             </if>
-            <if test="status != null">
-                AND ft.status = #{status}
+            <if test="status != null and status == 1">
+                AND ft.status = 1
+                AND ft.deadline_time &gt;= NOW()
+            </if>
+            <if test="status != null and status == 2">
+                AND ft.status = 2
+                AND ft.deadline_time &gt;= NOW()
+            </if>
+            <if test="status != null and status == 3">
+                AND ft.status = 3
+            </if>
+            <if test="status != null and status == 4">
+                AND ft.status IN (1, 2)
+                AND ft.deadline_time &lt; NOW()
+            </if>
+            <if test="status != null and status == 5">
+                AND ft.status = 5
+            </if>
+            <if test="status == null">
+                AND ft.status != 5
             </if>
             <if test="sourceType != null and sourceType != ''">
                 AND ft.source_type = #{sourceType}
@@ -336,11 +338,12 @@
                 AND ft.status = 3
             </when>
             <when test="status == 4">
-                AND (ft.status = 4 OR (ft.status IN (1, 2) AND ft.deadline_time &lt; NOW()))
+                AND ft.status IN (1, 2)
+                AND ft.deadline_time &lt; NOW()
             </when>
         </choose>
         ORDER BY
-          CASE WHEN ft.status = 4 OR (ft.status IN (1, 2) AND ft.deadline_time &lt; NOW()) THEN 0 ELSE 1 END,
+          CASE WHEN ft.status IN (1, 2) AND ft.deadline_time &lt; NOW() THEN 0 ELSE 1 END,
           ft.deadline_time ASC,
           ft.id DESC
     </select>
@@ -393,10 +396,10 @@
     <select id="selectClientStatistics"
             resultType="map">
         <!-- 首页与移动端任务列表保持同一数据范围，并由数据库一次完成状态聚合。 -->
-        SELECT COALESCE(SUM(CASE WHEN ft.status = 1 THEN 1 ELSE 0 END), 0) AS pendingCount,
-               COALESCE(SUM(CASE WHEN ft.status = 2 THEN 1 ELSE 0 END), 0) AS runningCount,
+        SELECT COALESCE(SUM(CASE WHEN ft.status = 1 AND ft.deadline_time &gt;= NOW() THEN 1 ELSE 0 END), 0) AS pendingCount,
+               COALESCE(SUM(CASE WHEN ft.status = 2 AND ft.deadline_time &gt;= NOW() THEN 1 ELSE 0 END), 0) AS runningCount,
                COALESCE(SUM(CASE WHEN ft.status = 3 THEN 1 ELSE 0 END), 0) AS completedCount,
-               COALESCE(SUM(CASE WHEN ft.status IN (1, 2, 4) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END), 0) AS overdueCount
+               COALESCE(SUM(CASE WHEN ft.status IN (1, 2) AND ft.deadline_time &lt; NOW() THEN 1 ELSE 0 END), 0) AS overdueCount
         FROM `farm_task` ft
         WHERE 1 = 1
           <include refid="ClientTaskAccess"/>
@@ -415,15 +418,15 @@
     <select id="selectStatistics" resultType="map">
         SELECT
             COUNT(1) AS totalCount,
-            COALESCE(SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END), 0) AS pendingCount,
-            COALESCE(SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END), 0) AS runningCount,
+            COALESCE(SUM(CASE WHEN status = 1 AND deadline_time &gt;= NOW() THEN 1 ELSE 0 END), 0) AS pendingCount,
+            COALESCE(SUM(CASE WHEN status = 2 AND deadline_time &gt;= NOW() THEN 1 ELSE 0 END), 0) AS runningCount,
             COALESCE(SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END), 0) AS completedCount,
+            COALESCE(SUM(CASE WHEN status IN (1, 2) AND deadline_time &lt; NOW() THEN 1 ELSE 0 END), 0) AS overdueCount,
             COALESCE(SUM(CASE WHEN source_type = 'AI_SOLUTION' THEN 1 ELSE 0 END), 0) AS aiGeneratedCount
         FROM `farm_task`
-        <where>
-            <if test="userId != null">
-                AND user_id = #{userId}
-            </if>
-        </where>
+        WHERE status != 5
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
     </select>
 </mapper>

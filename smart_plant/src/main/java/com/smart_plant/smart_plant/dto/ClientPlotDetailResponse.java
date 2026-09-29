@@ -146,12 +146,14 @@ public class ClientPlotDetailResponse {
         private Long id;
         /** 任务标题。 */
         private String taskTitle;
-        /** 任务状态编码：1未开始、2进行中、3已完成、4已逾期、5已取消。 */
+        /** 任务生命周期状态：1未开始、2进行中、3已完成、5已取消；逾期由 overdue 表示。 */
         private Integer status;
         /** 已格式化的任务状态名称，供移动端直接展示。 */
         private String statusName;
         /** 任务截至时间。 */
         private LocalDateTime deadlineTime;
+        /** 是否已超过截止时间且仍未完成。 */
+        private Boolean overdue;
     }
 
     @Data

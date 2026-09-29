@@ -38,16 +38,21 @@ const STATUS_NAME_MAP = {
 	1: '未开始',
 	2: '进行中',
 	3: '已完成',
-	4: '已逾期',
 	5: '已取消'
 }
+
+// 时间线可能仍包含迁移前的状态 4，仅作历史记录展示兼容。
+const RECORD_STATUS_NAME_MAP = { ...STATUS_NAME_MAP, 4: '已逾期（历史）' }
 
 const ACTION_NAME_MAP = {
 	0: '创建任务',
 	1: '开始执行',
 	2: '完成任务',
 	3: '进度反馈',
-	4: '优化建议'
+	4: '优化建议',
+	5: '创建任务',
+	6: '编辑任务',
+	7: '取消任务'
 }
 
 function padNumber(value) {
@@ -82,6 +87,7 @@ function normalizeDateSummary(item) {
 function normalizeTask(item) {
 	const taskType = Number(item.taskType || 0)
 	const status = Number(item.status || 0)
+	const overdue = item.overdue === true || item.overdue === 1
 	return {
 		id: item.id,
 		plotId: item.plotId,
@@ -94,7 +100,7 @@ function normalizeTask(item) {
 		taskTypeName: item.taskTypeName || TYPE_NAME_MAP[taskType] || '其他',
 		taskIcon: TYPE_ICON_MAP[taskType] || 'icon-renwu-',
 		status,
-		statusName: item.statusName || STATUS_NAME_MAP[status] || '未知',
+		statusName: item.statusName || (overdue ? '已逾期' : STATUS_NAME_MAP[status]) || '未知',
 		deadlineTime: item.deadlineTime,
 		deadlineText: formatDate(item.deadlineTime),
 		createTime: item.createTime,
@@ -105,8 +111,8 @@ function normalizeTask(item) {
 		actualEndText: formatDate(item.actualEndTime),
 		executorName: item.executorName || '',
 		completeRemark: item.completeRemark || '',
-		overdue: item.overdue === true || item.overdue === 1,
-		canExecute: item.canExecute === true || item.canExecute === 1 || status === 1 || status === 4,
+		overdue,
+		canExecute: item.canExecute === true || item.canExecute === 1 || status === 1,
 		canSubmitProgress: item.canSubmitProgress === true || item.canSubmitProgress === 1 || status === 2,
 		canComplete: item.canComplete === true || item.canComplete === 1 || status === 2
 	}
@@ -142,7 +148,7 @@ function normalizeTaskRecord(item) {
 		actionName: ACTION_NAME_MAP[actionType] || '任务操作',
 		beforeStatus: Number(item.beforeStatus || 0),
 		afterStatus,
-		statusName: STATUS_NAME_MAP[afterStatus] || '',
+		statusName: RECORD_STATUS_NAME_MAP[afterStatus] || '',
 		actionContent: item.actionContent || '',
 		feedbackDetail: item.feedbackDetail || '',
 		progressPercent: item.progressPercent == null ? null : Number(item.progressPercent),

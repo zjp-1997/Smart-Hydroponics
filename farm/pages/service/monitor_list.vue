@@ -8,7 +8,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="monitor-content" scroll-y>
+		<scroll-view class="monitor-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<view class="search-card">
 				<view class="search-box">
 					<text class="search-icon"></text>

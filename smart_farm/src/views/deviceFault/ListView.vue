@@ -25,7 +25,7 @@ import {
   type IotDeviceFault,
 } from '@/api/iotDeviceFault'
 import { listSmartPlantUsers, type SmartPlantUser } from '@/api/user'
-import { getCurrentRoleCode, getCurrentUserId, isAdminUser } from '@/utils/auth'
+import { getCurrentRoleCode, getCurrentUserId } from '@/utils/auth'
 import AddOrUpdate from './AddOrUpdate.vue'
 
 interface StatCard {
@@ -96,7 +96,7 @@ const statusLoadingIds = ref<number[]>([])
 const assignLoading = ref(false)
 const faults = ref<FaultRow[]>([])
 const technicianOptions = ref<SmartPlantUser[]>([])
-const isAdmin = computed(() => isAdminUser())
+const canAssign = computed(() => ['admin', 'farm_owner'].includes(getCurrentRoleCode()))
 const currentUserId = computed(() => getCurrentUserId())
 const isTechnician = computed(() => getCurrentRoleCode() === 'technician')
 
@@ -256,7 +256,7 @@ const mapFaultToRow = (fault: IotDeviceFault): FaultRow => {
 }
 
 const loadTechnicians = async () => {
-  if (!isAdmin.value) {
+  if (!canAssign.value) {
     technicianOptions.value = []
     return
   }
@@ -410,7 +410,7 @@ const handleSetStatus = async (row: FaultRow, status: number) => {
 }
 
 const openAssignDialog = (row: FaultRow) => {
-  if (!isAdmin.value) {
+  if (!canAssign.value) {
     return
   }
 
@@ -634,7 +634,7 @@ onMounted(() => {
                   <div class="table-actions">
                     <el-button link type="primary" :icon="EditPen" @click="handleEditFault(row)">编辑</el-button>
                     <el-button
-                      v-if="isAdmin"
+                      v-if="canAssign"
                       link
                       :type="getAssignButtonType(row)"
                       :icon="UserFilled"

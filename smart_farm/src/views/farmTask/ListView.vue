@@ -75,9 +75,16 @@ const taskStatusMap: Record<number, { text: string; tone: string }> = {
   1: { text: '未开始', tone: 'status-pending' },
   2: { text: '进行中', tone: 'status-running' },
   3: { text: '已完成', tone: 'status-success' },
-  4: { text: '已逾期', tone: 'status-failed' },
   5: { text: '已取消', tone: 'status-muted' },
 }
+
+const taskStatusFilters = [
+  { value: 1, label: '未开始' },
+  { value: 2, label: '进行中' },
+  { value: 3, label: '已完成' },
+  { value: 4, label: '已逾期' },
+  { value: 5, label: '已取消' },
+]
 
 const taskTypeMap: Record<number, string> = {
   1: '浇水',
@@ -102,6 +109,9 @@ const actionMap: Record<number, string> = {
   2: '完成任务',
   3: '反馈',
   4: '优化',
+  5: '创建任务',
+  6: '编辑任务',
+  7: '取消任务',
 }
 
 // 顶部统计卡片展示任务管理需要关注的总量、AI来源、执行中和已完成数量。
@@ -118,9 +128,13 @@ const closeSidebar = () => {
 
 const formatCount = (value?: number) => Number(value || 0).toLocaleString()
 
-const getStatusMeta = (status?: number) => status == null
+const getStatusMeta = (status?: number, overdue = false) => overdue
+  ? { text: '已逾期', tone: 'status-failed' }
+  : status == null
   ? { text: '-', tone: 'status-muted' }
   : taskStatusMap[status] || { text: '-', tone: 'status-muted' }
+
+const canCancelTask = (row: FarmTask) => row.status === 1 || row.status === 2
 
 // 构建分页查询参数时过滤空字符串，避免后端收到无意义的 LIKE 条件。
 const getQueryParams = () => {
@@ -194,40 +208,40 @@ const getNextPageAfterDelete = (deletedCount: number) => {
 
 const handleDelete = async (row: FarmTask) => {
   try {
-    await ElMessageBox.confirm(`确定删除农事任务“${row.taskTitle}”吗？`, '删除确认', {
-      confirmButtonText: '确认删除',
+    await ElMessageBox.confirm(`确定取消农事任务“${row.taskTitle}”吗？取消后仍保留审计记录。`, '取消确认', {
+      confirmButtonText: '确认取消',
       cancelButtonText: '取消',
       type: 'warning',
     })
     await deleteFarmTask(row.id)
-    ElMessage.success('删除农事任务成功')
+    ElMessage.success('取消农事任务成功')
     void fetchTasks(getNextPageAfterDelete(1))
     void fetchStats()
   } catch (error) {
     if (error === 'cancel' || error === 'close') {
-      ElMessage.info('已取消删除')
+      ElMessage.info('已放弃取消任务')
     }
   }
 }
 
 const handleBatchDelete = async () => {
   if (!selectedRows.value.length) {
-    ElMessage.warning('请先选择需要删除的农事任务')
+    ElMessage.warning('请先选择需要取消的农事任务')
     return
   }
   try {
-    await ElMessageBox.confirm(`确定批量删除已选中的 ${selectedRows.value.length} 条农事任务吗？`, '批量删除确认', {
-      confirmButtonText: '确认删除',
+    await ElMessageBox.confirm(`确定批量取消已选中的 ${selectedRows.value.length} 条农事任务吗？`, '批量取消确认', {
+      confirmButtonText: '确认取消',
       cancelButtonText: '取消',
       type: 'warning',
     })
     await batchDeleteFarmTasks(selectedRows.value.map((row) => row.id))
-    ElMessage.success('批量删除农事任务成功')
+    ElMessage.success('批量取消农事任务成功')
     void fetchTasks(getNextPageAfterDelete(selectedRows.value.length))
     void fetchStats()
   } catch (error) {
     if (error === 'cancel' || error === 'close') {
-      ElMessage.info('已取消批量删除')
+      ElMessage.info('已放弃批量取消')
     }
   }
 }
@@ -317,12 +331,17 @@ onMounted(() => {
                 <el-option v-for="(label, value) in taskTypeMap" :key="value" :label="label" :value="Number(value)" />
               </el-select>
             </el-form-item>
+            <el-form-item label="状态">
+              <el-select v-model="searchForm.status" placeholder="全部状态" clearable>
+                <el-option v-for="item in taskStatusFilters" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
             <div class="filter-actions">
               <el-button type="primary" :icon="Search" @click="fetchTasks(1)">查询</el-button>
               <el-button :icon="Refresh" @click="resetSearch">重置</el-button>
             </div>
             <div class="manage-actions">
-              <el-button type="danger" plain :icon="Delete" @click="handleBatchDelete">批量删除</el-button>
+              <el-button type="danger" plain :icon="Delete" @click="handleBatchDelete">批量取消</el-button>
               <el-button type="primary" :icon="Plus" @click="openAdd">新增任务</el-button>
             </div>
           </el-form>
@@ -337,7 +356,7 @@ onMounted(() => {
             class="task-table"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="56" fixed="left" align="center" />
+            <el-table-column type="selection" width="56" fixed="left" align="center" :selectable="canCancelTask" />
             <el-table-column prop="taskTitle" label="任务标题" min-width="180" show-overflow-tooltip />
             <el-table-column prop="plotName" label="地块" min-width="130" align="center" />
             <el-table-column label="类型" width="100" align="center">
@@ -349,8 +368,8 @@ onMounted(() => {
             <el-table-column prop="deadlineTime" label="截至时间" min-width="170" align="center" />
             <el-table-column label="状态" width="110" align="center">
               <template #default="{ row }">
-                <el-tag :class="getStatusMeta(row.status).tone" effect="light" round>
-                  {{ getStatusMeta(row.status).text }}
+                <el-tag :class="getStatusMeta(row.status, row.overdue).tone" effect="light" round>
+                  {{ getStatusMeta(row.status, row.overdue).text }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -362,7 +381,7 @@ onMounted(() => {
                 <div class="table-actions">
                   <el-button link type="primary" :icon="View" @click="openDetail(row)">详情</el-button>
                   <el-button link type="primary" :icon="Edit" @click="openEdit(row)">编辑</el-button>
-                  <el-button link type="danger" :icon="Delete" @click="handleDelete(row)">删除</el-button>
+                  <el-button v-if="canCancelTask(row)" link type="danger" :icon="Delete" @click="handleDelete(row)">取消</el-button>
                 </div>
               </template>
             </el-table-column>
@@ -395,8 +414,8 @@ onMounted(() => {
               <strong>{{ currentDetail.taskTitle }}</strong>
               <span>{{ currentDetail.plotName || '-' }} / {{ taskTypeMap[currentDetail.taskType] || '-' }}</span>
             </div>
-            <el-tag :class="getStatusMeta(currentDetail.status).tone" effect="light" round>
-              {{ getStatusMeta(currentDetail.status).text }}
+            <el-tag :class="getStatusMeta(currentDetail.status, currentDetail.overdue).tone" effect="light" round>
+              {{ getStatusMeta(currentDetail.status, currentDetail.overdue).text }}
             </el-tag>
           </div>
 

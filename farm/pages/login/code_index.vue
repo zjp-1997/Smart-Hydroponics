@@ -46,7 +46,7 @@
 			<button class="text-button password-link" role="button" @tap="goPasswordLogin">账号密码登录</button>
 		</view>
 
-		<view class="agreement">
+		<view class="agreement" :class="{ 'agreement-agreed': agreed }">
 			<checkbox-group class="checkbox-hit" role="checkbox" aria-label="同意用户协议和隐私政策"
 				:aria-checked="String(agreed)" @change="handleAgreementChange">
 				<label class="checkbox-label">
@@ -213,7 +213,7 @@ page {
 	position: relative;
 	box-sizing: border-box;
 	min-height: 100vh;
-	padding: 150rpx 56rpx calc(44rpx + env(safe-area-inset-bottom));
+	padding: 150rpx 56rpx calc(160rpx + env(safe-area-inset-bottom));
 	background-color: #ffffff;
 	color: #000000;
 }
@@ -334,15 +334,23 @@ page {
 .text-button::after { border: 0; }
 
 .agreement {
+	position: fixed;
+	z-index: 2;
+	left: 50%;
+	bottom: calc(24rpx + env(safe-area-inset-bottom));
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-wrap: wrap;
-	margin-top: 40rpx;
+	box-sizing: border-box;
+	width: calc(100% - 112rpx);
+	max-width: 638rpx;
 	min-height: 88rpx;
+	background-color: #ffffff;
 	font-size: 24rpx;
 	line-height: 1.4;
 	color: #000000;
+	transform: translateX(-50%);
 }
 
 .checkbox-hit,
@@ -365,6 +373,11 @@ page {
 	padding: 0 4rpx;
 	line-height: 72rpx;
 	color: #000000;
+}
+
+.agreement.agreement-agreed .agreement-prefix,
+.agreement.agreement-agreed .agreement-link {
+	color: #1ba291;
 }
 
 @media screen and (min-width: 768px) {

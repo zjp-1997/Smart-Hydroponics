@@ -11,7 +11,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="mine-content" scroll-y>
+		<scroll-view class="mine-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<!-- 专家中心沿用农场主菜单样式，不展示仓库记录与我的农事。 -->
 
 			<view class="menu-group" v-for="(group, index) in menuGroups" :key="index">

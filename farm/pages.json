@@ -98,8 +98,7 @@
 			"path": "pages/index/map",
 			"style": {
 				"navigationBarTitleText": "地图",
-				"navigationStyle": "custom",
-				"disableScroll": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -137,8 +136,7 @@
 			"path": "pages/secondPage/about/about_me",
 			"style": {
 				"navigationBarTitleText": "关于我们",
-				"navigationStyle": "custom",
-				"disableScroll": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -154,8 +152,7 @@
 			"path": "pages/secondPage/about/technical",
 			"style": {
 				"navigationBarTitleText": "技术支持",
-				"navigationStyle": "custom",
-				"disableScroll": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -240,8 +237,7 @@
 			"path": "pages/secondPage/monitor/detail",
 			"style": {
 				"navigationBarTitleText": "实时监控",
-				"navigationStyle": "custom",
-				"disableScroll": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -371,7 +367,11 @@
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
 		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
+		"backgroundColor": "#F3F8F6",
+		"backgroundColorTop": "#F3F8F6",
+		"backgroundColorContent": "#F7F7F7",
+		"backgroundTextStyle": "dark",
+		"enablePullDownRefresh": true
 	},
 	"tabBar": {
 		"color": "#C8C8C8",
@@ -387,6 +387,8 @@
 			{
 				"pagePath": "pages/index/index",
 				"text": "首页",
+				"iconPath": "static/tabbar/home.png",
+				"selectedIconPath": "static/tabbar/home-active.png",
 				"iconfont": {
 					"text": "\ue603",
 					"selectedText": "\ue603",
@@ -398,6 +400,8 @@
 			{
 				"pagePath": "pages/index/news",
 				"text": "消息",
+				"iconPath": "static/tabbar/message.png",
+				"selectedIconPath": "static/tabbar/message-active.png",
 				"iconfont": {
 					"text": "\ue604",
 					"selectedText": "\ue604",
@@ -409,6 +413,8 @@
 			{
 				"pagePath": "pages/index/map",
 				"text": "地图",
+				"iconPath": "static/tabbar/map.png",
+				"selectedIconPath": "static/tabbar/map-active.png",
 				"iconfont": {
 					"text": "\ue868",
 					"selectedText": "\ue868",
@@ -420,6 +426,8 @@
 			{
 				"pagePath": "pages/index/mine",
 				"text": "我的",
+				"iconPath": "static/tabbar/profile.png",
+				"selectedIconPath": "static/tabbar/profile-active.png",
 				"iconfont": {
 					"text": "\ue61b",
 					"selectedText": "\ue61b",

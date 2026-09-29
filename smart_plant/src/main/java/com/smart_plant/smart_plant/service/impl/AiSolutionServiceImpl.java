@@ -54,6 +54,7 @@ public class AiSolutionServiceImpl implements AiSolutionService {
     private final RecognitionDecisionService recognitionDecisionService;
     private final AlertEventService alertEventService;
     private final NotificationService notificationService;
+    private final FarmTaskAuditService farmTaskAuditService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -118,6 +119,10 @@ public class AiSolutionServiceImpl implements AiSolutionService {
 
         FarmTask farmTask = buildFarmTask(solution, request, decision);
         farmTaskMapper.insert(farmTask);
+        var operator = CurrentUserContext.get();
+        farmTaskAuditService.record(farmTask, operator, FarmTaskAuditService.ACTION_CREATE,
+                "AI处置方案生成农事任务：" + farmTask.getTaskTitle(), null, farmTask.getStatus(),
+                operator == null ? "SYSTEM" : "SMART_FARM");
         aiSolutionMapper.updateTaskLink(solution.getId(), farmTask.getId(), TASK_GENERATED, SOLUTION_TASK_CREATED);
         FarmTask savedTask = farmTaskMapper.selectById(farmTask.getId());
         ensureTaskNotification(savedTask, alertEvent, decision);

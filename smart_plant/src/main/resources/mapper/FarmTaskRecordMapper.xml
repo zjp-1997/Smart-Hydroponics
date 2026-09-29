@@ -87,19 +87,6 @@
         </trim>
     </insert>
 
-    <delete id="deleteByTaskId">
-        DELETE FROM `farm_task_record`
-        WHERE task_id = #{taskId}
-    </delete>
-
-    <delete id="deleteByTaskIds">
-        DELETE FROM `farm_task_record`
-        WHERE task_id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </delete>
-
     <select id="selectById" resultMap="FarmTaskRecordResultMap">
         SELECT <include refid="BaseColumns"/>
         FROM `farm_task_record` r

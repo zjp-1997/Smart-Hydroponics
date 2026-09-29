@@ -8,7 +8,8 @@
 			</view>
 		</view>
 
-		<scroll-view class="task-content" scroll-y>
+		<scroll-view class="task-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
+			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
 			<scroll-view class="date-scroll" scroll-x :show-scrollbar="false">
 				<view class="date-inner">
 					<view
@@ -48,7 +49,7 @@
 						<view class="task-info">
 							<view class="task-title-row">
 								<text class="task-title">{{ task.taskTitle }}</text>
-								<text class="task-status" :class="`status-${task.status}`">{{ task.statusName }}</text>
+								<text class="task-status" :class="task.overdue ? 'status-overdue' : `status-${task.status}`">{{ task.statusName }}</text>
 							</view>
 							<view class="task-meta-row">
 								<text class="plot-tag">{{ formatPlotName(task.plotName) }}</text>
@@ -292,7 +293,7 @@ export default {
 				this.handleExecute(task)
 				return
 			}
-			if (task.status === 2 && task.canComplete) {
+			if (task.canComplete) {
 				this.openCompletionDialog(task)
 			}
 		},
@@ -467,7 +468,7 @@ export default {
 			return record.progressPercent == null ? content : `${record.progressPercent}% · ${content}`
 		},
 		resolveActionText(task) {
-			if (task.status === 1 || task.status === 4) {
+			if (task.canExecute) {
 				return this.submittingTaskId === task.id ? '执行中' : '执行任务'
 			}
 			if (task.status === 2) {
@@ -712,7 +713,7 @@ page {
 
 .task-status.status-2 { color: #168577; }
 .task-status.status-3 { color: #66817a; }
-.task-status.status-4 { color: #c04b3b; }
+.task-status.status-overdue { color: #c04b3b; }
 
 .task-meta-row {
 	justify-content: flex-start;

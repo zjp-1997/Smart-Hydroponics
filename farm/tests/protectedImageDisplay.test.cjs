@@ -18,6 +18,8 @@ assert.match(component, /downloadProtectedFile\(src\)/)
 assert.doesNotMatch(component, /#ifdef APP-PLUS/)
 assert.ok(component.includes("if (/^https?:\\/\\//i.test(expectedSrc))"))
 assert.match(component, /:fade-show="false"/)
+assert.match(component, /class="protected-image__image"/)
+assert.match(component, /\.protected-image__image\s*\{[\s\S]*width:\s*100%;[\s\S]*height:\s*100%;[\s\S]*border-radius:\s*inherit;/)
 assert.match(pagesConfig, /"\^protected-image\$":\s*"@\/componment\/ProtectedImage\.vue"/)
 
 for (const file of vueFiles(path.join(root, 'pages'))) {

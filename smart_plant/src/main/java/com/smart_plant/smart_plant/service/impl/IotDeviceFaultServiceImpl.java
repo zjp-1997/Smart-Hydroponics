@@ -116,10 +116,12 @@ public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
         validateHandlerIfPresent(fault.getHandleUserId(), targetDevice.getUserId());
         validateLifecycleTransition(oldFault, fault.getStatus(),
                 fault.getHandleUserId(), fault.getAssignStatus(), fault.getHandleResult());
-        int rows = faultMapper.updateById(fault);
-        if (rows == 0) {
-            throw new BusinessException(ResponseCode.FAIL, "设备故障修改失败");
-        }
+        int rows = faultMapper.updateById(
+                fault,
+                oldFault.getStatus(),
+                oldFault.getAssignStatus(),
+                oldFault.getHandleUserId());
+        requireLifecycleUpdate(rows);
         if (!Integer.valueOf(STATUS_HANDLED).equals(oldFault.getStatus())
                 && Integer.valueOf(STATUS_HANDLED).equals(fault.getStatus())) {
             restoreDeviceAfterFaultResolved(oldFault.getDeviceId());
@@ -136,10 +138,14 @@ public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
         validateStatus(status);
         String normalizedResult = normalizeOptionalText(handleResult);
         validateLifecycleTransition(oldFault, status, null, null, normalizedResult);
-        int rows = faultMapper.updateStatus(id, status, normalizedResult);
-        if (rows == 0) {
-            throw new BusinessException(ResponseCode.NOT_FOUND, "设备故障不存在");
-        }
+        int rows = faultMapper.updateStatus(
+                id,
+                status,
+                normalizedResult,
+                oldFault.getStatus(),
+                oldFault.getAssignStatus(),
+                oldFault.getHandleUserId());
+        requireLifecycleUpdate(rows);
         if (STATUS_HANDLED == status) {
             restoreDeviceAfterFaultResolved(oldFault.getDeviceId());
         }
@@ -154,10 +160,13 @@ public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
         dataPermissionService.requireFaultManager(device);
         validateHandler(handleUserId, device.getUserId());
         validateAssignable(oldFault);
-        int rows = faultMapper.updateAssignee(id, handleUserId);
-        if (rows == 0) {
-            throw new BusinessException(ResponseCode.NOT_FOUND, "设备故障不存在");
-        }
+        int rows = faultMapper.updateAssignee(
+                id,
+                handleUserId,
+                oldFault.getStatus(),
+                oldFault.getAssignStatus(),
+                oldFault.getHandleUserId());
+        requireLifecycleUpdate(rows);
     }
 
     @Override
@@ -170,10 +179,15 @@ public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
         if (Integer.valueOf(ASSIGN_STATUS_REJECTED).equals(oldFault.getAssignStatus())) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "该故障已拒绝接单，请重新分配");
         }
-        int rows = faultMapper.updateAssignmentStatus(id, ASSIGN_STATUS_ACCEPTED, STATUS_PROCESSING, null);
-        if (rows == 0) {
-            throw new BusinessException(ResponseCode.NOT_FOUND, "设备故障不存在");
-        }
+        int rows = faultMapper.updateAssignmentStatus(
+                id,
+                ASSIGN_STATUS_ACCEPTED,
+                STATUS_PROCESSING,
+                null,
+                oldFault.getStatus(),
+                oldFault.getAssignStatus(),
+                oldFault.getHandleUserId());
+        requireLifecycleUpdate(rows);
     }
 
     @Override
@@ -187,10 +201,11 @@ public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
                 id,
                 ASSIGN_STATUS_REJECTED,
                 STATUS_PENDING,
-                normalizeOptionalText(rejectReason));
-        if (rows == 0) {
-            throw new BusinessException(ResponseCode.NOT_FOUND, "设备故障不存在");
-        }
+                normalizeOptionalText(rejectReason),
+                oldFault.getStatus(),
+                oldFault.getAssignStatus(),
+                oldFault.getHandleUserId());
+        requireLifecycleUpdate(rows);
     }
 
     @Override
@@ -475,6 +490,12 @@ public class IotDeviceFaultServiceImpl implements IotDeviceFaultService {
     private void requireId(Long id) {
         if (id == null) {
             throw new BusinessException(ResponseCode.PARAM_ERROR, "ID不能为空");
+        }
+    }
+
+    private void requireLifecycleUpdate(int rows) {
+        if (rows == 0) {
+            throw new BusinessException(ResponseCode.FAIL, "故障状态已发生变化，请刷新后重试");
         }
     }
 

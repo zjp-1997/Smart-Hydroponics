@@ -17,16 +17,6 @@ public interface FarmTaskMapper {
 
     int updateById(FarmTask farmTask);
 
-    int deleteById(Long id);
-
-    int deleteBatchByIds(@Param("ids") List<Long> ids);
-
-    int updateStatus(@Param("id") Long id,
-                     @Param("status") Integer status,
-                     @Param("actualStartTime") LocalDateTime actualStartTime,
-                     @Param("actualEndTime") LocalDateTime actualEndTime,
-                     @Param("completeRemark") String completeRemark);
-
     /**
      * 原子领取并开始任务；状态条件位于 SQL 中，避免多人同时点击造成重复领取。
      */
@@ -40,6 +30,9 @@ public interface FarmTaskMapper {
     int completeTask(@Param("id") Long id,
                      @Param("actualEndTime") LocalDateTime actualEndTime,
                      @Param("completeRemark") String completeRemark);
+
+    /** 只有未完成任务可以被取消，状态条件在 SQL 中保证原子性。 */
+    int cancelTask(@Param("id") Long id);
 
     FarmTask selectById(Long id);
 
