@@ -218,8 +218,8 @@ page {
 	box-sizing: border-box;
 	min-height: 300rpx;
 	padding: calc(var(--status-bar-height) + 16rpx) 36rpx 0;
-	/* 与农场管理页 page-hero 完全一致，消息页顶部保持统一的渐变层级。 */
-	background: linear-gradient(180deg, rgba(27, 162, 145, 0.7) 0%, rgba(90, 184, 173, 0) 100%);
+	border-radius: 0;
+	background: linear-gradient(110deg, #60cbba 0%, #57c5b4 50%, #4ebfad 100%);
 }
 
 .navbar {

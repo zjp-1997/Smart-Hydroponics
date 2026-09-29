@@ -4,7 +4,10 @@ const path = require('node:path')
 
 const root = path.join(__dirname, '..')
 const pagesConfig = fs.readFileSync(path.join(root, 'pages.json'), 'utf8')
+const app = fs.readFileSync(path.join(root, 'App.vue'), 'utf8')
 const iconNames = ['home', 'message', 'map', 'profile']
+
+assert.match(app, /uni-tabbar,[\s\S]*\.uni-tabbar\s*\{[\s\S]*border-radius:\s*0 !important;/)
 
 for (const name of iconNames) {
 	for (const suffix of ['', '-active']) {

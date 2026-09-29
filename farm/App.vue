@@ -82,4 +82,12 @@
 	scroll-view {
 		width: 100%;
 	}
+
+	/* H5 原生 TabBar 由框架渲染，显式清除圆角以保持四端导航外观一致。 */
+	/* #ifdef H5 */
+	uni-tabbar,
+	.uni-tabbar {
+		border-radius: 0 !important;
+	}
+	/* #endif */
 </style>
