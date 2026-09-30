@@ -1,17 +1,21 @@
 <template>
 	<view class="chat-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<!-- 返回按钮尺寸与专家聊天页一致，保留可点击区域。 -->
 				<button class="back" aria-label="返回消息" @tap="handleBack"><text class="iconfont icon-fanhui"></text></button>
-				<text class="nav-title">{{ expertName }}</text>
+				<text class="nav-title app-nav-title">{{ expertName }}</text>
 				<view class="placeholder"></view>
 			</view>
 		</view>
 
 		<scroll-view class="chat-content" :class="{ 'chat-content-expanded': showChatTools }" scroll-y :scroll-top="scrollTop"
-			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
-			@refresherrefresh="$handlePullDownRefresh">
+			refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
+			@refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view
 				v-for="message in displayMessages"
 				:key="message.id"

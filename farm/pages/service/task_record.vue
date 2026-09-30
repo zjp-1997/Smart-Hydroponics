@@ -1,19 +1,21 @@
 <template>
 	<view class="record-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<!-- 返回区域保持至少 44px 的触控尺寸，便于移动端单手操作。 -->
 				<view class="nav-action" hover-class="nav-action-pressed" @tap="handleBack">
 					<text class="iconfont icon-fanhui nav-icon"></text>
 				</view>
-				<text class="nav-title">农事记录</text>
+				<text class="nav-title app-nav-title">农事记录</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
 		<scroll-view class="record-content" scroll-y :show-scrollbar="false" refresher-enabled
-			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			refresher-default-style="none"
+			:refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
 			@refresherrefresh="$handlePullDownRefresh">
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="loading" class="state-card">
 				<view class="loading-dot"></view>
 				<text class="state-text">正在加载任务记录...</text>

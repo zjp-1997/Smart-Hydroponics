@@ -1,9 +1,9 @@
 <template>
 	<view class="my-task-page">
-		<view class="mytask-hero">
-			<view class="mytask-navbar">
+		<view class="mytask-hero app-nav-surface">
+			<view class="mytask-navbar app-nav-row">
 				<text class="iconfont icon-fanhui mytask-back" hover-class="mytask-control-pressed" @tap="handleBack"></text>
-				<text class="mytask-nav-title">农事任务</text>
+				<text class="mytask-nav-title app-nav-title">农事任务</text>
 				<view class="mytask-nav-placeholder"></view>
 			</view>
 		</view>
@@ -22,8 +22,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="mytask-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="mytask-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="loading" class="mytask-state">正在加载农事任务...</view>
 			<view v-else-if="!tasks.length" class="mytask-state">暂无{{ activeStatusLabel }}任务</view>
 			<view v-else class="mytask-list">

@@ -83,6 +83,65 @@
 		width: 100%;
 	}
 
+	/* 所有自定义导航复用消息页的薄荷渐变、标题尺寸与 58rpx 导航行。 */
+	.app-nav-surface {
+		border-radius: 0 !important;
+		background: transparent !important;
+	}
+
+	/* 渐变只覆盖状态栏和导航行，避免搜索、筛选或摘要区被误染成导航背景。 */
+	.app-nav-surface::before {
+		position: absolute;
+		z-index: 0;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: calc(var(--status-bar-height) + 88rpx);
+		background: linear-gradient(110deg, #60cbba 0%, #57c5b4 50%, #4ebfad 100%);
+		pointer-events: none;
+		content: '';
+	}
+
+	.app-nav-row {
+		position: relative !important;
+		z-index: 1;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: space-between !important;
+		height: 58rpx !important;
+	}
+
+	.app-nav-title {
+		position: absolute !important;
+		left: 90rpx !important;
+		right: 90rpx !important;
+		overflow: hidden;
+		text-align: center !important;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 16px !important;
+		font-weight: normal !important;
+		line-height: 58rpx !important;
+		color: #ffffff !important;
+	}
+
+	/* 少量页面原先把安全区与导航行合并成一个节点，使用紧凑类保持相同视觉。 */
+	.app-nav-compact {
+		box-sizing: border-box !important;
+		height: calc(var(--status-bar-height) + 90rpx) !important;
+		padding: calc(var(--status-bar-height) + 16rpx) 36rpx 0 !important;
+	}
+
+	.app-nav-compact > .app-nav-title {
+		bottom: 16rpx;
+	}
+
+	.app-nav-surface .app-nav-row .iconfont,
+	.app-nav-compact > .back-button,
+	.app-nav-compact > .back-button .iconfont {
+		color: #ffffff !important;
+	}
+
 	/* H5 原生 TabBar 由框架渲染，显式清除圆角以保持四端导航外观一致。 */
 	/* #ifdef H5 */
 	uni-tabbar,

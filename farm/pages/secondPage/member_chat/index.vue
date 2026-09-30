@@ -1,10 +1,10 @@
 <template>
 	<view class="chat-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<button class="back" aria-label="返回消息列表" @tap="handleBack"><text class="iconfont icon-fanhui"></text></button>
 				<view class="title-wrap">
-					<text class="nav-title">{{ peerName }}</text>
+					<text class="nav-title app-nav-title">{{ peerName }}</text>
 					<!-- 角色文字帮助农场主区分同名的普通用户和技术人员。 -->
 					<text v-if="peerRoleLabel" class="role-label">{{ peerRoleLabel }}</text>
 				</view>
@@ -13,8 +13,12 @@
 		</view>
 
 		<scroll-view class="chat-content" :class="{ 'chat-content-expanded': showChatTools }" scroll-y :scroll-top="scrollTop"
-			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
-			@refresherrefresh="$handlePullDownRefresh">
+			refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
+			@refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<button v-if="hasMoreBefore" class="load-earlier" :loading="loadingOlder" @tap="loadEarlier">
 				{{ loadingOlder ? '正在加载...' : '加载更早消息' }}
 			</button>

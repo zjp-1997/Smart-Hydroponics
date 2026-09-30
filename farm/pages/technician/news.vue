@@ -1,8 +1,12 @@
 <template>
   <view class="news-page">
-    <view class="hero"><text class="title">消息</text></view>
-    <scroll-view class="content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+    <view class="hero app-nav-surface"><view class="app-nav-row"><text class="title app-nav-title">消息</text><view class="nav-placeholder"></view></view></view>
+    <scroll-view class="content" scroll-y refresher-enabled
+      refresher-default-style="none" :refresher-triggered="pullRefreshing"
+      refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+      :show-scrollbar="false"
+    >
+      <farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
       <!-- 消息入口沿用农场主消息页的头像、摘要和未读角标布局。 -->
       <view class="message-row" @tap="open('/pages/secondPage/message/announcement')">
         <view class="avatar"><text class="iconfont icon-xitonggonggao"></text></view>

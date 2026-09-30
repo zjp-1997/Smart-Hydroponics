@@ -1,14 +1,18 @@
 <template>
 	<view class="agreement-page">
-		<view class="navbar">
+		<view class="navbar app-nav-surface app-nav-row app-nav-compact">
 			<button class="back-button" role="button" aria-label="返回登录页" @tap="goBack">
 				<text class="iconfont icon-fanhui" aria-hidden="true"></text>
 			</button>
-			<text class="nav-title">{{ document.title }}</text>
+			<text class="nav-title app-nav-title">{{ document.title }}</text>
 			<view class="nav-placeholder"></view>
 		</view>
-		<scroll-view class="document" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="document" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<text class="updated">更新日期：2026年9月23日</text>
 			<view v-for="section in document.sections" :key="section.title" class="section">
 				<text class="section-title">{{ section.title }}</text>

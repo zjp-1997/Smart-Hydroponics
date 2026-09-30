@@ -1,11 +1,15 @@
 <template>
   <view class="record-page">
-    <view class="hero"><view class="navbar">
+    <view class="hero app-nav-surface"><view class="navbar app-nav-row">
       <text class="iconfont icon-fanhui back" @tap="goBack"></text>
-      <text class="title">故障处理记录</text>
+      <text class="title app-nav-title">故障处理记录</text>
     </view></view>
-    <scroll-view class="content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+    <scroll-view class="content" scroll-y refresher-enabled
+      refresher-default-style="none" :refresher-triggered="pullRefreshing"
+      refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+      :show-scrollbar="false"
+    >
+      <farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
       <view v-if="loading" class="empty">正在加载处理记录...</view>
       <view v-else-if="!records.length" class="empty">暂无已完成的故障记录</view>
       <!-- 记录卡片复用农事记录的摘要加详情入口布局，完整时间轴在故障记录页展示。 -->

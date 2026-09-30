@@ -1,15 +1,19 @@
 <template>
 	<view class="monitor-page">
-		<view class="monitor-hero">
-			<view class="monitor-nav">
+		<view class="monitor-hero app-nav-surface">
+			<view class="monitor-nav app-nav-row">
 				<text class="iconfont icon-fanhui monitor-back" @tap="handleBack"></text>
-				<text class="monitor-title">实时监控</text>
+				<text class="monitor-title app-nav-title">实时监控</text>
 				<view class="monitor-nav-placeholder"></view>
 			</view>
 		</view>
 
-		<scroll-view class="monitor-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="monitor-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="search-card">
 				<view class="search-box">
 					<text class="search-icon"></text>

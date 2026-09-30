@@ -1,11 +1,11 @@
 <template>
 	<view class="technical-page">
 		<!-- 自定义导航栏与参考图一致，保留足够的返回触控区域。 -->
-		<view class="page-header">
+		<view class="page-header app-nav-surface app-nav-row app-nav-compact">
 			<button class="back-button" hover-class="button-pressed" aria-label="返回" @tap="goBack">
 				<text class="iconfont icon-fanhui"></text>
 			</button>
-			<text class="page-title">技术支持</text>
+			<text class="page-title app-nav-title">技术支持</text>
 			<view class="header-placeholder"></view>
 		</view>
 

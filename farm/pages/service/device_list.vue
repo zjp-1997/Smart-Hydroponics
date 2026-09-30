@@ -1,9 +1,9 @@
 <template>
 	<view class="device-page">
-		<view class="device-hero">
-			<view class="device-nav">
+		<view class="device-hero app-nav-surface">
+			<view class="device-nav app-nav-row">
 				<text class="iconfont icon-fanhui device-back" @tap="handleBack"></text>
-				<text class="device-title">设备管理</text>
+				<text class="device-title app-nav-title">设备管理</text>
 				<text
 					class="iconfont icon-guzhangchuli device-fault-entry"
 					aria-label="进入故障处理"
@@ -13,8 +13,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="device-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="device-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="filter-card">
 				<view class="filter-head">
 					<view class="card-title-wrap">

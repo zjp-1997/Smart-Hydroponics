@@ -1,11 +1,11 @@
 <template>
 	<view class="about-page">
 		<!-- 自定义导航栏：与项目其他二级页面保持一致，并避开系统状态栏。 -->
-		<view class="page-header">
+		<view class="page-header app-nav-surface app-nav-row app-nav-compact">
 			<button class="back-button" hover-class="button-pressed" aria-label="返回" @tap="goBack">
 				<text class="iconfont icon-fanhui"></text>
 			</button>
-			<text class="page-title">关于我们</text>
+			<text class="page-title app-nav-title">关于我们</text>
 			<view class="header-placeholder"></view>
 		</view>
 

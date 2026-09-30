@@ -12,8 +12,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="mine-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="mine-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="quick-grid">
 				<button
 					v-for="item in quickActions"

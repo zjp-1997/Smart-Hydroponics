@@ -1,16 +1,20 @@
 <template>
 	<view class="help-page">
 		<!-- 页面头部使用自定义导航，保证 H5 与 App 视觉一致。 -->
-		<view class="page-header">
+		<view class="page-header app-nav-surface app-nav-row app-nav-compact">
 			<button class="back-button" hover-class="button-pressed" aria-label="返回" @tap="goBack">
 				<text class="iconfont icon-fanhui"></text>
 			</button>
-			<text class="page-title">帮助与反馈</text>
+			<text class="page-title app-nav-title">帮助与反馈</text>
 			<view class="header-placeholder"></view>
 		</view>
 
-		<scroll-view class="page-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="page-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<!-- 搜索区仅复现静态界面，不发起查询请求。 -->
 			<view class="search-row">
 				<view class="search-field">

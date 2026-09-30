@@ -1,9 +1,9 @@
 <template>
 	<view class="strategy-page">
-		<view class="strategy-hero">
-			<view class="strategy-nav">
+		<view class="strategy-hero app-nav-surface">
+			<view class="strategy-nav app-nav-row">
 				<text class="iconfont icon-fanhui strategy-back" @tap="handleBack"></text>
-				<text class="strategy-title">智能策略</text>
+				<text class="strategy-title app-nav-title">智能策略</text>
 				<text class="record-link" @tap="handleRecord">识别记录</text>
 			</view>
 		</view>
@@ -50,8 +50,12 @@
 			<!-- AI 消息由内部列表滚动，顶部导航与专家聊天同款输入区保持固定。 -->
 			<scroll-view v-else class="consult-area" :class="{ expanded: showAiTools }" scroll-y
 				:scroll-top="scrollTop" :scroll-into-view="scrollIntoView" @scrolltoupper="loadOlderAiHistory"
-				refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
-				@refresherrefresh="$handlePullDownRefresh">
+				refresher-enabled
+				refresher-default-style="none" :refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
+				@refresherrefresh="$handlePullDownRefresh"
+				:show-scrollbar="false"
+			>
+				<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 				<view v-if="historyLoading && !historyLoaded" class="consult-empty">正在加载历史对话...</view>
 				<view v-else-if="!aiMessages.length" class="consult-empty">向 DeepSeek 咨询种植、病虫害或设备问题</view>
 				<view v-if="historyLoaded && hasMoreHistory" class="history-more" @tap="loadOlderAiHistory">

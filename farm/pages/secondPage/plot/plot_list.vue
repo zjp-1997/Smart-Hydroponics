@@ -1,15 +1,19 @@
 <template>
 	<view class="plot-list-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<text class="iconfont icon-fanhui nav-icon" @tap="handleBack"></text>
-				<text class="nav-title">地块列表</text>
+				<text class="nav-title app-nav-title">地块列表</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
-		<scroll-view class="plot-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="plot-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<!-- 搜索和状态筛选只作用于接口返回的当前地块集合，不改变顶部渐变区域。 -->
 			<view class="search-box">
 				<text class="iconfont icon-icon_33 search-icon" aria-hidden="true"></text>

@@ -1,10 +1,10 @@
 <template>
 	<view class="picture-page">
-		<view class="picture-hero">
-			<view class="picture-nav" :class="{ 'picture-nav-select': selectionMode }">
+		<view class="picture-hero app-nav-surface">
+			<view class="picture-nav app-nav-row" :class="{ 'picture-nav-select': selectionMode }">
 				<text v-if="selectionMode" class="iconfont icon-quxiao select-close" @tap="exitSelectionMode"></text>
 				<text v-else class="iconfont icon-fanhui picture-back" @tap="handleBack"></text>
-				<text class="picture-title">{{ selectionMode ? `已选择${selectedCount}项` : '图片管理' }}</text>
+				<text class="picture-title app-nav-title">{{ selectionMode ? `已选择${selectedCount}项` : '图片管理' }}</text>
 				<text v-if="selectionMode" class="iconfont icon-quanxuan select-all-icon" @tap="handleSelectAll"></text>
 				<view v-else class="picture-actions">
 					<text class="iconfont icon-icon_33 nav-action-icon" aria-label="搜索图片" @tap="handleSearch"></text>
@@ -13,8 +13,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="picture-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="picture-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="activeMode === 'photo'" class="photo-view">
 				<text class="main-title">照片</text>
 				<view v-if="loading" class="state-text">正在加载图片...</view>

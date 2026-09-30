@@ -1,14 +1,18 @@
 <template>
   <view class="identity-page">
-    <view class="page-hero">
-      <view class="navbar">
+    <view class="page-hero app-nav-surface">
+      <view class="navbar app-nav-row">
         <button class="back" aria-label="返回个人中心" @tap="goBack"><text class="iconfont icon-fanhui" /></button>
-        <text class="nav-title">身份认证</text><view class="placeholder" />
+        <text class="nav-title app-nav-title">身份认证</text><view class="placeholder" />
       </view>
     </view>
 
-    <scroll-view scroll-y class="content" refresher-enabled :refresher-triggered="pullRefreshing"
-      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+    <scroll-view scroll-y class="content" refresher-enabled
+      refresher-default-style="none" :refresher-triggered="pullRefreshing"
+      refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+      :show-scrollbar="false"
+    >
+      <farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
       <view class="status-card" :class="`status-${auditStatus}`">
         <text class="iconfont icon-a-typeyonghustyledunpai status-icon" />
         <view class="status-copy">

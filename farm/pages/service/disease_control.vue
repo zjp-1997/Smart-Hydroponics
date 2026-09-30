@@ -1,9 +1,9 @@
 <template>
 	<view class="disease-page">
-		<view class="disease-hero">
-			<view class="disease-nav">
+		<view class="disease-hero app-nav-surface">
+			<view class="disease-nav app-nav-row">
 				<text class="iconfont icon-fanhui disease-back" @tap="handleBack"></text>
-				<text class="disease-title">病虫害防治</text>
+				<text class="disease-title app-nav-title">病虫害防治</text>
 				<view class="disease-actions">
 					<text v-if="canManageKnowledge" class="iconfont icon-tianjia1 disease-action-icon" aria-label="上传病虫害信息" @tap="openUploadDialog"></text>
 					<text class="iconfont icon-saoma recognition-link disease-action-icon" aria-label="病虫害识别" @tap="handleRecognition"></text>
@@ -11,8 +11,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="disease-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="disease-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="search-wrap">
 				<view class="search-box">
 					<text class="iconfont icon-icon_33 search-icon"></text>

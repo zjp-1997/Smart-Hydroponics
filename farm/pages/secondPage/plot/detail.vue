@@ -1,9 +1,9 @@
 <template>
 	<view class="plot-detail-page">
-		<view class="detail-hero">
-			<view class="navbar">
+		<view class="detail-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<text class="iconfont icon-fanhui nav-icon" @tap="handleBack"></text>
-				<text class="nav-title">地块详情</text>
+				<text class="nav-title app-nav-title">地块详情</text>
 				<text v-if="canManageFarm" class="iconfont icon-gengduobianji nav-icon" role="button" aria-label="编辑地块信息" @tap="handleEdit"></text>
 				<view v-else class="nav-icon"></view>
 			</view>
@@ -32,8 +32,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="detail-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="detail-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="env-card">
 				<view class="card-head">
 					<text class="env-title">环境监测</text>

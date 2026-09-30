@@ -1,18 +1,22 @@
 <template>
 	<view class="picture-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<text v-if="selectionMode" class="iconfont icon-quxiao nav-icon select-close" @tap="exitSelectionMode"></text>
 				<text v-else class="iconfont icon-fanhui nav-icon" @tap="handleBack"></text>
-				<text class="nav-title">{{ selectionMode ? `已选择${selectedCount}项` : '摄像头图片' }}</text>
+				<text class="nav-title app-nav-title">{{ selectionMode ? `已选择${selectedCount}项` : '摄像头图片' }}</text>
 				<text v-if="selectionMode" class="iconfont icon-quanxuan nav-placeholder select-all-icon" @tap="handleSelectAll"></text>
 				<view v-else class="nav-placeholder"></view>
 			</view>
 		</view>
 
 		<scroll-view class="picture-content" :class="{ 'picture-content-select': selectionMode }" scroll-y
-			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
-			@refresherrefresh="$handlePullDownRefresh">
+			refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
+			@refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="loading" class="state-text">正在加载图片...</view>
 			<view v-else-if="!groupedPictures.length" class="state-text">暂无摄像头图片</view>
 			<block v-else>

@@ -1,9 +1,9 @@
 <template>
 	<view class="live-page">
 		<!-- 自定义导航栏遵循安全区，标题始终使用后端返回的摄像头名称。 -->
-		<view class="live-navbar">
+		<view class="live-navbar app-nav-surface app-nav-row app-nav-compact">
 			<text class="iconfont icon-fanhui back-button" aria-label="返回" @tap="handleBack"></text>
-			<text class="live-title">{{ monitor.cameraName || '实时监控' }}</text>
+			<text class="live-title app-nav-title">{{ monitor.cameraName || '实时监控' }}</text>
 			<view class="nav-placeholder"></view>
 		</view>
 

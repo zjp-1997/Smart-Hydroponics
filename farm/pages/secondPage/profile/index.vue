@@ -1,15 +1,19 @@
 <template>
 	<view class="profile-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<text class="iconfont icon-fanhui back" hover-class="control-pressed" @tap="goBack"></text>
-				<text class="nav-title">个人信息</text>
+				<text class="nav-title app-nav-title">个人信息</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
-		<scroll-view class="profile-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="profile-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="avatar-card">
 				<view class="avatar-wrap" hover-class="control-pressed" aria-label="修改头像" @tap="chooseAvatar">
 					<protected-image class="avatar" :src="avatarPreview" mode="aspectFill" @error="useDefaultAvatar"></protected-image>

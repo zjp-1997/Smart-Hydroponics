@@ -4,7 +4,8 @@
 		"custom": {
 			// 将 npm 安装的 uni-ui 组件按 uni-* 标签自动解析，避免每个页面重复注册。
 			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
-			"^protected-image$": "@/componment/ProtectedImage.vue"
+			"^protected-image$": "@/componment/ProtectedImage.vue",
+			"^farm-pull-refresh$": "@/componment/FarmPullRefresh.vue"
 		}
 	},
 	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
@@ -12,8 +13,7 @@
 			"path": "pages/login/code_index",
 			"style": {
 				"navigationBarTitleText": "验证码登录",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -67,16 +67,14 @@
 			"path": "pages/login/pwd_index",
 			"style": {
 				"navigationBarTitleText": "账号密码登录",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/register/index",
 			"style": {
 				"navigationBarTitleText": "注册",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 
@@ -101,8 +99,7 @@
 			"path": "pages/index/map",
 			"style": {
 				"navigationBarTitleText": "地图",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -140,8 +137,7 @@
 			"path": "pages/secondPage/about/about_me",
 			"style": {
 				"navigationBarTitleText": "关于我们",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -157,8 +153,7 @@
 			"path": "pages/secondPage/about/technical",
 			"style": {
 				"navigationBarTitleText": "技术支持",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -243,8 +238,7 @@
 			"path": "pages/secondPage/monitor/detail",
 			"style": {
 				"navigationBarTitleText": "实时监控",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
+				"navigationStyle": "custom"
 			}
 		},
 		{

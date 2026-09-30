@@ -1,18 +1,22 @@
 <template>
   <view class="maintenance-page">
     <!-- 标题旁展示当前用户全部未读公告数，与分页列表独立统计。 -->
-    <view class="page-hero">
-      <view class="navbar">
+    <view class="page-hero app-nav-surface">
+      <view class="navbar app-nav-row">
         <view class="nav-action" aria-label="返回" @tap="handleBack">
           <text class="iconfont icon-fanhui nav-icon"></text>
         </view>
-        <text class="nav-title">系统消息({{ unreadCount }})</text>
+        <text class="nav-title app-nav-title">系统消息({{ unreadCount }})</text>
         <view class="nav-placeholder"></view>
       </view>
     </view>
 
-    <scroll-view class="maintenance-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+    <scroll-view class="maintenance-content" scroll-y refresher-enabled
+      refresher-default-style="none" :refresher-triggered="pullRefreshing"
+      refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+      :show-scrollbar="false"
+    >
+      <farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
       <!-- 首次请求保留固定高度，避免异步数据加载造成页面跳动。 -->
       <view v-if="loading && !messages.length" class="state-card loading-state">
         <view class="loading-line wide"></view>

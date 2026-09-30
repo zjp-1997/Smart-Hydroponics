@@ -1,9 +1,9 @@
 <template>
 	<view class="news-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<view class="nav-placeholder"></view>
-				<text class="nav-title">消息</text>
+				<text class="nav-title app-nav-title">消息</text>
 				<!-- <view class="unread-summary">
 					<text class="unread-label">未读（</text>
 					<text class="unread-count">{{ totalUnread }}</text>
@@ -12,8 +12,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="news-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="news-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<!-- 系统入口聚合为一张卡片，减少同级白色块对页面层级的干扰。 -->
 			<view class="message-card system-card">
 				<view class="message-item" hover-class="message-item-pressed" :hover-stay-time="80"

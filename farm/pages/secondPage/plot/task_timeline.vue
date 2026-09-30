@@ -1,19 +1,21 @@
 <template>
 	<view class="timeline-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<!-- 返回按钮使用 44px 触控区，避免小图标难以点击。 -->
 				<view class="nav-action" hover-class="nav-action-pressed" @tap="handleBack">
 					<text class="iconfont icon-fanhui nav-icon"></text>
 				</view>
-				<text class="nav-title">地块农事</text>
+				<text class="nav-title app-nav-title">地块农事</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
 		<scroll-view class="page-content" scroll-y :show-scrollbar="false" refresher-enabled
-			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			refresher-default-style="none"
+			:refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
 			@refresherrefresh="$handlePullDownRefresh">
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="loading" class="state-card">
 				<view class="loading-dot"></view>
 				<text class="state-text">正在加载地块农事任务...</text>

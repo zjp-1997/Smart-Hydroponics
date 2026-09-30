@@ -1,18 +1,22 @@
 <template>
 	<view class="account-page">
 		<!-- 顶部渐变参数与农场管理页保持一致，确保二级页面视觉统一。 -->
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<button class="back-button" hover-class="control-pressed" aria-label="返回" @tap="handleBack">
 					<text class="iconfont icon-fanhui nav-icon"></text>
 				</button>
-				<text class="nav-title">账号设置</text>
+				<text class="nav-title app-nav-title">账号设置</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
-		<scroll-view class="account-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="account-content" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view class="setting-section">
 				<text class="section-title">账号关联</text>
 				<view class="setting-card">

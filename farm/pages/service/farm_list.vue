@@ -1,74 +1,86 @@
 <template>
 	<view class="farm-list-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<button class="nav-back" role="button" aria-label="返回上一页" @tap="handleBack">
 					<text class="iconfont icon-fanhui nav-icon" aria-hidden="true"></text>
 				</button>
-				<text class="nav-title">{{ isOrdinaryUser ? '农场信息' : '农场管理' }}</text>
+				<text class="nav-title app-nav-title">{{ isOrdinaryUser ? '农场信息' : '农场管理' }}</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
 		<scroll-view class="farm-content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
-			<view v-if="loading && !farms.length" class="state-panel" role="status">正在加载农场信息...</view>
-			<view v-else-if="errorMessage && !farms.length" class="state-panel error-state" role="alert">
-				<text class="state-title">{{ offline ? '当前处于离线状态' : '农场信息加载失败' }}</text>
-				<text class="state-detail">{{ errorMessage }}</text>
-				<button class="retry-button" :disabled="loading" @tap="fetchFarmList">重新加载</button>
-			</view>
-			<view v-else-if="!farms.length" class="state-panel empty-state">
-				<text class="state-title">暂无农场信息</text>
-				<text class="state-detail">当前账号还没有可查看的农场</text>
-			</view>
-			<block v-else>
-				<view v-if="errorMessage" class="stale-banner" role="alert">
-					<text>{{ offline ? '网络已断开，正在显示上次加载的数据' : '刷新失败，正在显示上次加载的数据' }}</text>
-					<button class="inline-retry" :disabled="loading" @tap="fetchFarmList">重试</button>
+			refresher-default-style="none" refresher-background="#f7f7f7" :refresher-threshold="56"
+			:enhanced="true" :bounces="true" :show-scrollbar="false"
+			@refresherrefresh="$handlePullDownRefresh">
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="农场数据" />
+			<view class="farm-content-inner">
+				<view v-if="loading && !farms.length" class="state-panel" role="status">正在加载农场信息...</view>
+				<view v-else-if="errorMessage && !farms.length" class="state-panel error-state" role="alert">
+					<text class="state-title">{{ offline ? '当前处于离线状态' : '农场信息加载失败' }}</text>
+					<text class="state-detail">{{ errorMessage }}</text>
+					<button class="retry-button" :disabled="loading" @tap="fetchFarmList">重新加载</button>
 				</view>
-				<!-- 卡片整体进入地块列表，图片区域单独保留预览能力。 -->
-				<view
-					class="farm-card"
-					v-for="farm in farms"
-					:key="farm.id"
-					hover-class="farm-card-pressed"
-					:hover-stay-time="80"
-					role="button"
-					:aria-label="`查看${farm.farmName}的地块，${farm.plotCount}个地块`"
-					tabindex="0"
-					@tap="handleFarmDetail(farm)"
-					@keyup.enter="handleFarmDetail(farm)"
-				>
+				<view v-else-if="!farms.length" class="state-panel empty-state">
+					<text class="state-title">暂无农场信息</text>
+					<text class="state-detail">当前账号还没有可查看的农场</text>
+				</view>
+				<block v-else>
+					<view v-if="errorMessage" class="stale-banner" role="alert">
+						<text>{{ offline ? '网络已断开，正在显示上次加载的数据' : '刷新失败，正在显示上次加载的数据' }}</text>
+						<button class="inline-retry" :disabled="loading" @tap="fetchFarmList">重试</button>
+					</view>
+					<view class="farm-section-head">
+						<view class="farm-section-title-wrap">
+							<view class="farm-section-accent" aria-hidden="true"></view>
+							<text class="farm-section-title">{{ isOrdinaryUser ? '农场信息' : '我的农场' }}</text>
+						</view>
+						<text class="farm-total">共 {{ farms.length }} 个农场</text>
+					</view>
+					<!-- 卡片整体进入地块列表，图片区域单独保留预览能力。 -->
 					<view
-						class="farm-image-action"
-						hover-class="farm-image-pressed"
+						class="farm-card"
+						v-for="farm in farms"
+						:key="farm.id"
+						hover-class="farm-card-pressed"
 						:hover-stay-time="80"
 						role="button"
-						:aria-label="`预览${farm.farmName}的农场图片`"
+						:aria-label="`查看${farm.farmName}的地块，${farm.plotCount}个地块`"
 						tabindex="0"
-						@tap.stop="previewFarmImage(farm)"
-						@keyup.enter.stop="previewFarmImage(farm)"
+						@tap="handleFarmDetail(farm)"
+						@keyup.enter="handleFarmDetail(farm)"
 					>
-						<protected-image class="farm-image" :src="farm.image || fallbackImage" :alt="`${farm.farmName}农场图片`" mode="aspectFill"></protected-image>
+						<view
+							class="farm-image-action"
+							hover-class="farm-image-pressed"
+							:hover-stay-time="80"
+							role="button"
+							:aria-label="`预览${farm.farmName}的农场图片`"
+							tabindex="0"
+							@tap.stop="previewFarmImage(farm)"
+							@keyup.enter.stop="previewFarmImage(farm)"
+						>
+							<protected-image class="farm-image" :src="farm.image || fallbackImage" :alt="`${farm.farmName}农场图片`" mode="aspectFill"></protected-image>
+						</view>
+						<view class="farm-info">
+							<view class="farm-title-row">
+								<text class="farm-name">{{ farm.farmName }}</text>
+								<text class="plot-count-badge">{{ farm.plotCount }} 个地块</text>
+							</view>
+							<view class="farm-detail-row">
+								<text class="detail-label">种植面积：</text>
+								<text class="detail-value">{{ farm.plantArea || '-' }}</text>
+							</view>
+							<view class="farm-detail-row address-row">
+								<text class="detail-label">种植地址：</text>
+								<text class="detail-value address-value">{{ farm.address || '-' }}</text>
+							</view>
+						</view>
+						<text class="iconfont icon-youjiantou farm-arrow" aria-hidden="true"></text>
 					</view>
-					<view class="farm-info">
-						<view class="farm-title-row">
-							<text class="farm-name">{{ farm.farmName }}</text>
-							<text class="plot-count-badge">{{ farm.plotCount }} 个地块</text>
-						</view>
-						<view class="farm-detail-row">
-							<text class="detail-label">种植面积:</text>
-							<text class="detail-value">{{ farm.plantArea || '-' }}</text>
-						</view>
-						<view class="farm-detail-row address-row">
-							<text class="detail-label">种植地址:</text>
-							<text class="detail-value address-value">{{ farm.address || '-' }}</text>
-						</view>
-					</view>
-					<text class="iconfont icon-youjiantou farm-arrow" aria-hidden="true"></text>
-				</view>
-			</block>
+				</block>
+			</view>
 		</scroll-view>
 	</view>
 </template>
@@ -143,17 +155,20 @@ page {
 .farm-list-page {
 	position: relative;
 	min-height: 100vh;
-	background-color: #f7f7f7;
+	background:
+		radial-gradient(120% 24% at 12% 104%, rgba(84, 196, 184, 0.1) 0%, rgba(84, 196, 184, 0.03) 48%, transparent 49%),
+		linear-gradient(180deg, #eaf6f3 0%, #f5f8f7 42%, #f7f7f7 100%);
 	font-size: 16px;
 	font-weight: normal;
-	color: #000000;
+	color: #20312f;
 }
 
 .page-hero {
 	box-sizing: border-box;
 	min-height: 300rpx;
 	padding: calc(var(--status-bar-height) + 16rpx) 36rpx 0;
-	background: linear-gradient(180deg, rgba(27, 162, 145, 0.7) 0%, rgba(90, 184, 173, 0) 100%);
+	border-radius: 0;
+	background: linear-gradient(110deg, #60cbba 0%, #57c5b4 50%, #4ebfad 100%);
 }
 
 .navbar {
@@ -169,7 +184,7 @@ page {
 	left: 90rpx;
 	right: 90rpx;
 	text-align: center;
-	font-size: 18px;
+	font-size: 16px;
 	line-height: 58rpx;
 	color: #ffffff;
 }
@@ -202,10 +217,55 @@ page {
 	position: absolute;
 	left: 0;
 	right: 0;
-	top: calc(var(--status-bar-height) + 136rpx);
+	top: calc(var(--status-bar-height) + 88rpx);
 	bottom: 0;
 	box-sizing: border-box;
-	padding: 0 36rpx 34rpx;
+	background:
+		radial-gradient(100% 20% at 88% 102%, rgba(84, 196, 184, 0.08) 0%, transparent 64%),
+		linear-gradient(180deg, rgba(234, 246, 243, 0.94) 0%, rgba(245, 248, 247, 0.98) 38%, #f7f7f7 100%);
+}
+
+.farm-content-inner {
+	box-sizing: border-box;
+	min-height: 100%;
+	padding: 0 32rpx 48rpx;
+}
+
+.farm-section-head,
+.farm-section-title-wrap {
+	display: flex;
+	align-items: center;
+}
+
+.farm-section-head {
+	justify-content: space-between;
+	min-height: 92rpx;
+	padding: 12rpx 8rpx 8rpx;
+}
+
+.farm-section-title-wrap {
+	gap: 16rpx;
+}
+
+.farm-section-accent {
+	width: 8rpx;
+	height: 42rpx;
+	border-radius: 999rpx;
+	background: linear-gradient(180deg, #2fc8b8 0%, #0fa493 100%);
+	box-shadow: 0 4rpx 10rpx rgba(15, 164, 147, 0.18);
+}
+
+.farm-section-title {
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: #20312f;
+}
+
+.farm-total {
+	font-size: 14px;
+	line-height: 1.4;
+	color: #6f837e;
 }
 
 .farm-card {
@@ -214,15 +274,12 @@ page {
 	display: flex;
 	align-items: center;
 	min-height: 232rpx;
-	margin-bottom: 28rpx;
-	padding: 24rpx 52rpx 24rpx 24rpx;
-	border-radius: 24rpx;
+	margin-bottom: 24rpx;
+	padding: 24rpx 58rpx 24rpx 24rpx;
+	border: 1rpx solid rgba(32, 49, 47, 0.035);
+	border-radius: 28rpx;
 	background-color: #ffffff;
-	box-shadow: 0 10rpx 28rpx rgba(31, 78, 71, 0.08);
-}
-
-.farm-card:first-child {
-	margin-top: 0;
+	box-shadow: 0 12rpx 34rpx rgba(31, 78, 71, 0.075);
 }
 
 .state-panel {
@@ -276,7 +333,7 @@ page {
 	align-items: center;
 }
 
-.farm-title-row { justify-content: space-between; gap: 16rpx; }
+.farm-title-row { align-items: flex-start; justify-content: space-between; gap: 16rpx; }
 
 .farm-name {
 	flex: 1;
@@ -284,7 +341,7 @@ page {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-size: 17px;
+	font-size: 18px;
 	font-weight: 600;
 	line-height: 1.35;
 	color: #26332f;
@@ -292,15 +349,16 @@ page {
 
 .plot-count-badge {
 	flex-shrink: 0;
-	padding: 6rpx 12rpx;
+	padding: 8rpx 16rpx;
 	border-radius: 999rpx;
 	background-color: #e7f5f2;
-	font-size: 11px;
-	color: #267f74;
+	font-size: 12px;
+	line-height: 1.25;
+	color: #168f81;
 }
 
-.farm-detail-row { margin-top: 18rpx; font-size: 13px; line-height: 1.4; }
-.detail-label { flex-shrink: 0; width: 112rpx; color: #66736f; }
+.farm-detail-row { margin-top: 18rpx; font-size: 14px; line-height: 1.45; }
+.detail-label { flex-shrink: 0; color: #66736f; }
 .detail-value { min-width: 0; color: #46534f; }
 .address-row { align-items: flex-start; }
 .address-value {

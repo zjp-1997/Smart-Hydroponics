@@ -1,11 +1,11 @@
 <template>
 	<view class="record-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<view class="back-action" role="button" aria-label="返回我的页面" @tap="handleBack">
 					<text class="iconfont icon-fanhui"></text>
 				</view>
-				<text class="nav-title">仓库记录</text>
+				<text class="nav-title app-nav-title">仓库记录</text>
 				<view class="nav-spacer"></view>
 			</view>
 		</view>
@@ -20,8 +20,10 @@
 			</view>
 
 			<scroll-view class="record-scroll" scroll-y :show-scrollbar="false" lower-threshold="80"
-				@scrolltolower="loadMore" refresher-enabled :refresher-triggered="pullRefreshing"
-				refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+				@scrolltolower="loadMore" refresher-enabled
+				refresher-default-style="none" :refresher-triggered="pullRefreshing"
+				refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh">
+				<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 				<view v-if="loading && !records.length" class="state-card">正在加载仓库记录...</view>
 				<view v-else-if="error && !records.length" class="state-card">
 					<text>记录加载失败，请检查网络后重试</text>

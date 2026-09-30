@@ -1,12 +1,12 @@
 <template>
 	<view class="detail-page">
 		<!-- 顶部栏保留返回与上传两个等宽触控区，标题始终视觉居中。 -->
-		<view class="detail-header">
-			<view class="detail-nav">
+		<view class="detail-header app-nav-surface">
+			<view class="detail-nav app-nav-row">
 				<view class="nav-action nav-action-left" hover-class="nav-action-pressed" aria-label="返回病虫害列表" @tap="handleBack">
 					<text class="iconfont icon-fanhui nav-back-icon" aria-hidden="true"></text>
 				</view>
-				<text class="detail-nav-title">{{ detail ? detail.name : '病虫害详情' }}</text>
+				<text class="detail-nav-title app-nav-title">{{ detail ? detail.name : '病虫害详情' }}</text>
 				<view class="nav-actions">
 					<view
 						class="nav-action"
@@ -20,8 +20,12 @@
 			</view>
 		</view>
 
-		<scroll-view class="detail-scroll" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+		<scroll-view class="detail-scroll" scroll-y refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing"
+			refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<!-- 骨架屏与最终内容使用相同高度，避免数据返回时发生明显跳动。 -->
 			<view v-if="loading" class="detail-loading" aria-label="正在加载病虫害详情">
 				<view class="skeleton skeleton-cover"></view>

@@ -29,12 +29,15 @@
 			scroll-y
 			refresher-enabled
 			:refresher-triggered="pullRefreshing"
-			refresher-background="#F3F8F6"
+			refresher-default-style="none"
+			refresher-background="#f7f7f7"
+			:refresher-threshold="56"
 			@refresherrefresh="$handlePullDownRefresh"
 			:enhanced="true"
 			:bounces="true"
 			:show-scrollbar="false"
 		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="首页数据" />
 			<view class="section-head">
 				<view class="section-title-wrap">
 					<view class="section-accent"></view>

@@ -1,13 +1,17 @@
 <template>
   <view class="chat-page">
     <!-- 顶部导航与农场主聊天页共用同样的尺寸、渐变和返回按钮布局。 -->
-    <view class="page-hero"><view class="navbar">
+    <view class="page-hero app-nav-surface"><view class="navbar app-nav-row">
       <button class="back" aria-label="返回消息" @tap="goBack"><text class="iconfont icon-fanhui"></text></button>
-      <text class="nav-title">{{ userName }}</text><view class="placeholder"></view>
+      <text class="nav-title app-nav-title">{{ userName }}</text><view class="placeholder"></view>
     </view></view>
     <scroll-view class="chat-content" :class="{ expanded: showChatTools }" scroll-y :scroll-top="scrollTop"
-      refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
-      @refresherrefresh="$handlePullDownRefresh">
+      refresher-enabled
+      refresher-default-style="none" :refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
+      @refresherrefresh="$handlePullDownRefresh"
+      :show-scrollbar="false"
+    >
+      <farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
       <button v-if="hasMoreBefore" class="load-earlier" :loading="loadingOlder" @tap="loadEarlier">
         {{ loadingOlder ? '正在加载...' : '加载更早消息' }}
       </button>

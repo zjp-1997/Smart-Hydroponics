@@ -1,9 +1,9 @@
 <template>
 	<view class="tab-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<view class="nav-placeholder"></view>
-				<text class="nav-title">地图</text>
+				<text class="nav-title app-nav-title">地图</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>

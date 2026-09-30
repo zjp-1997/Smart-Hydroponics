@@ -1,10 +1,10 @@
 <template>
 	<view class="fault-page">
-		<view class="fault-hero">
-			<view class="fault-navbar">
+		<view class="fault-hero app-nav-surface">
+			<view class="fault-navbar app-nav-row">
 				<text v-if="!isTechnicianHome" class="iconfont icon-fanhui fault-back" hover-class="fault-control-pressed" @tap="handleBack"></text>
 				<view v-else class="fault-nav-placeholder"></view>
-				<text class="fault-nav-title">故障处理</text>
+				<text class="fault-nav-title app-nav-title">故障处理</text>
 				<view class="fault-nav-placeholder"></view>
 			</view>
 		</view>
@@ -25,8 +25,12 @@
 		</view>
 
 		<scroll-view class="fault-content" :class="{ 'technician-content': isTechnicianHome }" scroll-y
-			refresher-enabled :refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
-			@refresherrefresh="$handlePullDownRefresh">
+			refresher-enabled
+			refresher-default-style="none" :refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
+			@refresherrefresh="$handlePullDownRefresh"
+			:show-scrollbar="false"
+		>
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="loading" class="fault-state">正在加载设备故障...</view>
 			<view v-else-if="!faults.length" class="fault-state">{{ emptyStateText }}</view>
 			<view v-else class="fault-list">

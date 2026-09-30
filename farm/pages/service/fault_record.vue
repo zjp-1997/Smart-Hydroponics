@@ -1,19 +1,21 @@
 <template>
 	<view class="maintenance-page">
-		<view class="page-hero">
-			<view class="navbar">
+		<view class="page-hero app-nav-surface">
+			<view class="navbar app-nav-row">
 				<!-- 返回按钮保留 44px 以上触控区域，与农事记录页的导航方式一致。 -->
 				<view class="nav-action" hover-class="pressed" aria-label="返回故障列表" @tap="handleBack">
 					<text class="iconfont icon-fanhui nav-icon"></text>
 				</view>
-				<text class="nav-title">维护记录</text>
+				<text class="nav-title app-nav-title">维护记录</text>
 				<view class="nav-placeholder"></view>
 			</view>
 		</view>
 
 		<scroll-view class="record-content" scroll-y :show-scrollbar="false" refresher-enabled
-			:refresher-triggered="pullRefreshing" refresher-background="#F3F8F6"
+			refresher-default-style="none"
+			:refresher-triggered="pullRefreshing" refresher-background="#f7f7f7" :refresher-threshold="56"
 			@refresherrefresh="$handlePullDownRefresh">
+			<farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
 			<view v-if="loading" class="state-card">正在加载维护记录...</view>
 			<template v-else-if="fault">
 				<!-- 故障快照与下方生命周期记录分开呈现，便于先确认设备和故障。 -->

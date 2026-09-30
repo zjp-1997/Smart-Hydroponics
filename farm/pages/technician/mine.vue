@@ -7,8 +7,12 @@
         <view class="identity"><text class="nickname">{{ profile.name }}</text><text class="account">{{ profile.account }}</text></view>
       </view>
     </view>
-    <scroll-view class="content" scroll-y refresher-enabled :refresher-triggered="pullRefreshing"
-      refresher-background="#F3F8F6" @refresherrefresh="$handlePullDownRefresh">
+    <scroll-view class="content" scroll-y refresher-enabled
+      refresher-default-style="none" :refresher-triggered="pullRefreshing"
+      refresher-background="#f7f7f7" :refresher-threshold="56" @refresherrefresh="$handlePullDownRefresh"
+      :show-scrollbar="false"
+    >
+      <farm-pull-refresh slot="refresher" :refreshing="pullRefreshing" label="页面数据" />
       <!-- 技术人员个人中心沿用农场主菜单形态，只展示与当前身份有关的入口。 -->
       <view v-for="(group, index) in menuGroups" :key="index" class="menu-group">
         <view v-for="item in group" :key="item.title" class="menu-row" @tap="open(item.path)">
