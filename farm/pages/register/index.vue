@@ -6,7 +6,7 @@
 			<view class="title">注册</view>
 			<view class="subtitle">选择身份并填写账号信息</view>
 
-			<view class="form">
+			<form class="form" @submit.prevent="handleRegister">
 				<view class="field-label">注册身份 <text class="required">*</text></view>
 				<view class="role-options">
 					<button v-for="role in roles" :key="role.code" class="role-option"
@@ -58,7 +58,7 @@
 				<button class="register-button" :disabled="isSubmitting" @tap="handleRegister">
 					{{ isSubmitting ? '注册中...' : '注册' }}
 				</button>
-			</view>
+			</form>
 		</view>
 
 		<view class="login-entry">

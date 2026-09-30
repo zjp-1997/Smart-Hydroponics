@@ -113,7 +113,8 @@
 
 		<!-- 找回密码弹框仅包含需求指定字段，并复用手机号弹框的视觉规范。 -->
 		<view v-if="passwordDialogVisible" class="phone-dialog-mask" @tap="closePasswordDialog">
-			<view class="phone-dialog password-dialog" role="dialog" aria-modal="true" aria-label="找回密码" @tap.stop>
+			<form class="phone-dialog password-dialog" role="dialog" aria-modal="true" aria-label="找回密码"
+				@submit.prevent="handleResetPassword" @tap.stop>
 				<text class="phone-dialog-title">找回密码</text>
 
 				<view class="phone-field">
@@ -152,7 +153,7 @@
 						{{ resettingPassword ? '提交中' : '确定' }}
 					</button>
 				</view>
-			</view>
+			</form>
 		</view>
 	</view>
 </template>
